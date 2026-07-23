@@ -408,6 +408,27 @@
     "garandOn": "Manuel Garand: visible",
     "garandOff": "Manuel Garand: hidden"
   },
+  "daily": {
+    "title": "Case of the Day",
+    "subtitle": "One case a day",
+    "today": "Today",
+    "caseNo": "Case № {{n}}",
+    "name": {
+      "easy": "*Easy* case of the day",
+      "medium": "*Medium* case of the day",
+      "hard": "*Hard* case of the day"
+    },
+    "levelTitle": "Case of the Day · {{date}}",
+    "unsolved": "Not yet solved",
+    "catchup": "You can catch up on missed days any time — tap a day.",
+    "legendSolved": "solved",
+    "legendSolo": "no hints",
+    "statSolved": "Solved",
+    "statStreak": "Current streak",
+    "statBest": "Best streak",
+    "prevMonth": "Previous month",
+    "nextMonth": "Next month"
+  },
   "settings": {
     "open": "Settings",
     "stamp": "Case file",

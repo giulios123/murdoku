@@ -408,6 +408,27 @@
     "garandOn": "Manuel Garand: visível",
     "garandOff": "Manuel Garand: oculto"
   },
+  "daily": {
+    "title": "O caso do dia",
+    "subtitle": "Um caso por dia",
+    "today": "Hoje",
+    "caseNo": "Caso n.º {{n}}",
+    "name": {
+      "easy": "O caso *fácil* do dia",
+      "medium": "O caso *médio* do dia",
+      "hard": "O caso *difícil* do dia"
+    },
+    "levelTitle": "O caso do dia · {{date}}",
+    "unsolved": "Por resolver",
+    "catchup": "Podes recuperar os dias perdidos quando quiseres — toca num dia.",
+    "legendSolved": "resolvido",
+    "legendSolo": "sem dicas",
+    "statSolved": "Resolvidos",
+    "statStreak": "Série atual",
+    "statBest": "Melhor série",
+    "prevMonth": "Mês anterior",
+    "nextMonth": "Mês seguinte"
+  },
   "settings": {
     "open": "Definições",
     "stamp": "Registo de serviço",

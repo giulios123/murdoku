@@ -3,6 +3,7 @@ import { Capacitor } from '@capacitor/core'
 import { App as CapApp } from '@capacitor/app'
 import { consumeBack } from './game/backHandler.ts'
 import StartScreen from './screens/StartScreen.tsx'
+import DailyScreen from './screens/DailyScreen.tsx'
 import LevelSelect from './screens/LevelSelect.tsx'
 import GameScreen from './screens/GameScreen.tsx'
 import GeneratorScreen from './screens/GeneratorScreen.tsx'
@@ -14,12 +15,21 @@ import { loadCustomLevels } from './game/storage.ts'
 type Screen =
   | { name: 'start' }
   | { name: 'select' }
+  // `open`: select this day AND open it immediately (the win dialog's "next
+  // daily" — the player already chose to play on, no extra tap in between).
+  | { name: 'daily'; open?: string }
   // `auto`: skip the form and immediately generate with the last-used settings
   // (from the win dialog's "Neues Level" — same options as the level just solved).
   | { name: 'generate'; auto?: boolean }
   | { name: 'tutorial' }
   | { name: 'editor'; initial?: LevelMeta }
-  | { name: 'game'; level: LevelMeta; generated?: boolean; fromEditor?: boolean }
+  | {
+      name: 'game'
+      level: LevelMeta
+      generated?: boolean
+      fromEditor?: boolean
+      fromDaily?: boolean
+    }
 
 function findMeta(id: string): LevelMeta | undefined {
   const bundled = LEVELS.find((l) => l.id === id)
@@ -36,6 +46,7 @@ function initialScreen(): Screen {
     if (level) return { name: 'game', level }
   }
   if (window.location.hash.includes('tutorial')) return { name: 'tutorial' }
+  if (window.location.hash.includes('daily')) return { name: 'daily' }
   if (window.location.hash.includes('generate')) return { name: 'generate' }
   if (window.location.hash.includes('editor')) return { name: 'editor' }
   if (window.location.hash.includes('select')) return { name: 'select' }
@@ -64,7 +75,9 @@ export default function App() {
           ? { name: 'editor' }
           : cur.generated
             ? { name: 'generate' }
-            : { name: 'select' },
+            : cur.fromDaily
+              ? { name: 'daily' }
+              : { name: 'select' },
       )
     } else if (cur.name === 'start') {
       if (Capacitor.isNativePlatform()) void CapApp.exitApp()
@@ -102,10 +115,19 @@ export default function App() {
       return (
         <StartScreen
           onPlay={() => setScreen({ name: 'select' })}
+          onDaily={() => setScreen({ name: 'daily' })}
           onGenerate={() => setScreen({ name: 'generate' })}
           onTutorial={() => setScreen({ name: 'tutorial' })}
           onEditor={() => setScreen({ name: 'editor' })}
           onQuit={onQuit}
+        />
+      )
+    case 'daily':
+      return (
+        <DailyScreen
+          openDay={screen.open}
+          onPick={(level) => setScreen({ name: 'game', level, fromDaily: true })}
+          onBack={back}
         />
       )
     case 'tutorial':
@@ -142,9 +164,15 @@ export default function App() {
           onNew={() => setScreen({ name: 'generate', auto: true })}
           onEdit={() => setScreen({ name: 'editor', initial: screen.level })}
           onNext={
-            screen.generated || screen.fromEditor
+            screen.generated || screen.fromEditor || screen.fromDaily
               ? undefined
               : (level) => setScreen({ name: 'game', level })
+          }
+          // Daily case: "next level" means the next still-open day, opened directly.
+          onNextDaily={
+            screen.fromDaily
+              ? (day) => setScreen({ name: 'daily', open: day })
+              : undefined
           }
         />
       )

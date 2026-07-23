@@ -198,6 +198,10 @@ export interface GenBudget {
   softMs: number
   /** Hard wall-clock cap (ms): give up (and report failure) even with nothing found. */
   hardMs: number
+  /** Cap for the easy path's fast-failing construction attempts (default 200000).
+   *  The daily case sets this: its result must be bound by ATTEMPTS, never by the
+   *  wall clock — a faster device must not see a different level. */
+  easyAttempts?: number
 }
 
 export interface GenerateOptions {
@@ -912,7 +916,8 @@ export function generateLevel(options: GenerateOptions): LevelJson {
   // fall back to generic selection rated nearest to easy so we ALWAYS return a level.
   if (options.difficulty === 'easy') {
     const deadline = performance.now() + (options.budget?.hardMs ?? 20000)
-    for (let a = 0; a < 200000 && performance.now() < deadline; a++) {
+    const easyCap = options.budget?.easyAttempts ?? 200000
+    for (let a = 0; a < easyCap && performance.now() < deadline; a++) {
       const result = tryGenerate(options, new Rng(baseSeed + a * 7919), baseSeed + a)
       if (result) {
         // The construction already guarantees an easy-typical puzzle (rank ≤ 2,
@@ -984,7 +989,8 @@ export function fillBoardClues(board: LevelJson, options: FillBoardOptions = {})
   // that works (the user chose "search longer" over a guaranteed result).
   if (options.difficulty === 'easy') {
     const deadline = performance.now() + (options.budget?.hardMs ?? 20000)
-    for (let a = 0; a < 200000 && performance.now() < deadline; a++) {
+    const easyCap = options.budget?.easyAttempts ?? 200000
+    for (let a = 0; a < easyCap && performance.now() < deadline; a++) {
       const result = fillAttempt(board, suspectIds, new Rng(baseSeed + a * 7919), 'easy', options.requiredClues, options.requiredAttributes)
       if (result && isShippable(result.level)) {
         // Constructed easy fill (rank ≤ 2, verified in fillAttempt) — label it easy

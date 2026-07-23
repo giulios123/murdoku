@@ -232,9 +232,7 @@ export default function LevelSelect({ onPick, onBack }: Props) {
 
         <div className="mk-level-grid">
           {levels.length === 0 && <p className="mk-empty">{t('select.empty')}</p>}
-          {(() => {
-            let cardIndex = 0
-            return groups.map((g) => (
+          {groups.map((g) => (
               <Fragment key={g.difficulty ?? 'all'}>
                 {g.difficulty && (
                   <div className="mk-divider">
@@ -245,13 +243,11 @@ export default function LevelSelect({ onPick, onBack }: Props) {
                   </div>
                 )}
                 {g.levels.map((l) => {
-                  const i = cardIndex++
                   const hints = results[l.id]?.hints
                   const solo = hints === 0
                   const isSolved = solved.has(l.id)
                   // Card state travels as data attributes so the CSS never needs :has()
-                  // (which is costly to recalc across ~150 cards). Only the first dozen
-                  // cards animate in — the rest are off-screen anyway.
+                  // (which is costly to recalc across ~150 cards).
                   return (
                     <button
                       key={l.id}
@@ -261,8 +257,6 @@ export default function LevelSelect({ onPick, onBack }: Props) {
                       data-custom={l.custom ? 'true' : undefined}
                       data-author={l.author ? 'true' : undefined}
                       data-solo={isSolved && solo ? 'true' : undefined}
-                      data-anim={i < 12 ? undefined : 'off'}
-                      style={i < 12 ? { animationDelay: `${i * 0.04}s` } : undefined}
                       onClick={() => onPick(l)}
                     >
                       <span className="mk-card__photo">
@@ -333,8 +327,7 @@ export default function LevelSelect({ onPick, onBack }: Props) {
                   )
                 })}
               </Fragment>
-            ))
-          })()}
+          ))}
         </div>
       </div>
 

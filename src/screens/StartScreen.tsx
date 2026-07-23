@@ -1,7 +1,11 @@
+import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import LanguageSelect from '../components/LanguageSelect.tsx'
 import BloodText from '../components/BloodText.tsx'
 import BloodSplatter from '../components/BloodSplatter.tsx'
+import DailyName from '../components/DailyName.tsx'
+import { dailyLevelId, dayInfo, formatMonthShort, todayKey } from '../game/daily.ts'
+import { loadSolved } from '../game/storage.ts'
 
 /* Hand-inked, line-art case-file icons (no emoji): brass strokes via currentColor,
  * crimson accents (threads / pins / fresh stamp) via the .mk-ic-red* classes. */
@@ -51,19 +55,27 @@ const IconGenerate = (
 
 export default function StartScreen({
   onPlay,
+  onDaily,
   onGenerate,
   onTutorial,
   onEditor,
   onQuit,
 }: {
   onPlay: () => void
+  onDaily: () => void
   onGenerate: () => void
   onTutorial: () => void
   onEditor: () => void
   /** Native app only: quit Murdoku (no system back bar in immersive mode). */
   onQuit?: () => void
 }) {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
+  const lang = i18n.resolvedLanguage ?? i18n.language
+  // Today's case for the ticket — pure date math (the level is never generated here).
+  const [daily] = useState(() => {
+    const key = todayKey()
+    return { info: dayInfo(key), solved: loadSolved().has(dailyLevelId(key)) }
+  })
 
   return (
     <div className="mk-screen">
@@ -115,6 +127,36 @@ export default function StartScreen({
               {t('start.play')}
             </button>
           </div>
+          {/* The daily case as a slim ticket: pinned tear-off calendar leaf, the full
+              name ("Schweres Rätsel des Tages"), facts in the typewriter line. A brass
+              spine (not the tiles' crimson) marks it as the special of the day. */}
+          <button
+            type="button"
+            className="mk-daily"
+            onClick={onDaily}
+            data-solved={daily.solved || undefined}
+          >
+            <span className="mk-leaf mk-leaf--mini" aria-hidden="true">
+              <span className="mk-leaf__band">
+                {formatMonthShort(daily.info.year, daily.info.month, lang)}
+              </span>
+              <span className="mk-leaf__day">{daily.info.day}</span>
+            </span>
+            <span className="mk-daily__text">
+              <span className="mk-daily__pre">
+                {t('daily.today')} · {t('daily.caseNo', { n: daily.info.caseNo })} ·{' '}
+                {daily.info.size}×{daily.info.size}
+              </span>
+              <span className="mk-daily__title">
+                <DailyName difficulty={daily.info.difficulty} />
+              </span>
+            </span>
+            {daily.solved ? (
+              <span className="mk-stamp">{t('select.solved')}</span>
+            ) : (
+              <span className="mk-daily__go">›</span>
+            )}
+          </button>
           <div className="mk-start__more">
             <button type="button" className="mk-tile" onClick={onTutorial}>
               <span className="mk-tile__icon">{IconTutorial}</span>

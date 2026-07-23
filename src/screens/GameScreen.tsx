@@ -37,6 +37,7 @@ import {
   loadSolved,
   markEraseHintSeen,
 } from '../game/storage.ts'
+import { dailyKeyOf, isDailyId, nextOpenDailyKey, todayKey } from '../game/daily.ts'
 import {
   DEFAULT_FILTER,
   levelMetaFromJson,
@@ -70,6 +71,10 @@ interface Props {
   onEdit?: () => void
   /** Play another level after a win (omitted for generated / editor test-plays). */
   onNext?: (level: LevelMeta) => void
+  /** Daily case only: open the given day (the next still-open one up to today).
+   *  The win dialog's "next level" then walks the catch-up days instead of the
+   *  bundled list; on today's case there is no target and the button hides. */
+  onNextDaily?: (day: string) => void
   /** Tutorial mode: fresh start, separate storage slot (doesn't touch the demo). */
   tutorial?: boolean
   /** Which tutorial level is running: 1 = demo, 2 = Tutorial Wohnung. */
@@ -86,6 +91,8 @@ interface Result {
   failures?: string[]
   /** On a win: the next level matching the saved filter (null if none). */
   next?: LevelMeta | null
+  /** On a win in a daily case: the next still-open day up to today (null if none). */
+  nextDaily?: string | null
   /** On a win: how many hints were used this solve (0 = solo, earns the medal). */
   hintsUsed?: number
 }
@@ -160,6 +167,7 @@ export default function GameScreen({
   onNew,
   onEdit,
   onNext,
+  onNextDaily,
   tutorial,
   tutorialPhase,
   onTutorialAdvance,
@@ -605,6 +613,12 @@ export default function GameScreen({
     const room = puzzle.board.rooms.get(m.roomId)
     // markSolved above already updated the solved set neighborLevel reads from.
     const next = onNext ? neighborLevel(nextLevel) : null
+    // Daily case: "next" walks the still-open days up to today (this win is
+    // already in the solved set). Today's case has no successor — button hides.
+    const nextDaily =
+      onNextDaily && isDailyId(storageId)
+        ? nextOpenDailyKey(dailyKeyOf(storageId), todayKey(), (id) => loadSolved().has(id))
+        : null
     setResult({
       win: true,
       murderer: {
@@ -614,9 +628,10 @@ export default function GameScreen({
       },
       victimCell: placements.get(VICTIM_ID)!,
       next,
+      nextDaily,
       hintsUsed,
     })
-  }, [session.allPlaced, session.state.placements, clearSaved, puzzle, renderer, storageId, hintsUsed, onNext, neighborLevel, t])
+  }, [session.allPlaced, session.state.placements, clearSaved, puzzle, renderer, storageId, hintsUsed, onNext, onNextDaily, neighborLevel, t])
 
   // Stable identities for the memoized board + toolbar (a fresh arrow/element per render
   // would re-render them on every screen render for nothing).
@@ -814,7 +829,9 @@ export default function GameScreen({
           onNext={
             result.win && result.next && onNext
               ? () => onNext(result.next!)
-              : undefined
+              : result.win && result.nextDaily && onNextDaily
+                ? () => onNextDaily(result.nextDaily!)
+                : undefined
           }
           onRetry={() => setResult(null)}
           onRestart={

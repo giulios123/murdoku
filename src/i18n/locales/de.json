@@ -408,6 +408,27 @@
     "garandOn": "Manuel Garand: sichtbar",
     "garandOff": "Manuel Garand: versteckt"
   },
+  "daily": {
+    "title": "Rätsel des Tages",
+    "subtitle": "Ein Fall pro Tag",
+    "today": "Heute",
+    "caseNo": "Fall № {{n}}",
+    "name": {
+      "easy": "*Leichtes* Rätsel des Tages",
+      "medium": "*Mittleres* Rätsel des Tages",
+      "hard": "*Schweres* Rätsel des Tages"
+    },
+    "levelTitle": "Rätsel des Tages · {{date}}",
+    "unsolved": "Noch ungelöst",
+    "catchup": "Verpasste Tage kannst du jederzeit nachholen — tippe einen Tag an.",
+    "legendSolved": "gelöst",
+    "legendSolo": "ohne Tipps",
+    "statSolved": "Gelöst",
+    "statStreak": "Aktuelle Serie",
+    "statBest": "Beste Serie",
+    "prevMonth": "Voriger Monat",
+    "nextMonth": "Nächster Monat"
+  },
   "settings": {
     "open": "Einstellungen",
     "stamp": "Dienstakte",

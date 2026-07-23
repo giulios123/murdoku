@@ -79,8 +79,8 @@ function withSeed(request: WorkerRequest, seed: number): WorkerRequest {
  * imported statically: the screens that reach this code already pull it in, so a
  * dynamic import here would never split it into its own chunk anyway.
  */
-function runInline(request: WorkerRequest): GenHandle {
-  const req = withBudget(request, fallbackBudget(request))
+function runInline(request: WorkerRequest, budget?: GenBudget): GenHandle {
+  const req = withBudget(request, budget ?? fallbackBudget(request))
   let cancelled = false
   const promise = (async () => {
     await new Promise((r) => setTimeout(r, 0))
@@ -227,6 +227,101 @@ function runPool(request: WorkerRequest, quality: GenQuality): GenHandle {
 /** Generate a brand-new level from scratch. */
 export function generateLevelAsync(opts: GenerateOptions, quality: GenQuality = 'max'): GenHandle {
   return runPool({ kind: 'generate', opts }, quality)
+}
+
+/* ------------------------------------------------- Rätsel des Tages (daily) */
+
+/**
+ * The daily case must be IDENTICAL for every player, so its search may depend on
+ * nothing but the seed: a fixed number of attempts (never "best in X seconds" —
+ * a faster device sees more attempts and picks a different winner) spread over a
+ * FIXED number of seed streams (never "one per CPU core"). More cores only make
+ * the same result arrive sooner. softMs/hardMs are set beyond any real runtime so
+ * the wall clock can never bind; the attempt caps bound the work instead.
+ */
+const DAILY_STREAMS = 4
+const DAILY_NEVER_MS = 1e12
+const DAILY_BUDGET: GenBudget = {
+  maxAttempts: 14,
+  softMs: DAILY_NEVER_MS,
+  hardMs: DAILY_NEVER_MS,
+  easyAttempts: 2000,
+}
+
+/**
+ * Deterministic pool for the daily case. Differences to `runPool`:
+ * - fixed stream count with seeds derived ONLY from `opts.seed` (which the caller
+ *   derives from the date), never from the device;
+ * - waits for ALL streams (no first-success grace cut — which streams make the
+ *   deadline is a wall-clock lottery) and selects in STREAM order, so score ties
+ *   break identically everywhere;
+ * - a worker that CRASHES (environment) is re-run inline with the same seed and
+ *   budget — same work, same result. A worker that RAN and found nothing is a
+ *   deterministic empty stream (same on every device) and stays empty.
+ */
+export function generateDailyLevelAsync(opts: GenerateOptions): GenHandle {
+  const baseSeed = opts.seed ?? 0
+  const streams: WorkerRequest[] = []
+  for (let i = 0; i < DAILY_STREAMS; i++) {
+    // Same prime stride as runPool: keeps the streams disjoint (pickBestLevel
+    // advances its seed by a*7919 per attempt, far below the stride).
+    streams.push(
+      withBudget(withSeed({ kind: 'generate', opts }, (baseSeed + i * 10_000_019) >>> 0), DAILY_BUDGET),
+    )
+  }
+  const handles = streams.map((r) => spawnWorker(r))
+  // Attach a no-op handler now: streams settle in any order while we await them
+  // sequentially below, and a rejection must never surface as "unhandled".
+  for (const h of handles) h?.promise.catch(() => {})
+
+  let cancelled = false
+  let inline: GenHandle | null = null
+  const promise = (async () => {
+    const found: LevelJson[] = []
+    for (let i = 0; i < streams.length; i++) {
+      if (cancelled) throw new Error('cancelled')
+      const h = handles[i]
+      let level: LevelJson | null = null
+      try {
+        if (h) {
+          level = await h.promise
+        } else {
+          // Workers unavailable in this browser: run the stream inline (slow but
+          // exactly the same computation).
+          inline = runInline(streams[i], DAILY_BUDGET)
+          level = await inline.promise
+        }
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : String(err)
+        if (msg === 'cancelled') throw err
+        if (msg === 'worker failed') {
+          // Environmental death (never reached the generator) → same stream inline.
+          inline = runInline(streams[i], DAILY_BUDGET)
+          try {
+            level = await inline.promise
+          } catch (err2) {
+            const msg2 = err2 instanceof Error ? err2.message : String(err2)
+            if (msg2 === 'cancelled') throw err2
+            level = null // deterministic no-find, just computed inline
+          }
+        }
+        // Any other error came out of the generator itself → deterministic empty
+        // stream (identical on every device) — contribute nothing.
+      }
+      if (level) found.push(level)
+    }
+    if (cancelled) throw new Error('cancelled')
+    if (found.length === 0) throw new Error('generation failed')
+    return selectBestLevel(found, opts.difficulty) ?? found[0]
+  })()
+
+  const cancel = () => {
+    if (cancelled) return
+    cancelled = true
+    for (const h of handles) h?.cancel()
+    inline?.cancel()
+  }
+  return { promise, cancel }
 }
 
 /** Keep the given board, (re)generate its people + clues at the chosen difficulty.

@@ -16,6 +16,7 @@ const SHOW_HIDDEN_AUTHOR_KEY = 'murdoku.showhiddenauthor.v1'
 const ERASE_HINT_KEY = 'murdoku.erasehint.v1'
 const GEN_SETTINGS_KEY = 'murdoku.gensettings.v1'
 const APP_SETTINGS_KEY = 'murdoku.settings.v1'
+const DAILY_LEVELS_KEY = 'murdoku.daily.levels.v1'
 
 /** A board state flattened to JSON-friendly arrays (Maps/Sets don't serialize). */
 export interface SavedState {
@@ -217,6 +218,23 @@ export function saveCustomLevel(level: LevelJson): void {
 
 export function isCustomSaved(id: string): boolean {
   return loadCustomLevels().some((l) => l.id === id)
+}
+
+/** Generated daily levels by day key ('2026-07-23'). Persisted JSON outlives
+ *  refactors, so it passes the same board-clue migration boundary as customs —
+ *  and once stored, a day NEVER regenerates (even if the generator changes). */
+export function loadDailyLevels(): Record<string, LevelJson> {
+  const raw = read<Record<string, LevelJson>>(DAILY_LEVELS_KEY, {})
+  return Object.fromEntries(
+    Object.entries(raw).map(([day, level]) => [
+      day,
+      { ...level, boardClues: normalizeBoardClues(level.boardClues) },
+    ]),
+  )
+}
+
+export function saveDailyLevel(day: string, level: LevelJson): void {
+  write(DAILY_LEVELS_KEY, { ...loadDailyLevels(), [day]: level })
 }
 
 /** The in-progress editor draft (so leaving the editor to test-play never loses work). */

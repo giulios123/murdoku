@@ -408,6 +408,27 @@
     "garandOn": "Manuel Garand : visible",
     "garandOff": "Manuel Garand : masqué"
   },
+  "daily": {
+    "title": "L’affaire du jour",
+    "subtitle": "Une affaire par jour",
+    "today": "Aujourd’hui",
+    "caseNo": "Affaire nº {{n}}",
+    "name": {
+      "easy": "L’affaire *facile* du jour",
+      "medium": "L’affaire *moyenne* du jour",
+      "hard": "L’affaire *difficile* du jour"
+    },
+    "levelTitle": "L’affaire du jour · {{date}}",
+    "unsolved": "Non résolue",
+    "catchup": "Vous pouvez rattraper les jours manqués à tout moment — touchez un jour.",
+    "legendSolved": "résolu",
+    "legendSolo": "sans indices",
+    "statSolved": "Résolues",
+    "statStreak": "Série en cours",
+    "statBest": "Meilleure série",
+    "prevMonth": "Mois précédent",
+    "nextMonth": "Mois suivant"
+  },
   "settings": {
     "open": "Réglages",
     "stamp": "Dossier de service",
