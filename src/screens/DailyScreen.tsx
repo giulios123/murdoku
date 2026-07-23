@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import SettingsButton from '../components/SettingsButton.tsx'
 import BloodText from '../components/BloodText.tsx'
@@ -72,6 +72,30 @@ export default function DailyScreen({ onPick, onBack, openDay }: Props) {
   const [error, setError] = useState<string | null>(null)
   const handleRef = useRef<DailyHandle | null>(null)
 
+  // Legend + catch-up hint are nice-to-haves that yield when height runs out —
+  // decided by MEASURING, not by guessed breakpoints (the real column height
+  // varies: 5- vs 6-row months, an extra hero line, …). After layout, if the
+  // screen would scroll, drop the hint first, then the legend (2 → 1 → 0); any
+  // layout input change re-opens the question. Never scroll is the hard rule.
+  const screenRef = useRef<HTMLDivElement>(null)
+  const [extras, setExtras] = useState(2)
+  useLayoutEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- intentional re-measure trigger
+    setExtras(2)
+  }, [view, selected, lang])
+  useLayoutEffect(() => {
+    const el = screenRef.current
+    if (!el) return
+    if (el.scrollHeight > el.clientHeight + 1 && extras > 0) {
+      setExtras(extras - 1) // converges in ≤2 steps (2 → 1 → 0), then stops
+    }
+  }, [extras, view, selected, lang])
+  useEffect(() => {
+    const onResize = () => setExtras(2)
+    window.addEventListener('resize', onResize)
+    return () => window.removeEventListener('resize', onResize)
+  }, [])
+
   const info = useMemo(() => dayInfo(selected), [selected])
   const selectedId = dailyLevelId(selected)
   const selectedSolved = solved.has(selectedId)
@@ -144,7 +168,7 @@ export default function DailyScreen({ onPick, onBack, openDay }: Props) {
   }, [])
 
   return (
-    <div className="mk-screen">
+    <div className="mk-screen" ref={screenRef}>
       <div className="mk-dailyscr">
         <header className="mk-topbar">
           <button type="button" className="mk-back" onClick={onBack} aria-label="back">
@@ -277,24 +301,26 @@ export default function DailyScreen({ onPick, onBack, openDay }: Props) {
           </div>
         </div>
 
-        <div className="mk-dailylegend">
-          <span>
-            <i className="mk-day__dot" data-d="easy" /> {t('difficulty.easy')}
-          </span>
-          <span>
-            <i className="mk-day__dot" data-d="medium" /> {t('difficulty.medium')}
-          </span>
-          <span>
-            <i className="mk-day__dot" data-d="hard" /> {t('difficulty.hard')}
-          </span>
-          <span>
-            <CheckMark /> {t('daily.legendSolved')}
-          </span>
-          <span>
-            <SoloStar /> {t('daily.legendSolo')}
-          </span>
-        </div>
-        <p className="mk-dailyhint">{t('daily.catchup')}</p>
+        {extras >= 1 && (
+          <div className="mk-dailylegend">
+            <span>
+              <i className="mk-day__dot" data-d="easy" /> {t('difficulty.easy')}
+            </span>
+            <span>
+              <i className="mk-day__dot" data-d="medium" /> {t('difficulty.medium')}
+            </span>
+            <span>
+              <i className="mk-day__dot" data-d="hard" /> {t('difficulty.hard')}
+            </span>
+            <span>
+              <CheckMark /> {t('daily.legendSolved')}
+            </span>
+            <span>
+              <SoloStar /> {t('daily.legendSolo')}
+            </span>
+          </div>
+        )}
+        {extras >= 2 && <p className="mk-dailyhint">{t('daily.catchup')}</p>}
 
         <div className="mk-dailystats">
           <div className="mk-dailystat">
