@@ -7,7 +7,11 @@ buildscript {
         mavenCentral()
     }
     dependencies {
-        classpath 'com.android.tools.build:gradle:8.13.0'
+        // Latest patch of the 8.13 line — the newest AGP Capacitor 8 supports. AGP 9
+        // is blocked until Capacitor 9: the plugins (e.g. @capacitor/filesystem) still
+        // apply the standalone kotlin-android plugin, which AGP 9 can no longer host
+        // (BaseExtension removed, built-in Kotlin owns the 'kotlin' extension).
+        classpath 'com.android.tools.build:gradle:8.13.2'
         classpath 'com.google.gms:google-services:4.4.4'
 
         // NOTE: Do not place your application dependencies here; they belong

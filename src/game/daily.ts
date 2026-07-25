@@ -16,6 +16,7 @@ import { GENERATOR_OBJECT_TYPES, type GenDifficulty } from '../engine/generator/
 import { Rng } from '../engine/generator/random.ts'
 import { generateDailyLevelAsync, type GenHandle } from './generatorClient.ts'
 import { loadDailyLevels, saveDailyLevel } from './storage.ts'
+import i18n, { SUPPORTED_LANGS } from '../i18n/index.ts'
 
 /** First month with dailies: July 2026 (the calendar never navigates earlier). */
 export const DAILY_START = { year: 2026, month: 7 }
@@ -243,11 +244,7 @@ export function firstWeekdayColumn(year: number, month: number): number {
 
 /** Brand a freshly generated level as THE case of `info.key`: stable id, the
  *  scheduled difficulty as its label, and a dated title in every language. */
-async function brandDaily(level: LevelJson, info: DayInfo): Promise<LevelJson> {
-  // i18n is imported lazily: it touches navigator/localStorage at module load,
-  // which must not run in node (tests import this module for the schedule math).
-  const { default: i18n } = await import('../i18n/index.ts')
-  const { SUPPORTED_LANGS } = await import('../i18n/index.ts')
+function brandDaily(level: LevelJson, info: DayInfo): LevelJson {
   const titles: Record<string, string> = {}
   for (const lang of SUPPORTED_LANGS) {
     titles[lang] = i18n.t('daily.levelTitle', { lng: lang, date: formatDayLong(info.key, lang) })
@@ -295,7 +292,7 @@ export function getDailyLevel(key: string): DailyHandle {
         seed: dailySeed(info.caseNo, round),
       })
       try {
-        const level = await brandDaily(await inner.promise, info)
+        const level = brandDaily(await inner.promise, info)
         saveDailyLevel(key, level)
         return level
       } catch (err) {

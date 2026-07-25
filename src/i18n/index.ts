@@ -65,6 +65,8 @@ function persist(lng: string): void {
  * otherwise the browser's PRIMARY language decides — Spanish → es, German → de,
  * anything else → English (the default). Only the first/primary language counts,
  * so a user whose main language is unsupported always lands on English.
+ * Must stay loadable in node (tests import this transitively): no bare
+ * navigator/localStorage access outside a guard.
  */
 function initialLanguage(): Lang {
   try {
@@ -73,7 +75,8 @@ function initialLanguage(): Lang {
   } catch {
     /* localStorage can be unavailable — fall back to browser detection */
   }
-  const primary = navigator.languages?.[0] ?? navigator.language ?? ''
+  const primary =
+    typeof navigator === 'undefined' ? '' : (navigator.languages?.[0] ?? navigator.language ?? '')
   return toSupported(primary) ?? 'en'
 }
 
