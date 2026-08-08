@@ -37,6 +37,21 @@ const IconEditor = (
   </svg>
 )
 
+/** Userlevel — an envelope with a crimson wax seal: "cases sent in by the community". */
+const IconUserLevels = (
+  <svg className="mk-tile__svg" viewBox="0 0 32 32" fill="none" aria-hidden="true">
+    <rect x="3.5" y="7.5" width="25" height="17" rx="1.8" stroke="currentColor" strokeWidth="1.6" />
+    <path d="M4.5 9 16 17.5 27.5 9" stroke="currentColor" strokeWidth="1.4" strokeLinejoin="round" />
+    <path d="M4.5 23 12.5 16.5M27.5 23 19.5 16.5" stroke="currentColor" strokeWidth="1.1" />
+    <circle className="mk-ic-red-fill" cx="16" cy="19.5" r="3.4" opacity="0.9" />
+    <path
+      d="M16 17.6 l0.6 1.2 1.3.2 -0.95.9 .25 1.3 -1.2 -.6 -1.2.6 .25 -1.3 -.95 -.9 1.3 -.2z"
+      fill="#131119"
+      stroke="none"
+    />
+  </svg>
+)
+
 /** Level generieren — a rubber stamp pressing a fresh case mark: "a new case is issued". */
 const IconGenerate = (
   <svg className="mk-tile__svg" viewBox="0 0 32 32" fill="none" aria-hidden="true">
@@ -58,6 +73,7 @@ export default function StartScreen({
   onDaily,
   onGenerate,
   onTutorial,
+  onUserLevels,
   onEditor,
   onQuit,
 }: {
@@ -65,6 +81,7 @@ export default function StartScreen({
   onDaily: () => void
   onGenerate: () => void
   onTutorial: () => void
+  onUserLevels: () => void
   onEditor: () => void
   /** Native app only: quit Murdoku (no system back bar in immersive mode). */
   onQuit?: () => void
@@ -163,15 +180,20 @@ export default function StartScreen({
               <span className="mk-tile__label">{t('start.tutorial')}</span>
               <span className="mk-tile__no">№ 001</span>
             </button>
+            <button type="button" className="mk-tile" onClick={onUserLevels}>
+              <span className="mk-tile__icon">{IconUserLevels}</span>
+              <span className="mk-tile__label">{t('start.userlevels')}</span>
+              <span className="mk-tile__no">№ 002</span>
+            </button>
             <button type="button" className="mk-tile" onClick={onEditor}>
               <span className="mk-tile__icon">{IconEditor}</span>
               <span className="mk-tile__label">{t('start.editor')}</span>
-              <span className="mk-tile__no">№ 002</span>
+              <span className="mk-tile__no">№ 003</span>
             </button>
             <button type="button" className="mk-tile" onClick={onGenerate}>
               <span className="mk-tile__icon">{IconGenerate}</span>
               <span className="mk-tile__label">{t('start.generate')}</span>
-              <span className="mk-tile__no">№ 003</span>
+              <span className="mk-tile__no">№ 004</span>
             </button>
           </div>
           <div className="mk-start__lang">

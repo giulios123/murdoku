@@ -2,7 +2,7 @@
   "schema": 1,
   "id": "editor-studentenwohnung",
   "title": "WG-Zimmer frei",
-  "titles": { "de": "WG-Zimmer frei", "en": "Roommate Wanted", "es": "Se busca compañero de piso", "pt": "Procura-se Colega de Casa", "fr": "Cherche colocataire" },
+  "titles": { "de": "WG-Zimmer frei", "en": "Roommate Wanted", "es": "Se busca compañero de piso", "pt": "Procura-se Colega de Casa", "fr": "Cherche colocataire", "ru": "Ищем соседа по квартире" },
   "size": {
     "width": 6,
     "height": 6

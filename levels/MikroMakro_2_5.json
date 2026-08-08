@@ -2,7 +2,7 @@
   "schema": 1,
   "id": "editor-mikromakro-2-5",
   "title": "MikroMakro 2.5",
-  "titles": { "de": "MikroMakro 2.5", "en": "MicroMacro 2.5", "es": "MicroMacro 2.5", "pt": "MicroMacro 2.5", "fr": "MicroMacro 2.5" },
+  "titles": { "de": "MikroMakro 2.5", "en": "MicroMacro 2.5", "es": "MicroMacro 2.5", "pt": "MicroMacro 2.5", "fr": "MicroMacro 2.5", "ru": "МикроМакро 2.5" },
   "size": {
     "width": 5,
     "height": 5

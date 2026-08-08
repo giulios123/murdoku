@@ -2,7 +2,7 @@
   "schema": 1,
   "id": "editor-mikromakro-1-5",
   "title": "MikroMakro 1.5",
-  "titles": { "de": "MikroMakro 1.5", "en": "MicroMacro 1.5", "es": "MicroMacro 1.5", "pt": "MicroMacro 1.5", "fr": "MicroMacro 1.5" },
+  "titles": { "de": "MikroMakro 1.5", "en": "MicroMacro 1.5", "es": "MicroMacro 1.5", "pt": "MicroMacro 1.5", "fr": "MicroMacro 1.5", "ru": "МикроМакро 1.5" },
   "author": "Dirk Aporius",
   "size": {
     "width": 5,

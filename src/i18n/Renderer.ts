@@ -30,9 +30,11 @@ export class Renderer {
    * Count-aware key variant for templates that read differently per count ("1 column" vs
    * "2 columns", "1 Raum ist" vs "2 Räume sind"). The base key holds the plural ("other")
    * form; the locale may add a `<key>_one` sibling for the singular and a `<key>_zero` one
-   * for none ("Kein Raum war leer" beats "Genau 0 Räume sind leer"). Picks a variant only
-   * when a count param (`count`/`n`/`size`) matches exactly AND that variant exists — so
-   * keys without the sibling are unaffected.
+   * for none ("Kein Raum war leer" beats "Genau 0 Räume sind leer"). Russian additionally
+   * declines 2–4 differently from 5+ («2 комнаты» vs «5 комнат») — a `<key>_few` sibling
+   * covers that; game counts never exceed 12, so the 22–24 tail of the real CLDR rule
+   * cannot occur. Picks a variant only when a count param (`count`/`n`/`size`) matches
+   * exactly AND that variant exists — so keys without the sibling are unaffected.
    */
   pluralKey(key: string, params: Record<string, string | number>): string {
     const n = params.count ?? params.n ?? params.size
@@ -40,10 +42,32 @@ export class Renderer {
     for (const [value, suffix] of [
       [0, '_zero'],
       [1, '_one'],
+      [2, '_few'],
+      [3, '_few'],
+      [4, '_few'],
     ] as const) {
       if (Number(n) === value && this.lookup(`${key}${suffix}`) !== undefined) return `${key}${suffix}`
     }
     return key
+  }
+
+  /**
+   * Case-variant slots resolve the SAME engine param under another name: a Russian
+   * template says `на {{objectPrep}}` (prepositional) where German says `auf {{object}}`
+   * — the clue still only provides `object`. Both template walkers (plain render and the
+   * rich clue text) fetch param values through this helper so the mapping lives once.
+   */
+  static readonly PARAM_BASE: Record<string, string> = {
+    objectNom: 'object',
+    objectPrep: 'object',
+    objectGen: 'object',
+    objectIns: 'object',
+    whoIns: 'who',
+  }
+
+  static paramValue(params: Record<string, string | number>, name: string): string | number {
+    const base = Renderer.PARAM_BASE[name]
+    return params[name] ?? (base !== undefined ? params[base] : undefined) ?? ''
   }
 
   cell(cell: number): string {
@@ -90,6 +114,21 @@ export class Renderer {
           .join(' & ')
       case 'object':
         return this.lookup(`object.${value}`) ?? String(value)
+      // Declined-language case variants of `object` (see PARAM_BASE): prepositional
+      // («на кровати»), genitive («от кровати») and bare instrumental («под кроватью» —
+      // ru bakes the comitative «с/со» into the base `object.*` form, so под/за need
+      // the preposition-free variant). Locales without the dict fall back to `object.*`.
+      case 'objectPrep':
+      case 'objectGen':
+      case 'objectIns':
+        return this.lookup(`${name}.${value}`) ?? this.lookup(`object.${value}`) ?? String(value)
+      // Gender suffix for past-tense verb agreement in Russian («был»/«была»): a template
+      // writes `был{{fem}}` and the locale defines `fem.m` = "" / `fem.f` = "а". Locales
+      // without the dict render nothing, and a missing subject renders nothing too.
+      case 'fem':
+        return subject !== undefined
+          ? (this.lookup(`fem.${this.genderOf(String(subject))}`) ?? '')
+          : ''
       // Nominative-with-article form ("ein Fernseher") for clues that compare to an
       // object ("…im selben Raum wie ein Fernseher"). Falls back to the dative form
       // (English has no case distinction, so it reuses `object.*`).
@@ -123,6 +162,11 @@ export class Renderer {
       // without per-type plurals: de "einem Baum"→"jedem Baum", "einer Pflanze"→"jeder
       // Pflanze"; en "a tree"→"every tree". Used by the universal direction-from-object clue.
       case 'objectEvery': {
+        // Declined languages can't derive "every X" by swapping an article (Russian has
+        // none, and «каждого/каждой» agrees in gender AND case) — an explicit
+        // `objectEvery.*` token wins over the derivation chain below.
+        const explicit = this.lookup(`objectEvery.${value}`)
+        if (explicit) return explicit
         const base = this.lookup(`object.${value}`) ?? String(value)
         // Locales with ONE gender-neutral "every" word (pt "cada", fr "chaque") declare it
         // as `everyWord` — it replaces the indefinite article. This must NOT ride the chain
@@ -147,6 +191,10 @@ export class Renderer {
       case 'whoNeg':
       case 'whoSg':
         return this.lookup(`who.${value}`) ?? String(value)
+      // Instrumental predicate form of the same `who` token («каждый был мужчиной») for
+      // declined languages — `who.<token>_ins`, falling back to the plain token.
+      case 'whoIns':
+        return this.lookup(`who.${value}_ins`) ?? this.lookup(`who.${value}`) ?? String(value)
       // "inside" / "outside" as an adverb ("waren draußen") — the counting board clue.
       case 'area':
         return this.lookup(`area.${value}`) ?? String(value)
@@ -209,7 +257,9 @@ export class Renderer {
         const rel = sep >= 0 ? s.slice(0, sep) : s
         const obj = sep >= 0 ? s.slice(sep + 1) : ''
         const tmpl = this.lookup(`roomPos.${rel}`) ?? rel
-        return tmpl.replace('{{object}}', this.resolveParam('object', obj))
+        // A roomPos template may ask for any case variant of the object («на
+        // {{objectPrep}}»), not just the base form.
+        return tmpl.replace(/\{\{(object\w*)\}\}/g, (_m, slot: string) => this.resolveParam(slot, obj))
       }
       case 'direction':
         return this.lookup(`dir.${value}`) ?? String(value)
@@ -342,7 +392,7 @@ export class Renderer {
           .replace(/\{\{child\}\}/g, childText)
           .replace(/\[\[([^\]]+?):[^\]]+?\]\]/g, '$1')
           .replace(/\{\{(\w+)\}\}/g, (_match, key: string) =>
-            this.resolveParam(key, params[key] ?? '', nameSubject, params.subject),
+            this.resolveParam(key, Renderer.paramValue(params, key), nameSubject, params.subject),
           )
       }
       const parts = exp.children.map((child) => this.render(child, extra, nameSubject))
@@ -358,7 +408,7 @@ export class Renderer {
       '$1',
     )
     return template.replace(/\{\{(\w+)\}\}/g, (_match, key: string) =>
-      this.resolveParam(key, params[key] ?? '', nameSubject, params.subject),
+      this.resolveParam(key, Renderer.paramValue(params, key), nameSubject, params.subject),
     )
   }
 }

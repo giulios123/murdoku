@@ -2,7 +2,7 @@
   "schema": 1,
   "id": "editor-mord-auf-dem-revier",
   "title": "Tod in Zelle 2",
-  "titles": { "de": "Tod in Zelle 2", "en": "Death in Cell 2", "es": "Muerte en la celda 2", "pt": "Morte na Cela 2", "fr": "Mort en cellule 2" },
+  "titles": { "de": "Tod in Zelle 2", "en": "Death in Cell 2", "es": "Muerte en la celda 2", "pt": "Morte na Cela 2", "fr": "Mort en cellule 2", "ru": "Смерть в камере № 2" },
   "size": {
     "width": 6,
     "height": 6

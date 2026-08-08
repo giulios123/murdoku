@@ -2,7 +2,7 @@
   "schema": 1,
   "id": "editor-klinikmord",
   "title": "Hinter dem Wandschirm",
-  "titles": { "de": "Hinter dem Wandschirm", "en": "Behind the Screen", "es": "Detrás del biombo", "pt": "Atrás do Biombo", "fr": "Derrière le paravent" },
+  "titles": { "de": "Hinter dem Wandschirm", "en": "Behind the Screen", "es": "Detrás del biombo", "pt": "Atrás do Biombo", "fr": "Derrière le paravent", "ru": "За ширмой" },
   "size": {
     "width": 8,
     "height": 8

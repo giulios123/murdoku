@@ -39,6 +39,14 @@ import {
 } from '../game/storage.ts'
 import { dailyKeyOf, isDailyId, nextOpenDailyKey, todayKey } from '../game/daily.ts'
 import {
+  averageStars,
+  isRated,
+  loadUserLevels,
+  rateUserLevel,
+  topTags,
+  type UserLevelTag,
+} from '../game/userlevels.ts'
+import {
   DEFAULT_FILTER,
   levelMetaFromJson,
   nextLevel,
@@ -75,6 +83,10 @@ interface Props {
    *  The win dialog's "next level" then walks the catch-up days instead of the
    *  bundled list; on today's case there is no target and the button hides. */
   onNextDaily?: (day: string) => void
+  /** True when this is a community level (id `ul-<n>`): a win offers the one-time
+   *  star/property rating, and "next level" walks the community list instead. */
+  userLevel?: boolean
+  onNextUser?: (level: LevelMeta) => void
   /** Tutorial mode: fresh start, separate storage slot (doesn't touch the demo). */
   tutorial?: boolean
   /** Which tutorial level is running: 1 = demo, 2 = Tutorial Wohnung. */
@@ -93,6 +105,12 @@ interface Result {
   next?: LevelMeta | null
   /** On a win in a daily case: the next still-open day up to today (null if none). */
   nextDaily?: string | null
+  /** On a win in a community level: the next one to play (unsolved first, newest first). */
+  nextUser?: LevelMeta | null
+  /** On a win in a community level: offer the one-time rating block. */
+  rate?: boolean
+  /** On a win in a community level: the level's community verdict (shown in the dialog). */
+  community?: { stars: number | null; ratings: number; tags: string[]; nologic: boolean } | null
   /** On a win: how many hints were used this solve (0 = solo, earns the medal). */
   hintsUsed?: number
 }
@@ -168,12 +186,16 @@ export default function GameScreen({
   onEdit,
   onNext,
   onNextDaily,
+  userLevel,
+  onNextUser,
   tutorial,
   tutorialPhase,
   onTutorialAdvance,
 }: Props) {
   const { t, i18n } = useTranslation()
   const storageId = tutorial ? '__tutorial__' : meta.id
+  // Community level: the DB id is baked into the level id (`ul-<n>`).
+  const userDbId = userLevel ? Number(/^ul-(\d+)$/.exec(meta.id)?.[1] ?? 0) : 0
   const puzzle = useMemo(() => loadLevel(meta.json), [meta])
   // The precomputed answer key is ONLY needed to steer the tutorial (win/submit check
   // the placement directly). Skipping it for normal play also keeps degenerate boards
@@ -619,6 +641,28 @@ export default function GameScreen({
       onNextDaily && isDailyId(storageId)
         ? nextOpenDailyKey(dailyKeyOf(storageId), todayKey(), (id) => loadSolved().has(id))
         : null
+    // Community level: "next" prefers the best unsolved level (list order), falls back
+    // to any other; the one-time rating block shows until this level has been rated.
+    let nextUser: LevelMeta | null = null
+    let community: Result['community'] = null
+    if (userLevel) {
+      const all = loadUserLevels()
+      if (onNextUser) {
+        const solvedNow = loadSolved()
+        const others = all.filter((e) => e.json.id !== meta.id)
+        const target = others.find((e) => !solvedNow.has(e.json.id)) ?? others[0]
+        nextUser = target ? levelMetaFromJson(target.json) : null
+      }
+      const own = all.find((e) => e.dbId === userDbId)
+      if (own) {
+        community = {
+          stars: averageStars(own.stats),
+          ratings: own.stats.ratings,
+          tags: topTags(own.stats),
+          nologic: !own.logic,
+        }
+      }
+    }
     setResult({
       win: true,
       murderer: {
@@ -629,9 +673,15 @@ export default function GameScreen({
       victimCell: placements.get(VICTIM_ID)!,
       next,
       nextDaily,
+      nextUser,
+      // Rating needs the server (Dirks Regel: bewerten nur online) — when the device
+      // is definitely offline, don't even offer the stars.
+      rate:
+        userLevel === true && userDbId > 0 && !isRated(userDbId) && navigator.onLine !== false,
+      community,
       hintsUsed,
     })
-  }, [session.allPlaced, session.state.placements, clearSaved, puzzle, renderer, storageId, hintsUsed, onNext, onNextDaily, neighborLevel, t])
+  }, [session.allPlaced, session.state.placements, clearSaved, puzzle, renderer, storageId, hintsUsed, onNext, onNextDaily, neighborLevel, userLevel, userDbId, onNextUser, meta.id, t])
 
   // Stable identities for the memoized board + toolbar (a fresh arrow/element per render
   // would re-render them on every screen render for nothing).
@@ -831,8 +881,16 @@ export default function GameScreen({
               ? () => onNext(result.next!)
               : result.win && result.nextDaily && onNextDaily
                 ? () => onNextDaily(result.nextDaily!)
-                : undefined
+                : result.win && result.nextUser && onNextUser
+                  ? () => onNextUser(result.nextUser!)
+                  : undefined
           }
+          onRate={
+            result.win && result.rate
+              ? (stars, tags) => rateUserLevel(userDbId, stars, tags as UserLevelTag[])
+              : undefined
+          }
+          community={result.win ? result.community : undefined}
           onRetry={() => setResult(null)}
           onRestart={
             result.win

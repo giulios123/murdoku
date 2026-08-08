@@ -2,7 +2,7 @@
   "schema": 1,
   "id": "editor-der-einfache-fall-im-hotel",
   "title": "Check-out für Valerie",
-  "titles": { "de": "Check-out für Valerie", "en": "Checkout for Valerie", "es": "Check-out para Valerie", "pt": "Check-out Antecipado", "fr": "Check-out définitif" },
+  "titles": { "de": "Check-out für Valerie", "en": "Checkout for Valerie", "es": "Check-out para Valerie", "pt": "Check-out Antecipado", "fr": "Check-out définitif", "ru": "Выписка навсегда" },
   "size": {
     "width": 9,
     "height": 9

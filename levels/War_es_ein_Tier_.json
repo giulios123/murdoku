@@ -2,7 +2,7 @@
   "schema": 1,
   "id": "editor-war-es-ein-tier",
   "title": "War es ein Tier?",
-  "titles": { "de": "War es ein Tier?", "en": "Was It an Animal?", "es": "¿Fue un animal?", "pt": "Terá Sido um Animal?", "fr": "Était-ce un animal ?" },
+  "titles": { "de": "War es ein Tier?", "en": "Was It an Animal?", "es": "¿Fue un animal?", "pt": "Terá Sido um Animal?", "fr": "Était-ce un animal ?", "ru": "Зверь ли это был?" },
   "size": {
     "width": 9,
     "height": 9

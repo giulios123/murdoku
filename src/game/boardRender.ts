@@ -82,6 +82,12 @@ export interface RevealInfo {
   murdererId: PersonId | null
 }
 
+/** How non-walkable cells are marked beyond the white card (a setting; the white
+ *  card alone drowns between many ✕ on big boards): 'plain' = card only (as
+ *  before), 'dim' = darkened floor, 'hatch' = diagonal ink hatching over card and
+ *  floor (the blueprint "blocked" signal), 'both' = darkened + hatched. */
+export type BlockedStyle = 'plain' | 'dim' | 'hatch' | 'both'
+
 export interface BoardView {
   puzzle: Puzzle
   /** Cell size in CSS pixels. */
@@ -120,6 +126,8 @@ export interface BoardView {
   objectBadges?: boolean
   /** Draw the subtle per-room floor patterns (a taste setting; default on). */
   floorTextures?: boolean
+  /** Extra marking of non-walkable cells (a setting; default 'plain'). */
+  blockedStyle?: BlockedStyle
   /** Thumbnail mode: rooms + walls + object dots only. */
   preview?: boolean
 }
@@ -159,8 +167,34 @@ function roomBottomRuns(puzzle: Puzzle): Map<string, { row: number; c0: number; 
   return runs
 }
 
+/** Fine diagonal ink hatching clipped to the cell — the blueprint/crime-scene-plan
+ *  "blocked" signal. Drawn OVER the white card but UNDER the object, so the glyph
+ *  stays clean while card and floor read unmistakably as off-limits. */
+function drawBlockedHatch(ctx: CanvasRenderingContext2D, x: number, y: number, S: number): void {
+  ctx.save()
+  ctx.beginPath()
+  ctx.rect(x + 0.5, y + 0.5, S - 1, S - 1)
+  ctx.clip()
+  ctx.strokeStyle = 'rgba(20, 16, 26, 0.16)'
+  ctx.lineWidth = Math.max(1.2, S * 0.032)
+  const step = Math.max(6, S * 0.14)
+  ctx.beginPath()
+  for (let i = -S; i < S * 2; i += step) {
+    ctx.moveTo(x + i, y + S + 2)
+    ctx.lineTo(x + i + S + 4, y - 2)
+  }
+  ctx.stroke()
+  ctx.restore()
+}
+
 /** The soft white "blocked" card drawn behind non-occupiable objects. */
-function drawBlockedCard(ctx: CanvasRenderingContext2D, x: number, y: number, S: number): void {
+function drawBlockedCard(
+  ctx: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  S: number,
+  hatch = false,
+): void {
   const pad = S * 0.08
   ctx.fillStyle = 'rgba(255, 255, 255, 0.78)'
   ctx.strokeStyle = 'rgba(40, 32, 48, 0.18)'
@@ -169,6 +203,7 @@ function drawBlockedCard(ctx: CanvasRenderingContext2D, x: number, y: number, S:
   ctx.roundRect(x + pad, y + pad, S - 2 * pad, S - 2 * pad, S * 0.16)
   ctx.fill()
   ctx.stroke()
+  if (hatch) drawBlockedHatch(ctx, x, y, S)
 }
 
 type BoardModel = Puzzle['board']
@@ -223,14 +258,26 @@ function roomConn(board: BoardModel, c: Cell): Conn {
 // board feel sluggish — so the whole base is rendered ONCE into an offscreen
 // image and every redraw just blits it (one drawImage call).
 
+/** Darkened floor under non-walkable cells? ('dim' and 'both' of the setting) */
+function dimsBlocked(view: BoardView): boolean {
+  return view.blockedStyle === 'dim' || view.blockedStyle === 'both'
+}
+
+/** Hatching over non-walkable cells? ('hatch' and 'both' of the setting) */
+function hatchesBlocked(view: BoardView): boolean {
+  return view.blockedStyle === 'hatch' || view.blockedStyle === 'both'
+}
+
 /** Everything the floor layer's pixels depend on — the cache key. */
 function floorSig(view: BoardView, dpr: number): string {
   const board = view.puzzle.board
+  const dim = dimsBlocked(view)
   const parts: string[] = [
     `${board.width}x${board.height}`,
     String(view.cell),
     String(dpr),
     view.floorTextures === false ? 'plain' : 'tex',
+    dim ? 'dark' : 'lit',
     view.preview ? 'prev' : 'full',
   ]
   for (const [id, room] of board.rooms) parts.push(`${id}:${room.color}:${room.nameKey}`)
@@ -239,6 +286,9 @@ function floorSig(view: BoardView, dpr: number): string {
     cells += board.roomIdOf(c)
     // Carpet blanks the pattern under the rug, so it shapes the layer's pixels.
     if (board.tileAt(c).ground?.type === 'carpet') cells += '*'
+    // With dimming on, WHICH cells are blocked shapes the layer's pixels too.
+    const top = board.tileAt(c).top
+    if (dim && top && !top.occupiable) cells += '#'
   }
   parts.push(cells)
   return parts.join('|')
@@ -292,6 +342,13 @@ function renderFloorLayer(view: BoardView, dpr: number): HTMLCanvasElement {
         if (board.tileAt(c).ground?.type === 'carpet')
           drawCarpetBase(ctx, x, y, S, objectConn(board, c, 'ground', 'carpet'), room.color)
       }
+    }
+    // Blocked-cell dimming (setting): a "sunken" floor under non-walkable cells —
+    // bright = free, dark = off-limits reads even in peripheral vision.
+    const top = board.tileAt(c).top
+    if (!view.preview && dimsBlocked(view) && top && !top.occupiable) {
+      ctx.fillStyle = 'rgba(22, 20, 29, 0.26)'
+      ctx.fillRect(x, y, S, S)
     }
   }
   return canvas
@@ -378,6 +435,7 @@ function furnitureSig(view: BoardView, dpr: number): string {
     `${board.width}x${board.height}`,
     String(view.cell),
     String(dpr),
+    hatchesBlocked(view) ? 'hatch' : 'plain',
     view.preview ? 'prev' : 'full',
   ]
   // Room nameKeys matter too: the slide's water/playground look reads them.
@@ -409,6 +467,7 @@ function paintFurniture(
   const board = puzzle.board
   const W = board.width
   const H = board.height
+  const hatch = !preview && hatchesBlocked(view)
   const xy = (c: Cell) => {
     const { row, col } = board.rc(c)
     return { x: ox + col * S, y: oy + row * S }
@@ -550,6 +609,7 @@ function paintFurniture(
       if (board.tileAt(c).top?.type !== 'table') continue
       const { x, y } = xy(c)
       drawBlockedCardTile(ctx, x, y, S, connOf(c, 'top', 'table'))
+      if (hatch) drawBlockedHatch(ctx, x, y, S)
     }
   }
   for (let c = 0; c < W * H; c++) {
@@ -625,13 +685,13 @@ function paintFurniture(
     if (top.type === 'tree' || top.type === 'boulder') {
       const room = board.rooms.get(board.roomIdOf(c))
       if (room && isWinterRoom(room.nameKey)) {
-        if (!preview) drawBlockedCard(ctx, x, y, S)
+        if (!preview) drawBlockedCard(ctx, x, y, S, hatch)
         if (top.type === 'tree') drawWinterFir(ctx, x, y, S)
         else drawSnowBoulder(ctx, x, y, S)
         continue
       }
     }
-    drawObjectIcon(ctx, top.type, x, y, S, top.occupiable, preview)
+    drawObjectIcon(ctx, top.type, x, y, S, top.occupiable, preview, hatch)
   }
 }
 
@@ -727,11 +787,11 @@ function paintNamePlates(
     // Fit the font to the gap (text width scales ~linearly, so one rescale lands it).
     let font = S * 0.155
     const required = (f: number): number => {
-      ctx.font = `700 ${f}px 'Spline Sans Variable', system-ui, sans-serif`
+      ctx.font = `700 ${f}px 'Spline Sans Variable', 'Golos Text Variable', system-ui, sans-serif`
       return ctx.measureText(label).width + 2 * f * 0.5
     }
     if (required(font) > maxW) font = Math.max(6, (font * maxW) / required(font))
-    ctx.font = `700 ${font}px 'Spline Sans Variable', system-ui, sans-serif`
+    ctx.font = `700 ${font}px 'Spline Sans Variable', 'Golos Text Variable', system-ui, sans-serif`
     const pillW = Math.min(maxW, ctx.measureText(label).width + 2 * font * 0.5)
     const pillH = font * 1.55
     const cx = ox + ((bc0 + bc1 + 1) / 2) * S
@@ -1034,7 +1094,7 @@ export function drawBoard(ctx: CanvasRenderingContext2D, view: BoardView): void 
         c2.lineJoin = 'round'
         c2.textAlign = 'left'
         c2.textBaseline = 'top'
-        c2.font = `700 ${S * 0.27}px 'Spline Sans Variable', sans-serif`
+        c2.font = `700 ${S * 0.27}px 'Spline Sans Variable', 'Golos Text Variable', sans-serif`
         const ow = Math.max(1.2, S * 0.04)
         c2.strokeStyle = BOARD.markHalo
         c2.lineWidth = ow + Math.max(1.2, S * 0.028)
@@ -1168,7 +1228,7 @@ export function drawBoardOverlay(ctx: CanvasRenderingContext2D, o: OverlayView):
     ctx.lineJoin = 'round'
     ctx.textAlign = 'left'
     ctx.textBaseline = 'top'
-    ctx.font = `800 ${S * 0.27 * scale}px 'Spline Sans Variable', sans-serif`
+    ctx.font = `800 ${S * 0.27 * scale}px 'Spline Sans Variable', 'Golos Text Variable', sans-serif`
     const outlineW = Math.max(1.2, S * 0.04 * scale)
     for (const [c, set] of o.marks) {
       if (occupied.has(c) || !set.has(o.emphasize)) continue
@@ -1229,12 +1289,14 @@ export function drawObjectIcon(
   S: number,
   occupiable: boolean,
   preview = false,
+  /** Board pass only — the Legend never hatches (its icons stay neutral). */
+  hatch = false,
 ): void {
   if (type === 'carpet') return drawCarpetTile(ctx, x, y, S, NO_CONN)
   if (type === 'street') return drawStreetTile(ctx, x, y, S, NO_CONN)
   if (type === 'path') return drawPathTile(ctx, x, y, S, NO_CONN)
   if (type === 'table') {
-    if (!preview) drawBlockedCard(ctx, x, y, S) // blocked like everything else now
+    if (!preview) drawBlockedCard(ctx, x, y, S, hatch) // blocked like everything else now
     return drawTableTile(ctx, x, y, S, NO_CONN)
   }
   if (MULTI_CELL_TYPES.has(type)) return drawSingleObject(ctx, type, x, y, S)
@@ -1257,123 +1319,123 @@ export function drawObjectIcon(
   if (type === 'paravent') return drawParavent(ctx, x, y, S) // occupiable (one stands BEHIND it)
   // blocked custom-art objects sit on the same white card as blocked emoji
   if (type === 'shelf') {
-    if (!preview) drawBlockedCard(ctx, x, y, S)
+    if (!preview) drawBlockedCard(ctx, x, y, S, hatch)
     return drawBookshelf(ctx, x, y, S)
   }
   if (type === 'locker') {
-    if (!preview) drawBlockedCard(ctx, x, y, S)
+    if (!preview) drawBlockedCard(ctx, x, y, S, hatch)
     return drawLocker(ctx, x, y, S)
   }
   if (type === 'punchbag') {
-    if (!preview) drawBlockedCard(ctx, x, y, S)
+    if (!preview) drawBlockedCard(ctx, x, y, S, hatch)
     return drawPunchbag(ctx, x, y, S)
   }
   if (type === 'cash') {
-    if (!preview) drawBlockedCard(ctx, x, y, S)
+    if (!preview) drawBlockedCard(ctx, x, y, S, hatch)
     return drawCashRegister(ctx, x, y, S)
   }
   if (type === 'crate') {
-    if (!preview) drawBlockedCard(ctx, x, y, S)
+    if (!preview) drawBlockedCard(ctx, x, y, S, hatch)
     return drawCrate(ctx, x, y, S)
   }
   if (type === 'washingmachine') {
-    if (!preview) drawBlockedCard(ctx, x, y, S)
+    if (!preview) drawBlockedCard(ctx, x, y, S, hatch)
     return drawWashingMachine(ctx, x, y, S)
   }
   if (type === 'fridge') {
-    if (!preview) drawBlockedCard(ctx, x, y, S)
+    if (!preview) drawBlockedCard(ctx, x, y, S, hatch)
     return drawFridge(ctx, x, y, S)
   }
   if (type === 'lamp') {
-    if (!preview) drawBlockedCard(ctx, x, y, S)
+    if (!preview) drawBlockedCard(ctx, x, y, S, hatch)
     return drawFloorLamp(ctx, x, y, S)
   }
   if (type === 'piano') {
-    if (!preview) drawBlockedCard(ctx, x, y, S)
+    if (!preview) drawBlockedCard(ctx, x, y, S, hatch)
     return drawPiano(ctx, x, y, S)
   }
   if (type === 'bear') {
-    if (!preview) drawBlockedCard(ctx, x, y, S)
+    if (!preview) drawBlockedCard(ctx, x, y, S, hatch)
     return drawBear(ctx, x, y, S)
   }
   if (type === 'campfire') {
-    if (!preview) drawBlockedCard(ctx, x, y, S)
+    if (!preview) drawBlockedCard(ctx, x, y, S, hatch)
     return drawCampfire(ctx, x, y, S)
   }
   if (type === 'grill') {
-    if (!preview) drawBlockedCard(ctx, x, y, S)
+    if (!preview) drawBlockedCard(ctx, x, y, S, hatch)
     return drawGrill(ctx, x, y, S)
   }
   if (type === 'hay') {
-    if (!preview) drawBlockedCard(ctx, x, y, S)
+    if (!preview) drawBlockedCard(ctx, x, y, S, hatch)
     return drawHaystack(ctx, x, y, S)
   }
   if (type === 'candle') {
-    if (!preview) drawBlockedCard(ctx, x, y, S)
+    if (!preview) drawBlockedCard(ctx, x, y, S, hatch)
     return drawCandelabrum(ctx, x, y, S)
   }
   if (type === 'fireplace') {
-    if (!preview) drawBlockedCard(ctx, x, y, S)
+    if (!preview) drawBlockedCard(ctx, x, y, S, hatch)
     return drawFireplace(ctx, x, y, S)
   }
   if (type === 'barrel') {
-    if (!preview) drawBlockedCard(ctx, x, y, S)
+    if (!preview) drawBlockedCard(ctx, x, y, S, hatch)
     return drawBarrel(ctx, x, y, S)
   }
   if (type === 'armor') {
-    if (!preview) drawBlockedCard(ctx, x, y, S)
+    if (!preview) drawBlockedCard(ctx, x, y, S, hatch)
     return drawArmor(ctx, x, y, S)
   }
   if (type === 'weaponrack') {
-    if (!preview) drawBlockedCard(ctx, x, y, S)
+    if (!preview) drawBlockedCard(ctx, x, y, S, hatch)
     return drawWeaponRack(ctx, x, y, S)
   }
   if (type === 'lion') {
-    if (!preview) drawBlockedCard(ctx, x, y, S)
+    if (!preview) drawBlockedCard(ctx, x, y, S, hatch)
     return drawLion(ctx, x, y, S)
   }
   if (type === 'monkey') {
-    if (!preview) drawBlockedCard(ctx, x, y, S)
+    if (!preview) drawBlockedCard(ctx, x, y, S, hatch)
     return drawMonkey(ctx, x, y, S)
   }
   if (type === 'goat') {
-    if (!preview) drawBlockedCard(ctx, x, y, S)
+    if (!preview) drawBlockedCard(ctx, x, y, S, hatch)
     return drawGoat(ctx, x, y, S)
   }
   if (type === 'elephant') {
-    if (!preview) drawBlockedCard(ctx, x, y, S)
+    if (!preview) drawBlockedCard(ctx, x, y, S, hatch)
     return drawElephant(ctx, x, y, S)
   }
   if (type === 'parrot') {
-    if (!preview) drawBlockedCard(ctx, x, y, S)
+    if (!preview) drawBlockedCard(ctx, x, y, S, hatch)
     return drawParrot(ctx, x, y, S)
   }
   if (type === 'penguin') {
-    if (!preview) drawBlockedCard(ctx, x, y, S)
+    if (!preview) drawBlockedCard(ctx, x, y, S, hatch)
     return drawPenguin(ctx, x, y, S)
   }
   if (type === 'flamingo') {
-    if (!preview) drawBlockedCard(ctx, x, y, S)
+    if (!preview) drawBlockedCard(ctx, x, y, S, hatch)
     return drawFlamingo(ctx, x, y, S)
   }
   if (type === 'snowman') {
-    if (!preview) drawBlockedCard(ctx, x, y, S)
+    if (!preview) drawBlockedCard(ctx, x, y, S, hatch)
     return drawSnowman(ctx, x, y, S)
   }
   if (type === 'skirack') {
-    if (!preview) drawBlockedCard(ctx, x, y, S)
+    if (!preview) drawBlockedCard(ctx, x, y, S, hatch)
     return drawSkiRack(ctx, x, y, S)
   }
   if (type === 'blackboard') {
-    if (!preview) drawBlockedCard(ctx, x, y, S)
+    if (!preview) drawBlockedCard(ctx, x, y, S, hatch)
     return drawBlackboard(ctx, x, y, S)
   }
   if (type === 'skeleton') {
-    if (!preview) drawBlockedCard(ctx, x, y, S)
+    if (!preview) drawBlockedCard(ctx, x, y, S, hatch)
     return drawSkeleton(ctx, x, y, S)
   }
   if (type === 'ivdrip') {
-    if (!preview) drawBlockedCard(ctx, x, y, S)
+    if (!preview) drawBlockedCard(ctx, x, y, S, hatch)
     return drawIvDrip(ctx, x, y, S)
   }
   // occupiable → no card; the chip/legend shows the neutral playground look
@@ -1381,7 +1443,7 @@ export function drawObjectIcon(
   if (type === 'shower') return drawShower(ctx, x, y, S) // occupiable → no blocked card
   const glyph = OBJECT_GLYPHS[type]
   if (!glyph) return
-  if (!preview && !occupiable) drawBlockedCard(ctx, x, y, S)
+  if (!preview && !occupiable) drawBlockedCard(ctx, x, y, S, hatch)
   ctx.fillStyle = '#1c1822' // opaque, so any monochrome glyph stays bold (not faint)
   ctx.textAlign = 'center'
   ctx.textBaseline = 'middle'
@@ -1547,6 +1609,6 @@ function drawToken(
   ctx.fillStyle = '#fff'
   ctx.textAlign = 'center'
   ctx.textBaseline = 'middle'
-  ctx.font = `800 ${S * 0.42}px 'Fraunces Variable', Georgia, serif`
+  ctx.font = `800 ${S * 0.42}px 'Fraunces Variable', 'Playfair Display Variable', Georgia, serif`
   ctx.fillText(letter, cx, cy + S * 0.02)
 }

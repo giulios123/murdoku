@@ -2,7 +2,7 @@
   "schema": 1,
   "id": "editor-mord-am-hof",
   "title": "Tod im Heu",
-  "titles": { "de": "Tod im Heu", "en": "Death in the Hay", "es": "Muerte en el heno", "pt": "Morte no Feno", "fr": "Mort dans le foin" },
+  "titles": { "de": "Tod im Heu", "en": "Death in the Hay", "es": "Muerte en el heno", "pt": "Morte no Feno", "fr": "Mort dans le foin", "ru": "Смерть в сене" },
   "size": {
     "width": 7,
     "height": 7

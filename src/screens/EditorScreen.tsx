@@ -36,6 +36,8 @@ import {
   type EditorSuspect,
 } from '../game/editorModel.ts'
 import { checkLevel, findMurderer, loadLevel, startCoverage, VOID_ROOM, type BoardClueJson, type Cell, type LevelJson } from '../engine/index.ts'
+import { loadAuthorName, saveAuthorName, uploadUserLevel } from '../game/userlevels.ts'
+import { keepFieldVisible } from '../game/keyboard.ts'
 import { Renderer } from '../i18n/Renderer.ts'
 import { useDebugSolveKey } from '../game/debugSolve.ts'
 import { useNarrowLayout } from '../game/useNarrowLayout.ts'
@@ -45,7 +47,7 @@ type Mode = 'rooms' | 'ground' | 'top' | 'window' | 'door' | 'global'
 /** The four board layers shown as tabs; windows & doors live inside 'top' (Objekte). */
 const LAYERS: Mode[] = ['rooms', 'ground', 'top', 'global']
 type CheckResult = {
-  kind: 'ok' | 'multi' | 'none' | 'contradiction' | 'aborted' | 'error' | 'saved' | 'exported' | 'loaded' | 'genfail' | 'genfailVorgaben'
+  kind: 'ok' | 'multi' | 'none' | 'contradiction' | 'aborted' | 'error' | 'saved' | 'exported' | 'loaded' | 'genfail' | 'genfailVorgaben' | 'uploaded' | 'uploadDuplicate' | 'uploadContent' | 'uploadTooFast' | 'uploadNetwork' | 'uploadFailed'
   murderer?: string
   /** For a solvable level: did pure forward deduction crack it ('pure'), or were
    *  proof-by-contradiction steps (forcing/SAT search) required ('contradiction')? */
@@ -144,6 +146,9 @@ export default function EditorScreen({ onBack, onPlay, initialLevel }: Props) {
     () => draft?.state ?? emptyEditorState(8, themeRooms(theme)),
   )
   const [name, setName] = useState(() => draft?.name ?? '')
+  // Upload byline — entered once, remembered across sessions.
+  const [author, setAuthor] = useState(() => loadAuthorName())
+  const [uploading, setUploading] = useState(false)
   const [difficulty, setDifficulty] = useState<EditDifficulty>(() => draft?.difficulty ?? 'medium')
   const [mode, setMode] = useState<Mode>('rooms')
   const [paintRoom, setPaintRoom] = useState('1')
@@ -435,6 +440,44 @@ export default function EditorScreen({ onBack, onPlay, initialLevel }: Props) {
     exportLevelJson(level)
       .then(() => setResult({ kind: 'exported' }))
       .catch(() => {})
+  }
+
+  // Upload gate: only genuinely unique levels may go to the community ('ok', or
+  // 'contradiction' = unique but beyond the deduction engine — those arrive with the
+  // automatic "Ausprobieren" property, computed by every client at sync time). The
+  // name is required; the author byline is OPTIONAL (not everyone wants to give
+  // their name) and remembered for the next upload.
+  const canUpload = saveWarn === 'ok' || saveWarn === 'contradiction'
+  const upload = async () => {
+    const title = name.trim()
+    const byline = author.trim()
+    if (!canUpload || title === '' || uploading) return
+    saveAuthorName(byline)
+    let level: LevelJson
+    try {
+      level = { ...build(levelId()), title, ...(byline !== '' ? { author: byline } : {}) }
+    } catch {
+      setShowSave(false)
+      setResult({ kind: 'error' })
+      return
+    }
+    setUploading(true)
+    const res = await uploadUserLevel(level)
+    setUploading(false)
+    setShowSave(false)
+    setResult({
+      kind: res.ok
+        ? 'uploaded'
+        : res.error === 'duplicate'
+          ? 'uploadDuplicate'
+          : res.error === 'content'
+            ? 'uploadContent'
+            : res.error === 'tooFast'
+              ? 'uploadTooFast'
+              : res.error === 'network'
+                ? 'uploadNetwork'
+                : 'uploadFailed',
+    })
   }
 
   /** Load a level from a picked .json file (works on desktop, mobile web AND Android). */
@@ -1345,6 +1388,19 @@ export default function EditorScreen({ onBack, onPlay, initialLevel }: Props) {
                 maxLength={40}
                 placeholder={t('editor.name')}
                 onChange={(e) => setName(e.target.value)}
+                onFocus={keepFieldVisible}
+              />
+            </div>
+            <div className="mk-nameform">
+              <label htmlFor="mk-authorname">{t('editor.authorLabel')}</label>
+              <input
+                id="mk-authorname"
+                type="text"
+                value={author}
+                maxLength={40}
+                placeholder={t('editor.authorPlaceholder')}
+                onChange={(e) => setAuthor(e.target.value)}
+                onFocus={keepFieldVisible}
               />
             </div>
             <div className="mk-savedlg__diff">
@@ -1360,7 +1416,6 @@ export default function EditorScreen({ onBack, onPlay, initialLevel }: Props) {
                 </button>
               ))}
             </div>
-            <p className="mk-savedlg__hint">{t('editor.saveHint')}</p>
             {saveWarn !== 'ok' && (
               <p className="mk-savedlg__warn">⚠ {t(`editor.result_${saveWarn}`)}</p>
             )}
@@ -1369,22 +1424,59 @@ export default function EditorScreen({ onBack, onPlay, initialLevel }: Props) {
                 <p className="mk-savedlg__exists">{t('editor.levelExists')}</p>
                 <div className="mk-dialog__actions">
                   <button type="button" className="mk-btn mk-btn--ghost" onClick={() => setShowSave(false)}>
-                    {t('result.back')}
+                    {t('generate.cancel')}
                   </button>
                 </div>
               </>
             ) : (
               <>
                 {nameTaken && <p className="mk-savedlg__warn">{t('editor.nameTaken')}</p>}
+                {/* The three destinations as self-explaining share-sheet rows: icon +
+                    name + a 3–5 word subline right where you tap — no separate hint
+                    text needed. A locked upload row shows its REASON as the subline. */}
+                <div className="mk-savelist">
+                  <button
+                    type="button"
+                    className="mk-saverow"
+                    disabled={!canUpload || name.trim() === '' || uploading}
+                    onClick={() => void upload()}
+                  >
+                    <span className="mk-saverow__ic" aria-hidden="true">↥</span>
+                    <span className="mk-saverow__text">
+                      <span className="mk-saverow__title">{t('editor.saveUpload')}</span>
+                      <span className="mk-saverow__sub">
+                        {uploading
+                          ? t('editor.uploading')
+                          : !canUpload
+                            ? t('editor.uploadGateShort')
+                            : name.trim() === ''
+                              ? t('editor.uploadNeedTitle')
+                              : saveWarn === 'contradiction'
+                                ? t('editor.uploadNoLogicShort')
+                                : t('editor.uploadSub')}
+                      </span>
+                    </span>
+                  </button>
+                  <button type="button" className="mk-saverow" onClick={keep}>
+                    <span className="mk-saverow__ic" aria-hidden="true">✓</span>
+                    <span className="mk-saverow__text">
+                      <span className="mk-saverow__title">{t('editor.saveKeep')}</span>
+                      <span className="mk-saverow__sub">{t('editor.keepSub')}</span>
+                    </span>
+                  </button>
+                  <button type="button" className="mk-saverow" onClick={exportJson}>
+                    <span className="mk-saverow__ic" aria-hidden="true">↧</span>
+                    <span className="mk-saverow__text">
+                      <span className="mk-saverow__title">{t('editor.saveExport')}</span>
+                      <span className="mk-saverow__sub">{t('editor.jsonSub')}</span>
+                    </span>
+                  </button>
+                </div>
+                {/* Plain back — closes the dialog, deliberately set apart from the
+                    destination list (it is navigation, not a destination). */}
                 <div className="mk-dialog__actions">
-                  <button type="button" className="mk-btn mk-btn--primary" onClick={keep}>
-                    {t('editor.saveKeep')}
-                  </button>
-                  <button type="button" className="mk-btn mk-btn--ghost" onClick={exportJson}>
-                    {t('editor.saveExport')}
-                  </button>
                   <button type="button" className="mk-btn mk-btn--ghost" onClick={() => setShowSave(false)}>
-                    {t('result.back')}
+                    {t('generate.cancel')}
                   </button>
                 </div>
               </>

@@ -47,9 +47,11 @@
   --diff-original: #b294d6;
 
   /* Type */
-  --font-display: 'Fraunces Variable', Georgia, 'Times New Roman', serif;
-  --font-type: 'Special Elite', 'Courier New', monospace;
-  --font-ui: 'Spline Sans Variable', system-ui, -apple-system, sans-serif;
+  /* Die kyrillischen Zwillinge (Playfair/PT Mono/Golos) greifen nur für Glyphen,
+     die der Spiel-Font nicht hat — lateinischer Text bleibt unverändert. */
+  --font-display: 'Fraunces Variable', 'Playfair Display Variable', Georgia, 'Times New Roman', serif;
+  --font-type: 'Special Elite', 'PT Mono', 'Courier New', monospace;
+  --font-ui: 'Spline Sans Variable', 'Golos Text Variable', system-ui, -apple-system, sans-serif;
 
   /* Geometry */
   --r-sm: 6px;
@@ -68,6 +70,10 @@
 
 * {
   box-sizing: border-box;
+  /* Androids halbtransparentes blaues Tap-Overlay passt nirgends zum Noir-Look —
+     alle Controls haben eigene Press-/Hover-Zustände (fiel zuerst an den großen
+     Bewertungs-Sternen auf, gilt aber app-weit). */
+  -webkit-tap-highlight-color: transparent;
 }
 
 html,
@@ -443,10 +449,10 @@ button {
    set apart from the primary CTA. Add more tiles (e.g. Editor) freely. */
 .mk-start__more {
   width: 100%;
-  max-width: 27rem;
+  max-width: 34rem;
   margin-top: 1.6rem;
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 0.9rem;
 }
 @media (max-width: 560px) {
@@ -459,17 +465,10 @@ button {
   .mk-game__author {
     display: none;
   }
+  /* Phones: 2×2 — Tutorial + Userlevel share row 1, Editor + Generierung row 2
+     (Dirks Vorgabe: Userlevel neben Tutorial, Tutorial nicht mehr überbreit). */
   .mk-start__more {
     grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-  /* Tutorial (most important) gets its own full-width row; Editor + Generierung share row 2. */
-  .mk-start__more > :first-child {
-    grid-column: 1 / -1;
-    min-height: 100px;
-  }
-  .mk-start__more > :first-child .mk-tile__svg {
-    width: 48px;
-    height: 48px;
   }
 }
 /* A precinct case file: dark dossier card with a blood-red spine tab, a hand-inked
@@ -3729,6 +3728,10 @@ button {
   display: grid;
   gap: 1rem;
   justify-items: center;
+  /* Tall dialogs (save + upload section, rating block) scroll INSIDE on small phones
+     instead of pushing buttons off-screen. No effect while the content fits. */
+  max-height: calc(100dvh - 3rem);
+  overflow-y: auto;
 }
 /* Ehren-Medaille — a hint-free win. Absolute corner badge, adds no dialog height. */
 .mk-dialog__medal {
@@ -5438,6 +5441,14 @@ button {
   text-align: center;
   margin-top: -0.5rem;
 }
+/* Kompaktes Dropdown in einer Settings-Zeile (blockierte Felder) — schlank,
+   damit der Dialog nie ins Scrollen kommt. */
+.mk-settings__select {
+  padding: 0.35rem 0.6rem;
+  font-size: 0.88rem;
+  max-width: 60%;
+}
+
 .mk-settings__row {
   display: flex;
   align-items: center;
@@ -5562,4 +5573,290 @@ button {
 }
 .mk-victimname[data-gender='m'] {
   color: #9fc3ea;
+}
+
+/* ============================ Userlevel (Community-Fälle) ============================
+   Zusatzvokabeln über den bestehenden Case-File-Bausteinen: die Karten der
+   Levelauswahl bekommen eine Bewertungszeile (Sterne + Eigenschafts-Chips), der
+   Screen eine Typewriter-Statuszeile, der Sieg-Dialog den Bewertungsblock. */
+
+/* Abgleich-/Offline-Status unter dem Titel — eine getippte Aktennotiz, kein Alarm. */
+.mk-ul-status {
+  margin: 0.15rem 0 0;
+  text-align: center;
+  font-family: var(--font-type);
+  font-size: 0.78rem;
+  letter-spacing: 0.06em;
+  color: var(--bone-faint);
+}
+.mk-ul-status[data-offline] {
+  color: var(--bone-dim);
+}
+
+/* Bewertungszeile der Karte: ★ Ø (Stimmen) + die zwei meistgewählten Eigenschaften —
+   EIN schmaler Textlauf mit ·-Trennern (keine Chips: kein Rahmen-/Padding-Platz,
+   garantiert einzeilig; überzähliges wird rechts sauber abgeschnitten). */
+.mk-card__ulmeta {
+  display: flex;
+  align-items: baseline;
+  gap: 0.35rem;
+  margin-top: 0.24rem;
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+}
+.mk-ul-stars {
+  font-family: var(--font-type);
+  font-size: 0.78rem;
+  letter-spacing: 0.04em;
+  color: var(--brass);
+  flex-shrink: 0;
+}
+.mk-ul-stars[data-unrated] {
+  color: var(--bone-faint);
+}
+.mk-ul-tag {
+  font-size: 0.74rem;
+  color: var(--bone-dim);
+}
+.mk-ul-tag::before {
+  content: '· ';
+  color: var(--bone-faint);
+}
+/* Auto-Eigenschaft „Ausprobieren": jenseits der Deduktions-Engine — dezent crimson. */
+.mk-ul-tag[data-nologic] {
+  color: var(--crimson);
+}
+/* „✓ bewertet": DIESER Spieler hat schon gewertet — evergreen wie die Sendebestätigung. */
+.mk-ul-tag[data-mine] {
+  color: var(--evergreen);
+}
+
+/* Bewertungsblock im Sieg-Dialog (einmalig pro Fall): die fünf hohlen Sterne sind
+   IMMER sichtbar (eine schlanke, universell lesbare „Bewerte mich"-Zeile); erst ein
+   Stern-Tap klappt Eigenschaften + Senden auf — kompakt auf kleinen Phones, ohne die
+   Einladung zu verstecken. */
+.mk-rate {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin: 0;
+  width: 100%;
+}
+.mk-rate__row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+}
+.mk-rate__yours {
+  font-family: var(--font-type);
+  font-size: 0.72rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--bone-dim);
+}
+.mk-rate__tagrow {
+  display: flex;
+  gap: 0.5rem;
+  width: 100%;
+}
+.mk-rate__select {
+  flex: 1;
+  min-width: 0;
+  padding: 0.45rem 0.6rem;
+  font-size: 0.88rem;
+}
+.mk-rate__stars {
+  display: flex;
+  justify-content: center;
+  gap: 0.3rem;
+}
+/* Kein globaler Button-Reset im Projekt — explizit entkleiden, sonst UA-Grau.
+   Hohle Sterne in Messing-Ton: sichtbar einladend, nicht im Ink versinkend. */
+.mk-rate__star {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  padding: 0.1rem 0.15rem;
+  font-size: 2.1rem;
+  line-height: 1;
+  color: var(--brass-dim);
+  transition:
+    color 0.12s ease,
+    transform 0.12s ease;
+}
+.mk-rate__star[data-on] {
+  color: var(--brass);
+  text-shadow: 0 0 12px rgba(226, 183, 94, 0.35);
+}
+.mk-rate__star:hover {
+  transform: scale(1.12);
+}
+/* Nach dem Senden frieren die Sterne ein — gewählt bleiben sie sichtbar. */
+.mk-rate__star:disabled {
+  cursor: default;
+}
+.mk-rate__tagslabel {
+  margin: 0;
+  text-align: center;
+  font-family: var(--font-type);
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--bone-dim);
+}
+.mk-rate__failed {
+  margin: 0;
+  text-align: center;
+  font-family: var(--font-type);
+  font-size: 0.8rem;
+  color: var(--crimson);
+}
+.mk-rate__send:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+/* Gesendet: der Button WIRD die Bestätigung (gleiche Größe → kein Layout-Sprung). */
+.mk-rate__send[data-sent] {
+  opacity: 1;
+  color: var(--evergreen);
+  border-color: rgba(121, 184, 154, 0.5);
+}
+
+/* Android/Touch: größere Sterne — Daumenziel statt Mauspräzision. */
+@media (pointer: coarse) {
+  .mk-rate__star {
+    font-size: 2.5rem;
+    padding: 0.1rem 0.25rem;
+  }
+}
+
+/* Desktop-Dossiers haben eine FESTE Höhe (138px, overflow hidden) — im Userlevel-
+   Screen bekommen sie exakt die Zeilenhöhe mehr, sonst wird die Wertung abgeschnitten.
+   Nur dort; die Levelauswahl behält ihre 138px. Mobil greift height:auto (s. unten). */
+@media (min-width: 641px) {
+  .mk-select--ul .mk-card {
+    height: 152px;
+    contain-intrinsic-size: auto 152px;
+  }
+}
+
+/* Speichern-Dialog: die drei Ziele (Hochladen / Behalten / Als JSON) als große,
+   selbsterklärende Listenzeilen im Share-Sheet-Muster — Icon-Kachel + Name + kurze
+   Typewriter-Unterzeile GENAU dort, wo man tippt (kein Hinweistext-Absatz mehr).
+   Eine gesperrte Zeile zeigt ihren Grund als Unterzeile. */
+.mk-savelist {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  border-top: 1px dashed var(--line-strong);
+}
+.mk-saverow {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  width: 100%;
+  padding: 0.65rem 0.35rem;
+  border-bottom: 1px dashed var(--line-strong);
+  text-align: left;
+  transition: background 0.12s ease;
+}
+.mk-saverow:hover:not(:disabled) {
+  background: rgba(236, 230, 218, 0.04);
+}
+.mk-saverow:active:not(:disabled) {
+  background: rgba(236, 230, 218, 0.07);
+}
+.mk-saverow:disabled {
+  cursor: default;
+  opacity: 0.55;
+}
+.mk-saverow__ic {
+  flex-shrink: 0;
+  width: 2.2rem;
+  height: 2.2rem;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--brass-dim);
+  border-radius: var(--r-sm);
+  color: var(--brass);
+  font-size: 1.1rem;
+}
+.mk-saverow:disabled .mk-saverow__ic {
+  color: var(--bone-faint);
+  border-color: var(--line-strong);
+}
+.mk-saverow__text {
+  display: flex;
+  flex-direction: column;
+  gap: 0.12rem;
+  min-width: 0;
+}
+.mk-saverow__title {
+  font-weight: 600;
+  color: var(--bone);
+  letter-spacing: 0.02em;
+  line-height: 1.2;
+}
+.mk-saverow__sub {
+  font-family: var(--font-type);
+  font-size: 0.74rem;
+  color: var(--bone-dim);
+  line-height: 1.3;
+}
+
+/* Schlichte Trennlinie im Sieg-Dialog (Bewertung ↔ normale Buttons). Volle Breite
+   (der Dialog zentriert Kinder auf Inhaltsbreite — ein leerer .mk-divider kollabiert
+   dort auf 0px) und mit negativem Margin enger als der 1rem-Dialog-Rhythmus. */
+.mk-dialog__rule {
+  width: 100%;
+  height: 0;
+  border-bottom: 1px dashed var(--line-strong);
+  margin: -0.4rem 0;
+}
+
+/* Community-Wertung im Sieg-Dialog: gleiche Vokabeln wie auf der Karte. */
+.mk-dialog__community {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: baseline;
+  gap: 0.35rem;
+  margin: 0;
+}
+.mk-dialog__community-label {
+  font-family: var(--font-type);
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--bone-dim);
+  margin-right: 0.15rem;
+}
+.mk-dialog__community .mk-ul-stars {
+  font-size: 0.9rem;
+}
+.mk-dialog__community .mk-ul-tag {
+  font-size: 0.84rem;
+}
+
+/* Schmale Register-Zeilen (≤640px): Mini-Zeile — dünner als die Foto-Luft, die
+   Karte wächst dadurch nicht (kein zusätzliches Scrollen). */
+@media (max-width: 640px) {
+  .mk-card__ulmeta {
+    margin-top: 0.05rem;
+    gap: 0.3rem;
+  }
+  .mk-ul-stars {
+    font-size: 0.68rem;
+  }
+  .mk-ul-tag {
+    font-size: 0.64rem;
+  }
 }

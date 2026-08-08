@@ -2,7 +2,7 @@
   "schema": 1,
   "id": "editor-wer-war-s",
   "title": "Wer war's",
-  "titles": { "de": "Wer war's", "en": "Whodunit", "es": "¿Quién lo hizo?", "pt": "Quem Terá Sido?", "fr": "Le Coupable court toujours" },
+  "titles": { "de": "Wer war's", "en": "Whodunit", "es": "¿Quién lo hizo?", "pt": "Quem Terá Sido?", "fr": "Le Coupable court toujours", "ru": "Кто же убийца?" },
   "size": {
     "width": 7,
     "height": 7

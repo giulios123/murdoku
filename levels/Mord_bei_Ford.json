@@ -2,7 +2,7 @@
   "schema": 1,
   "id": "editor-mord-bei-ford",
   "title": "Mord bei Ford",
-  "titles": { "de": "Mord bei Ford", "en": "Murder at Ford's", "es": "Asesinato en Ford", "pt": "Homicídio na Ford", "fr": "Meurtre chez Ford" },
+  "titles": { "de": "Mord bei Ford", "en": "Murder at Ford's", "es": "Asesinato en Ford", "pt": "Homicídio na Ford", "fr": "Meurtre chez Ford", "ru": "Убийство в автосалоне" },
   "size": {
     "width": 8,
     "height": 8

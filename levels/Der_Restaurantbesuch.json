@@ -2,7 +2,7 @@
   "schema": 1,
   "id": "editor-der-restaurantbesuch",
   "title": "Die letzte Bestellung",
-  "titles": { "de": "Die letzte Bestellung", "en": "The Last Order", "es": "El último pedido", "pt": "O Último Pedido", "fr": "La Dernière Commande" },
+  "titles": { "de": "Die letzte Bestellung", "en": "The Last Order", "es": "El último pedido", "pt": "O Último Pedido", "fr": "La Dernière Commande", "ru": "Последний заказ" },
   "size": {
     "width": 7,
     "height": 7

@@ -5,16 +5,19 @@ import { consumeBack } from './game/backHandler.ts'
 import StartScreen from './screens/StartScreen.tsx'
 import DailyScreen from './screens/DailyScreen.tsx'
 import LevelSelect from './screens/LevelSelect.tsx'
+import UserLevelScreen from './screens/UserLevelScreen.tsx'
 import GameScreen from './screens/GameScreen.tsx'
 import GeneratorScreen from './screens/GeneratorScreen.tsx'
 import TutorialScreen from './screens/TutorialScreen.tsx'
 import EditorScreen from './screens/EditorScreen.tsx'
 import { LEVELS, levelMetaFromJson, type LevelMeta } from './game/levels.ts'
 import { loadCustomLevels } from './game/storage.ts'
+import { loadUserLevels } from './game/userlevels.ts'
 
 type Screen =
   | { name: 'start' }
   | { name: 'select' }
+  | { name: 'userlevels' }
   // `open`: select this day AND open it immediately (the win dialog's "next
   // daily" — the player already chose to play on, no extra tap in between).
   | { name: 'daily'; open?: string }
@@ -29,11 +32,16 @@ type Screen =
       generated?: boolean
       fromEditor?: boolean
       fromDaily?: boolean
+      fromUserLevels?: boolean
     }
 
 function findMeta(id: string): LevelMeta | undefined {
   const bundled = LEVELS.find((l) => l.id === id)
   if (bundled) return bundled
+  if (id.startsWith('ul-')) {
+    const entry = loadUserLevels().find((e) => e.json.id === id)
+    if (entry) return levelMetaFromJson(entry.json)
+  }
   const custom = loadCustomLevels().find((j) => j.id === id)
   return custom ? levelMetaFromJson(custom, true) : undefined
 }
@@ -46,6 +54,7 @@ function initialScreen(): Screen {
     if (level) return { name: 'game', level }
   }
   if (window.location.hash.includes('tutorial')) return { name: 'tutorial' }
+  if (window.location.hash.includes('userlevels')) return { name: 'userlevels' }
   if (window.location.hash.includes('daily')) return { name: 'daily' }
   if (window.location.hash.includes('generate')) return { name: 'generate' }
   if (window.location.hash.includes('editor')) return { name: 'editor' }
@@ -77,7 +86,9 @@ export default function App() {
             ? { name: 'generate' }
             : cur.fromDaily
               ? { name: 'daily' }
-              : { name: 'select' },
+              : cur.fromUserLevels
+                ? { name: 'userlevels' }
+                : { name: 'select' },
       )
     } else if (cur.name === 'start') {
       if (Capacitor.isNativePlatform()) void CapApp.exitApp()
@@ -118,8 +129,16 @@ export default function App() {
           onDaily={() => setScreen({ name: 'daily' })}
           onGenerate={() => setScreen({ name: 'generate' })}
           onTutorial={() => setScreen({ name: 'tutorial' })}
+          onUserLevels={() => setScreen({ name: 'userlevels' })}
           onEditor={() => setScreen({ name: 'editor' })}
           onQuit={onQuit}
+        />
+      )
+    case 'userlevels':
+      return (
+        <UserLevelScreen
+          onPick={(level) => setScreen({ name: 'game', level, fromUserLevels: true })}
+          onBack={back}
         />
       )
     case 'daily':
@@ -164,7 +183,7 @@ export default function App() {
           onNew={() => setScreen({ name: 'generate', auto: true })}
           onEdit={() => setScreen({ name: 'editor', initial: screen.level })}
           onNext={
-            screen.generated || screen.fromEditor || screen.fromDaily
+            screen.generated || screen.fromEditor || screen.fromDaily || screen.fromUserLevels
               ? undefined
               : (level) => setScreen({ name: 'game', level })
           }
@@ -172,6 +191,14 @@ export default function App() {
           onNextDaily={
             screen.fromDaily
               ? (day) => setScreen({ name: 'daily', open: day })
+              : undefined
+          }
+          // Userlevel: after a win, the rating block appears and "next" walks the
+          // community list (unsolved first, newest first).
+          userLevel={screen.fromUserLevels}
+          onNextUser={
+            screen.fromUserLevels
+              ? (level) => setScreen({ name: 'game', level, fromUserLevels: true })
               : undefined
           }
         />

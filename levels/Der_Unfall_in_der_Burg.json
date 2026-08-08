@@ -2,7 +2,7 @@
   "schema": 1,
   "id": "editor-der-unfall-in-der-burg",
   "title": "Sturz von den Zinnen",
-  "titles": { "de": "Sturz von den Zinnen", "en": "A Fall from the Battlements", "es": "Caída desde las almenas", "pt": "Queda das Ameias", "fr": "Mort aux créneaux" },
+  "titles": { "de": "Sturz von den Zinnen", "en": "A Fall from the Battlements", "es": "Caída desde las almenas", "pt": "Queda das Ameias", "fr": "Mort aux créneaux", "ru": "Падение со стены" },
   "size": {
     "width": 7,
     "height": 7

@@ -7,6 +7,13 @@ import '@fontsource-variable/fraunces/full.css'
 import '@fontsource-variable/fraunces/full-italic.css'
 import '@fontsource-variable/spline-sans/index.css'
 import '@fontsource/special-elite/index.css'
+// Kyrillische Zwillinge (Russisch): die Spiel-Fonts haben kein Kyrillisch, diese drei
+// stehen als Fallback in den Font-Stacks. Per unicode-range lädt ein Latein-Nutzer
+// davon nichts. Familien: 'Playfair Display Variable', 'PT Mono', 'Golos Text Variable'.
+import '@fontsource-variable/playfair-display/index.css'
+import '@fontsource-variable/playfair-display/wght-italic.css'
+import '@fontsource/pt-mono/index.css'
+import '@fontsource-variable/golos-text/index.css'
 import './i18n'
 import './index.css'
 import App from './App.tsx'

@@ -2,7 +2,7 @@
   "schema": 1,
   "id": "editor-der-fall-beim-autoh-ndler",
   "title": "Die letzte Probefahrt",
-  "titles": { "de": "Die letzte Probefahrt", "en": "The Last Test Drive", "es": "La última prueba de conducción", "pt": "A Última Prova de Estrada", "fr": "Le Dernier Essai sur route" },
+  "titles": { "de": "Die letzte Probefahrt", "en": "The Last Test Drive", "es": "La última prueba de conducción", "pt": "A Última Prova de Estrada", "fr": "Le Dernier Essai sur route", "ru": "Последний тест-драйв" },
   "size": {
     "width": 8,
     "height": 8

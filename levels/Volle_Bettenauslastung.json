@@ -2,7 +2,7 @@
   "schema": 1,
   "id": "editor-volle-bettenauslastung",
   "title": "Volle Bettenauslastung",
-  "titles": { "es": "Camas al completo", "pt": "Lotação Esgotada", "fr": "Complet pour la nuit" },
+  "titles": { "es": "Camas al completo", "pt": "Lotação Esgotada", "fr": "Complet pour la nuit", "ru": "Мест нет" },
   "size": {
     "width": 8,
     "height": 8

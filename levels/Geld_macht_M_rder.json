@@ -2,7 +2,7 @@
   "schema": 1,
   "id": "editor-geld-macht-m-rder",
   "title": "Reduziert zu Tode",
-  "titles": { "de": "Reduziert zu Tode", "en": "Marked Down for Murder", "es": "Rebajas mortales", "pt": "Saldos Mortais", "fr": "Soldes meurtriers" },
+  "titles": { "de": "Reduziert zu Tode", "en": "Marked Down for Murder", "es": "Rebajas mortales", "pt": "Saldos Mortais", "fr": "Soldes meurtriers", "ru": "Скидка на смерть" },
   "size": {
     "width": 9,
     "height": 9

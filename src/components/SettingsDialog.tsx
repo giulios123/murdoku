@@ -1,6 +1,7 @@
 import { useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { updateSettings, useSettings, type HelpMode } from '../game/settings.ts'
+import type { BlockedStyle } from '../game/boardRender.ts'
 import LanguageSelect from './LanguageSelect.tsx'
 
 const HELP_MODES: readonly HelpMode[] = ['full', 'reduced', 'none']
@@ -9,6 +10,8 @@ const MODE_KEY: Record<HelpMode, string> = {
   reduced: 'settings.helpReduced',
   none: 'settings.helpNone',
 }
+
+const BLOCKED_STYLES: readonly BlockedStyle[] = ['plain', 'dim', 'hatch', 'both']
 
 /** A compact label + switch row — no helper text, so the list stays short. */
 function ToggleRow({
@@ -107,6 +110,24 @@ export default function SettingsDialog({ onClose }: { onClose: () => void }) {
           checked={settings.floorTextures}
           onChange={(floorTextures) => updateSettings({ floorTextures })}
         />
+
+        {/* One slim row with a native dropdown — the settings dialog must never
+            grow to the point of scrolling (Dirks Regel). */}
+        <div className="mk-settings__row">
+          <span className="mk-settings__label">{t('settings.blockedStyle')}</span>
+          <select
+            className="mk-select-input mk-settings__select"
+            aria-label={t('settings.blockedStyle')}
+            value={settings.blockedStyle}
+            onChange={(e) => updateSettings({ blockedStyle: e.target.value as BlockedStyle })}
+          >
+            {BLOCKED_STYLES.map((style) => (
+              <option key={style} value={style}>
+                {t(`settings.blocked_${style}`)}
+              </option>
+            ))}
+          </select>
+        </div>
 
         <button type="button" className="mk-btn mk-settings__close" onClick={onClose}>
           {t('settings.close')}

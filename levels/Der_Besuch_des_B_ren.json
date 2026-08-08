@@ -2,7 +2,7 @@
   "schema": 1,
   "id": "editor-der-besuch-des-b-ren",
   "title": "Der Bär war es nicht",
-  "titles": { "de": "Der Bär war es nicht", "en": "It Wasn't the Bear", "es": "El oso es inocente", "pt": "O Urso Está Inocente", "fr": "Ce n'est pas l'ours" },
+  "titles": { "de": "Der Bär war es nicht", "en": "It Wasn't the Bear", "es": "El oso es inocente", "pt": "O Urso Está Inocente", "fr": "Ce n'est pas l'ours", "ru": "Медведь не виноват" },
   "size": {
     "width": 9,
     "height": 9

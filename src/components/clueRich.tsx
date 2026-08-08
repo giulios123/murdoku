@@ -1,10 +1,10 @@
 import type { ReactNode } from 'react'
-import type { Renderer } from '../i18n/Renderer.ts'
+import { Renderer } from '../i18n/Renderer.ts'
 import type { Explanation, PersonId } from '../engine/index.ts'
 import InfoTip from './InfoTip.tsx'
 
 /** Params rendered bold (objects/rooms etc. — also shown on the board). */
-const BOLD_PARAMS = new Set(['object', 'objectNom', 'objectEvery', 'objects', 'room', 'attribute', 'who', 'whoNeg', 'whoSg', 'whoOther', 'whoOtherPl', 'whoBare', 'mate', 'mateLc', 'row', 'col', 'n', 'line', 'roomRel', 'target', 'people', 'atCell', 'area'])
+const BOLD_PARAMS = new Set(['object', 'objectNom', 'objectPrep', 'objectGen', 'objectIns', 'objectEvery', 'objects', 'room', 'attribute', 'who', 'whoNeg', 'whoSg', 'whoOther', 'whoOtherPl', 'whoBare', 'mate', 'mateLc', 'row', 'col', 'n', 'line', 'roomRel', 'target', 'people', 'atCell', 'area'])
 
 /**
  * The rich-text machinery shared by suspect clues AND board (global) clues: one place that
@@ -44,7 +44,7 @@ export function makeRichRenderer(
         if (name === 'child' && childNodes) {
           out.push(...childNodes)
         } else {
-          const val = renderer.resolveParam(name, params[name] ?? '', false, params.subject)
+          const val = renderer.resolveParam(name, Renderer.paramValue(params, name), false, params.subject)
           // The negation word ("nicht"/"not") is bold + tooltipped like the concept
           // words; the trailing space stays outside the bold span so spacing is unchanged.
           if (name === 'neg') {
@@ -99,13 +99,14 @@ export function makeRichRenderer(
             name === 'who' ||
             name === 'whoNeg' ||
             name === 'whoSg' ||
+            name === 'whoIns' ||
             name === 'whoOther' ||
             name === 'whoOtherPl' ||
             name === 'whoBare'
           ) {
             // "_susp" gender tokens are suspects (victim excluded → "suspect" tooltip);
             // plain gender tokens count everyone incl. the victim → the "all people" one.
-            const tok = String(params[name] ?? '')
+            const tok = String(Renderer.paramValue(params, name))
             out.push(term(m.index, val, tok.includes('_susp') ? 'suspect' : 'person'))
           } else if (BOLD_PARAMS.has(name)) out.push(<strong key={m.index}>{val}</strong>)
           else out.push(val)

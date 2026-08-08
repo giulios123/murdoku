@@ -2,7 +2,7 @@
   "schema": 1,
   "id": "editor-ein-bauer-auf-abwegen",
   "title": "Vidals letzte Ernte",
-  "titles": { "de": "Vidals letzte Ernte", "en": "Vidal's Last Harvest", "es": "La última cosecha de Vidal", "pt": "A Última Colheita", "fr": "La Dernière Moisson" },
+  "titles": { "de": "Vidals letzte Ernte", "en": "Vidal's Last Harvest", "es": "La última cosecha de Vidal", "pt": "A Última Colheita", "fr": "La Dernière Moisson", "ru": "Последняя жатва" },
   "size": {
     "width": 9,
     "height": 9

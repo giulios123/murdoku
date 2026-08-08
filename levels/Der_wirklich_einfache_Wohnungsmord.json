@@ -2,7 +2,7 @@
   "schema": 1,
   "id": "editor-der-wirklich-einfache-wohnungsmord",
   "title": "Valentins letzte Adresse",
-  "titles": { "de": "Valentins letzte Adresse", "en": "Valentin's Last Address", "es": "La última dirección de Valentín", "pt": "A Última Morada", "fr": "La Dernière Adresse" },
+  "titles": { "de": "Valentins letzte Adresse", "en": "Valentin's Last Address", "es": "La última dirección de Valentín", "pt": "A Última Morada", "fr": "La Dernière Adresse", "ru": "Последний адрес" },
   "size": {
     "width": 8,
     "height": 8

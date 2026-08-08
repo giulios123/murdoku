@@ -30,7 +30,7 @@ export default function EditorBoard({ state, onPaint, windowMode, onPaintWindow,
   const { t, i18n } = useTranslation()
   // The floor-pattern setting applies here too — the editor board must go plain
   // (and redraw) the moment it's switched off in the gear menu.
-  const { floorTextures } = useSettings()
+  const { floorTextures, blockedStyle } = useSettings()
   const W = state.size
   const H = state.size
   const wrapRef = useRef<HTMLDivElement>(null)
@@ -90,8 +90,9 @@ export default function EditorBoard({ state, onPaint, windowMode, onPaintWindow,
       highlight: null,
       reveal: null,
       floorTextures,
+      blockedStyle,
     })
-  }, [layout, puzzle, artTick, t, i18n.language, floorTextures])
+  }, [layout, puzzle, artTick, t, i18n.language, floorTextures, blockedStyle])
 
   // Redraw when bundled board art (e.g. the armchair) finishes loading.
   useEffect(() => onArtReady(() => setArtTick((t) => t + 1)), [])

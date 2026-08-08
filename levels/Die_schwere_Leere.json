@@ -2,7 +2,7 @@
   "schema": 1,
   "id": "editor-die-schwere-leere",
   "title": "Schweigen am Beckenrand",
-  "titles": { "de": "Schweigen am Beckenrand", "en": "Still Waters", "es": "Silencio en la piscina", "pt": "Silêncio na Piscina", "fr": "Silence au bord du bassin" },
+  "titles": { "de": "Schweigen am Beckenrand", "en": "Still Waters", "es": "Silencio en la piscina", "pt": "Silêncio na Piscina", "fr": "Silence au bord du bassin", "ru": "Тишина у бассейна" },
   "size": {
     "width": 7,
     "height": 7

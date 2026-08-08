@@ -2,7 +2,7 @@
   "schema": 1,
   "id": "editor-achtung-b-ren",
   "title": "Achtung Bären",
-  "titles": { "de": "Achtung Bären", "en": "Beware of Bears", "es": "Cuidado con los osos", "pt": "Cuidado com o Urso", "fr": "Gare à l'ours" },
+  "titles": { "de": "Achtung Bären", "en": "Beware of Bears", "es": "Cuidado con los osos", "pt": "Cuidado com o Urso", "fr": "Gare à l'ours", "ru": "Осторожно, медведи!" },
   "size": {
     "width": 8,
     "height": 8

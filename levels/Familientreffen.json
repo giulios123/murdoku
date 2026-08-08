@@ -2,7 +2,7 @@
   "schema": 1,
   "id": "editor-familientreffen",
   "title": "Familie zum Sterben",
-  "titles": { "de": "Familie zum Sterben", "en": "Family to Die For", "es": "Una familia de muerte", "pt": "Uma Família de Morte", "fr": "Une famille à mourir" },
+  "titles": { "de": "Familie zum Sterben", "en": "Family to Die For", "es": "Una familia de muerte", "pt": "Uma Família de Morte", "fr": "Une famille à mourir", "ru": "Смертельная родня" },
   "size": {
     "width": 6,
     "height": 6

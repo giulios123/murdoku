@@ -2,7 +2,7 @@
   "schema": 1,
   "id": "editor-der-wirklich-andere-supermarkt",
   "title": "Sonderangebot: Mord",
-  "titles": { "de": "Sonderangebot: Mord", "en": "Murder on Sale", "es": "Oferta especial: asesinato", "pt": "Promoção: Homicídio", "fr": "Promo sur le meurtre" },
+  "titles": { "de": "Sonderangebot: Mord", "en": "Murder on Sale", "es": "Oferta especial: asesinato", "pt": "Promoção: Homicídio", "fr": "Promo sur le meurtre", "ru": "Убийство по акции" },
   "size": {
     "width": 9,
     "height": 9

@@ -2,7 +2,7 @@
   "schema": 1,
   "id": "editor-der-einkauf-des-todes",
   "title": "Der Einkauf des Todes",
-  "titles": { "de": "Der Einkauf des Todes", "en": "Shopping for Death", "es": "De compras con la muerte", "pt": "As Compras da Morte", "fr": "Les Courses de la mort" },
+  "titles": { "de": "Der Einkauf des Todes", "en": "Shopping for Death", "es": "De compras con la muerte", "pt": "As Compras da Morte", "fr": "Les Courses de la mort", "ru": "Смертельная корзина" },
   "size": {
     "width": 9,
     "height": 9

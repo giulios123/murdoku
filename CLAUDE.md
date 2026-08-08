@@ -11,7 +11,8 @@ Ein Deduktions-Krimi: Verdächtige + Opfer werden per Hinweisen auf einem Raster
   supermarkt, camping, castle, pool, zoo, ski) · **74 Objekt-Typen** (28 betretbar).
 - **40 Hinweistypen** (inkl. and/or/not) **+ 5 globale** (`BoardClueJson`) ·
   **34 registrierte Techniken** (28 Klassen) in `forward.ts`.
-- **5 Sprachen** (de/en/es/pt/fr; pt = **pt-PT** mit „tu", fr mit **„vous"**) ·
+- **6 Sprachen** (de/en/es/pt/fr/ru; pt = **pt-PT** mit „tu", fr mit **„vous"**, ru mit
+  **«вы»** — Personennamen bleiben lateinisch) ·
   Brettgrößen **4×4–12×12** (Korpus & Generator; Editor bis 11×11).
 - **Level-Titel:** `title` (de) + `titles {de,en,es,pt,fr}`, Krimi-/Christie-Ton, je Sprache
   eigenständig (nie wörtlich), **eindeutig über den GESAMTEN Korpus je Sprache** (vor dem
@@ -346,6 +347,60 @@ eindeutig **und** die Deduktion streicht nie eine wahre Zelle).
 
 Bekannt & nicht deine Schuld: `79_Der_Bauernhof.json` löst als einziges Level nicht rein
 vorwärts (braucht eine Fallunterscheidung) — alle anderen Level tun es.
+
+## Userlevel (Community-System, 08/2026)
+
+Spieler laden Editor-Level zu einer PHP-API hoch (`php/` → Deploy `https://apo-games.de/murdoku/`;
+Tabellen in `php/schema.sql`: `murdoku_userlevel` + Drossel `murdoku_upload_ip`). Client-Logik in
+`src/game/userlevels.ts` (Sync-Cache in localStorage, offline voll spielbar), Screen
+`UserLevelScreen`, Level-ids `ul-<dbId>`.
+
+- **Upload ist ASYNCHRON und schnell** (<1 s, KEINE OpenAI-Aufrufe im Pfad — Dirks Regel: niemand
+  wartet): `addUserlevel.php` speichert `status='pending'`; `processUserlevel.php` (vom Client
+  fire-and-forget angestoßen, `kickProcessing()`) moderiert (omni-moderation; sexual/hate/…
+  blocken, violence NICHT — Krimi! API down ⇒ bleibt pending, fail-closed) und übersetzt den
+  Titel in alle 6 Sprachen / transliteriert nicht-lateinische Namen (`OPENAI_MODEL`, best effort)
+  → `ok`/`rejected`. `sync.php` liefert NUR `ok`; Cursor = `updated` — wird NUR bei der Freigabe
+  gebumpt, NIE durch Bewertungen (sonst liefert jeder Sync frisch bewertete Level komplett neu);
+  der Client ERSETZT gelieferte Einträge idempotent (so kommen Nachübersetzungen an).
+- **Duplikat-Schutz:** `src/game/levelHash.ts` = SHA-256 der Puzzle-KERNSTRUKTUR (Titel/Autor/
+  Namen/Raumnamen/Farben = Flavor, zählen nicht ⇒ Re-Skin bleibt Duplikat). NUR der Client
+  rechnet; PHP vergleicht Strings. **Bei neuen offiziellen Leveln PFLICHT:**
+  `npx tsx src/dev/userlevel-hashes.ts` laufen lassen und `php/internal_hashes.php` neu
+  deployen — sonst lassen sich offizielle Level als Userlevel hochladen.
+- **ratings-Zeilen sind positionscodiert:** Spaltenreihenfolge `TAG_KEYS` (php/db_config.php)
+  == `USERLEVEL_TAGS` (userlevels.ts). Beim Ändern IMMER beide synchron halten.
+- **Auto-Tag „Ausprobieren"** (`nologic`): Level eindeutig, aber die Default-Deduktions-Pipeline
+  scheitert (⇒ Tipp funktioniert dort nicht). Wird NICHT in der DB gespeichert, sondern von jedem
+  Client beim Sync selbst berechnet — lernt die Engine Techniken dazu, verschwindet der Tag mit
+  dem App-Update (Re-Check markierter Level, wenn die `TECHNIQUE_RANK`-Größe sich ändert).
+  Upload-Gate im Editor: `checkLevel` 'ok' ODER 'contradiction'; mehrdeutig/unlösbar = gesperrt.
+- **Bewerten nur online** und einmalig pro Level (`murdoku.userlevels.rated.v1`); Sperre und
+  lokale Einrechnung erst NACH Server-OK — keine Offline-Queue (bewusst entfernt). Autor ist
+  beim Upload optional. Rate-Limit: 1 Upload / 5 s je IP (gespeichert nur als SHA-256-Hash).
+- `php/db_config.php` ist **gitignored** (echte DB-/OpenAI-Secrets; Repo-Vorlage
+  `db_config.example.php`). `DEBUG=true` schreibt echte PDO-Meldungen in die Antworten —
+  nur zum Einrichten, danach wieder aus. Auswertung: `php/index.php` (Noir-Stil, Status-Spalte).
+
+## UI-Regeln (Dirk, gelten immer)
+
+- **Settings-Dialog darf nie scrollen** — kompakte Zeilen; Mehrfach-Optionen als Dropdown
+  (`mk-settings__select`), nie als Chip-Gruppen.
+- **Android-Tastatur:** das fokussierte Textfeld muss sichtbar bleiben. Drei Schichten:
+  Manifest `windowSoftInputMode="adjustResize"` + Viewport `interactive-widget=resizes-content`
+  + `keepFieldVisible()` (`game/keyboard.ts`) als onFocus an Dialog-Inputs.
+- **Kein Tap-Highlight:** global `-webkit-tap-highlight-color: transparent` (Androids blauer
+  Tap-Schleier passt nie zum Noir-Look; alle Controls haben eigene Press-Zustände).
+- **Dialoge springen nicht:** Nach einer Aktion (z. B. Bewertung senden) Inhalte EINFRIEREN
+  statt austauschen — die Dialoghöhe darf sich nicht ändern (der Button wird zur Bestätigung).
+- **Blockierte Felder** (`blockedStyle`-Setting: Karte/dim/hatch/beides, Default Karte): dim lebt
+  im gecachten Floor-Layer, hatch im gecachten Möbel-Layer — die Cache-Schlüssel (`floorSig`/
+  `furnitureSig`) kennen den Stil; einmal gerendert, pro Frame nur Blit. Legende bleibt neutral.
+  Der `BlockedStyle`-Typ lebt in `boardRender.ts`; `settings.ts` importiert ihn type-only —
+  nie andersherum (kein React in boardRender, die Dev-Sheet-Scripts importieren es headless).
+- **Speichern-Dialog des Editors** = drei Ziel-Zeilen im Share-Sheet-Muster (`mk-saverow`:
+  Icon + Name + 3–5-Wörter-Unterzeile; gesperrtes Hochladen zeigt den GRUND als Unterzeile),
+  darunter abgesetzt „Abbrechen". Keine Hinweistext-Absätze, kein ⓘ.
 
 ## i18n-Konventionen
 

@@ -2,7 +2,7 @@
   "schema": 1,
   "id": "editor-der-schwere-fall-in-der-burg",
   "title": "Verrat im Rittersaal",
-  "titles": { "de": "Verrat im Rittersaal", "en": "Treachery in the Knights' Hall", "es": "Traición en el castillo", "pt": "Traição no Salão dos Cavaleiros", "fr": "Trahison chez les chevaliers" },
+  "titles": { "de": "Verrat im Rittersaal", "en": "Treachery in the Knights' Hall", "es": "Traición en el castillo", "pt": "Traição no Salão dos Cavaleiros", "fr": "Trahison chez les chevaliers", "ru": "Предательство в рыцарском зале" },
   "size": {
     "width": 7,
     "height": 7

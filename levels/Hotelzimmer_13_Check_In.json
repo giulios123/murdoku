@@ -3,7 +3,7 @@
   "author": "Mika Aporius",
   "id": "editor-hotelzimmer-13-check-in",
   "title": "Hotelzimmer 13 Check In",
-  "titles": { "de": "Hotelzimmer 13 Check In", "en": "Room 13: Check-In", "es": "Habitación 13: Check-in", "pt": "Quarto 13: Check-in", "fr": "Chambre 13 : check-in" },
+  "titles": { "de": "Hotelzimmer 13 Check In", "en": "Room 13: Check-In", "es": "Habitación 13: Check-in", "pt": "Quarto 13: Check-in", "fr": "Chambre 13 : check-in", "ru": "Номер 13: заселение" },
   "size": {
     "width": 4,
     "height": 4

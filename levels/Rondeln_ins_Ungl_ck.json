@@ -2,7 +2,7 @@
   "schema": 1,
   "id": "editor-rodeln-ins-ungl-ck",
   "title": "Rodeln ins Unglück",
-  "titles": { "es": "En trineo hacia la desgracia", "pt": "Trenó Para o Desastre", "fr": "En luge vers le drame" },
+  "titles": { "es": "En trineo hacia la desgracia", "pt": "Trenó Para o Desastre", "fr": "En luge vers le drame", "ru": "Санки навстречу беде" },
   "size": {
     "width": 6,
     "height": 6

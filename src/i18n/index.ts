@@ -5,6 +5,7 @@ import en from './locales/en.json'
 import es from './locales/es.json'
 import pt from './locales/pt.json'
 import fr from './locales/fr.json'
+import ru from './locales/ru.json'
 
 // All UI/clue strings live in the locale JSON files — never hard-coded in TS.
 
@@ -15,7 +16,7 @@ const LANG_KEY = 'murdoku.lang.v1'
  * browser detection all derive from this list — adding a locale is just an entry
  * here plus its JSON in `resources` and a `language.<code>` label in each file.
  */
-export const SUPPORTED_LANGS = ['de', 'en', 'es', 'pt', 'fr'] as const
+export const SUPPORTED_LANGS = ['de', 'en', 'es', 'pt', 'fr', 'ru'] as const
 export type Lang = (typeof SUPPORTED_LANGS)[number]
 
 /**
@@ -30,6 +31,7 @@ export const LANGUAGE_NAMES: Record<Lang, string> = {
   es: 'Español',
   pt: 'Português',
   fr: 'Français',
+  ru: 'Русский',
 }
 
 const resources = {
@@ -38,6 +40,7 @@ const resources = {
   es: { translation: es },
   pt: { translation: pt },
   fr: { translation: fr },
+  ru: { translation: ru },
 }
 
 function isLang(value: string): value is Lang {

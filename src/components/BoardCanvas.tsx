@@ -72,7 +72,7 @@ interface Layout {
 function BoardCanvas(props: Props) {
   const { puzzle } = props
   const { t } = useTranslation()
-  const { objectBadges, floorTextures } = useSettings()
+  const { objectBadges, floorTextures, blockedStyle } = useSettings()
   const W = puzzle.board.width
   const H = puzzle.board.height
 
@@ -106,6 +106,8 @@ function BoardCanvas(props: Props) {
   badgesRef.current = objectBadges
   const texturesRef = useRef(floorTextures)
   texturesRef.current = floorTextures
+  const blockedRef = useRef(blockedStyle)
+  blockedRef.current = blockedStyle
 
   const pressRef = useRef<{
     cell: Cell
@@ -164,6 +166,7 @@ function BoardCanvas(props: Props) {
       helpMarks: p.helpMarks,
       objectBadges: badgesRef.current,
       floorTextures: texturesRef.current,
+      blockedStyle: blockedRef.current,
       reveal: p.reveal,
       avatars: avatarsRef.current,
       hover: hoverRef.current,
@@ -258,7 +261,7 @@ function BoardCanvas(props: Props) {
     redraw()
     redrawOverlay()
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [layout, props.state, props.selectedSuspect, props.highlight, props.highlight2, props.highlightAlpha, props.highlightAlpha2, props.helpMarks, props.reveal, objectBadges, floorTextures])
+  }, [layout, props.state, props.selectedSuspect, props.highlight, props.highlight2, props.highlightAlpha, props.highlightAlpha2, props.helpMarks, props.reveal, objectBadges, floorTextures, blockedStyle])
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => () => cancelPress(), [])

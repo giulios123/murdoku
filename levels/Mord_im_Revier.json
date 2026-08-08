@@ -2,7 +2,7 @@
   "schema": 1,
   "id": "editor-mord-im-revier",
   "title": "Der Maulwurf",
-  "titles": { "de": "Der Maulwurf", "en": "The Mole", "es": "El topo", "pt": "A Toupeira", "fr": "La Taupe" },
+  "titles": { "de": "Der Maulwurf", "en": "The Mole", "es": "El topo", "pt": "A Toupeira", "fr": "La Taupe", "ru": "Крот в участке" },
   "size": {
     "width": 6,
     "height": 6

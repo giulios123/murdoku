@@ -2,7 +2,7 @@
   "schema": 1,
   "id": "editor-die-schule-der-m-rder",
   "title": "Das Skelett im Klassenzimmer",
-  "titles": { "de": "Das Skelett im Klassenzimmer", "en": "A Skeleton in the Classroom", "es": "Un esqueleto en el aula", "pt": "Um Esqueleto na Sala de Aula", "fr": "Un squelette en classe" },
+  "titles": { "de": "Das Skelett im Klassenzimmer", "en": "A Skeleton in the Classroom", "es": "Un esqueleto en el aula", "pt": "Um Esqueleto na Sala de Aula", "fr": "Un squelette en classe", "ru": "Скелет в классе" },
   "size": {
     "width": 8,
     "height": 8

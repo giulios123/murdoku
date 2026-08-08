@@ -2,6 +2,8 @@ import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import Avatar from './Avatar.tsx'
 import type { AvatarAttrs } from '../game/avatar.ts'
+import { USERLEVEL_TAGS } from '../game/userlevels.ts'
+import { keepFieldVisible } from '../game/keyboard.ts'
 
 interface Props {
   win: boolean
@@ -28,6 +30,14 @@ interface Props {
   onSave: (name: string) => void
   onExport: (name: string) => void
   onNew?: () => void
+  /** Community level, first win: offer the one-time rating (1–5 stars, ≤ 2 properties).
+   *  Sending is optional — every other action simply skips it. Resolves false when the
+   *  server couldn't be reached (rating only works online) — the dialog then says so
+   *  and lets the player try again. */
+  onRate?: (stars: number, tags: string[]) => Promise<boolean>
+  /** Community level: the level's overall verdict (Ø stars + top properties), shown
+   *  with the win regardless of whether the player still gets to rate. */
+  community?: { stars: number | null; ratings: number; tags: string[]; nologic: boolean } | null
 }
 
 export default function ResultDialog({
@@ -47,9 +57,22 @@ export default function ResultDialog({
   onSave,
   onExport,
   onNew,
+  onRate,
+  community,
 }: Props) {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
+  const lang = i18n.resolvedLanguage ?? i18n.language
   const showGen = win && generated
+  // One-time community rating: the five (initially hollow) stars are always visible —
+  // one slim, universally readable "rate me" row. Only once a star is tapped do the
+  // property dropdowns + send button unfold, so the verdict stays short on small
+  // phones without hiding the invitation behind a button.
+  const [stars, setStars] = useState(0)
+  const [tag1, setTag1] = useState('')
+  const [tag2, setTag2] = useState('')
+  const [rateSent, setRateSent] = useState(false)
+  const [rateSending, setRateSending] = useState(false)
+  const [rateFailed, setRateFailed] = useState(false)
   // The "back" button is the only secondary when there's no restart sibling and no
   // generated save/export pair (i.e. a loss) — then it spans the full row instead of
   // sitting in one half of the 2-column grid.
@@ -104,6 +127,105 @@ export default function ResultDialog({
             <p>{t('result.winMurderer', { name: murderer.name, room: murderer.room })}</p>
           </div>
         )}
+        {win && community && (
+          // The case's community verdict — same vocabulary as the picker cards.
+          <p className="mk-dialog__community">
+            <span className="mk-dialog__community-label">{t('rate.community')}</span>
+            <span className="mk-ul-stars" data-unrated={community.stars === null || undefined}>
+              {community.stars === null
+                ? '★ –'
+                : `★ ${community.stars.toLocaleString(lang, { minimumFractionDigits: 1, maximumFractionDigits: 1 })} (${community.ratings})`}
+            </span>
+            {community.tags.map((tag) => (
+              <span key={tag} className="mk-ul-tag">
+                {t(`tag.${tag}`)}
+              </span>
+            ))}
+            {community.nologic && (
+              <span className="mk-ul-tag" data-nologic="true">
+                {t('tag.nologic')}
+              </span>
+            )}
+          </p>
+        )}
+        {win && onRate && (
+          // After sending NOTHING is swapped out — the chosen stars stay, the inputs
+          // freeze, only the send button turns into the green confirmation. The dialog
+          // keeps its exact height, so the verdict never "flashes"/re-centres.
+          <div className="mk-rate" data-sent={rateSent || undefined}>
+            <div className="mk-rate__row">
+              <span className="mk-rate__yours">{t('rate.yours')}</span>
+              <div className="mk-rate__stars" role="radiogroup" aria-label={t('rate.starsLabel')}>
+                {[1, 2, 3, 4, 5].map((n) => (
+                  <button
+                    key={n}
+                    type="button"
+                    className="mk-rate__star"
+                    data-on={n <= stars || undefined}
+                    role="radio"
+                    aria-checked={stars === n}
+                    aria-label={`${n} ★`}
+                    disabled={rateSent || rateSending}
+                    onClick={() => setStars(n)}
+                  >
+                    {n <= stars ? '★' : '☆'}
+                  </button>
+                ))}
+              </div>
+            </div>
+            {stars > 0 && (
+              <>
+                <p className="mk-rate__tagslabel">{t('rate.tagsLabel')}</p>
+                <div className="mk-rate__tagrow">
+                  {[
+                    { value: tag1, set: setTag1, other: tag2 },
+                    { value: tag2, set: setTag2, other: tag1 },
+                  ].map(({ value, set, other }, i) => (
+                    <select
+                      key={i}
+                      className="mk-select-input mk-rate__select"
+                      aria-label={`${t('rate.tagsLabel')} ${i + 1}`}
+                      value={value}
+                      disabled={rateSent || rateSending}
+                      onChange={(e) => set(e.target.value)}
+                    >
+                      <option value="">–</option>
+                      {USERLEVEL_TAGS.filter((tag) => tag !== other).map((tag) => (
+                        <option key={tag} value={tag}>
+                          {t(`tag.${tag}`)}
+                        </option>
+                      ))}
+                    </select>
+                  ))}
+                </div>
+                {rateFailed && !rateSent && (
+                  <p className="mk-rate__failed">{t('rate.failed')}</p>
+                )}
+                <button
+                  type="button"
+                  className="mk-btn mk-btn--ghost mk-btn--wide mk-rate__send"
+                  data-sent={rateSent || undefined}
+                  disabled={rateSending || rateSent}
+                  onClick={() => {
+                    setRateSending(true)
+                    setRateFailed(false)
+                    void onRate(stars, [tag1, tag2].filter((tag) => tag !== '')).then((sent) => {
+                      setRateSending(false)
+                      if (sent) setRateSent(true)
+                      else setRateFailed(true)
+                    })
+                  }}
+                >
+                  {rateSending ? '…' : rateSent ? `✓ ${t('rate.sent')}` : t('rate.send')}
+                </button>
+              </>
+            )}
+          </div>
+        )}
+        {/* A plain rule between the rating row and the regular verdict buttons.
+            (Not .mk-divider: the dialog grid centers children at content width,
+            which collapses a label-less divider to 0px — this one is full width.) */}
+        {win && onRate && <div className="mk-dialog__rule" aria-hidden="true" />}
         {!win && failures && failures.length > 0 && (
           <div className="mk-dialog__clues">
             <p className="mk-dialog__clues-title">{t('result.loseClues')}</p>
@@ -132,6 +254,7 @@ export default function ResultDialog({
                 maxLength={40}
                 placeholder={t('result.namePlaceholder')}
                 onChange={(e) => setName(e.target.value)}
+                onFocus={keepFieldVisible}
                 onKeyDown={(e) => {
                   if (e.key === 'Enter' && !saved) onSave(value())
                 }}

@@ -6,6 +6,7 @@
  */
 import { useSyncExternalStore } from 'react'
 import { loadAppSettings, saveAppSettings } from './storage.ts'
+import type { BlockedStyle } from './boardRender.ts'
 
 /** How much the board highlights when a suspect card is selected:
  *  'full' = every cell their statements still allow (intersection, as before),
@@ -23,6 +24,9 @@ export interface AppSettings {
   objectBadges: boolean
   /** Draw the subtle per-room floor patterns on the board (a taste setting). */
   floorTextures: boolean
+  /** Extra marking of non-walkable cells beyond the white card ('plain' = as
+   *  before, 'dim' = darkened floor, 'hatch' = ink hatching, 'both'). */
+  blockedStyle: BlockedStyle
 }
 
 export const DEFAULT_SETTINGS: AppSettings = {
@@ -31,6 +35,7 @@ export const DEFAULT_SETTINGS: AppSettings = {
   genderColors: true,
   objectBadges: true,
   floorTextures: true,
+  blockedStyle: 'plain',
 }
 
 let current: AppSettings = loadAppSettings(DEFAULT_SETTINGS)

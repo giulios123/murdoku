@@ -2,7 +2,7 @@
   "schema": 1,
   "id": "editor-m-rder-unter-sich",
   "title": "Mörder unter sich",
-  "titles": { "de": "Mörder unter sich", "en": "No Honor Among Killers", "es": "Sin honor entre asesinos", "pt": "Sem Honra Entre Assassinos", "fr": "Pas d'honneur entre assassins" },
+  "titles": { "de": "Mörder unter sich", "en": "No Honor Among Killers", "es": "Sin honor entre asesinos", "pt": "Sem Honra Entre Assassinos", "fr": "Pas d'honneur entre assassins", "ru": "Убийцы между собой" },
   "size": {
     "width": 9,
     "height": 9

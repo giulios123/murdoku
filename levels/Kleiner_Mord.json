@@ -2,7 +2,7 @@
   "schema": 1,
   "id": "editor-kleiner-mord",
   "title": "Nur ein kleiner Mord",
-  "titles": { "de": "Nur ein kleiner Mord", "en": "Just a Little Murder", "es": "Solo un pequeño asesinato", "pt": "Só Um Pequeno Homicídio", "fr": "Juste un petit meurtre" },
+  "titles": { "de": "Nur ein kleiner Mord", "en": "Just a Little Murder", "es": "Solo un pequeño asesinato", "pt": "Só Um Pequeno Homicídio", "fr": "Juste un petit meurtre", "ru": "Всего лишь маленькое убийство" },
   "size": {
     "width": 4,
     "height": 4

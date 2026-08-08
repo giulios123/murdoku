@@ -2,7 +2,7 @@
   "schema": 1,
   "id": "editor-tod-bei-der-entspannung",
   "title": "Dampf und Schweigen",
-  "titles": { "de": "Dampf und Schweigen", "en": "Steam and Silence", "es": "Vapor y silencio", "pt": "Vapor e Silêncio", "fr": "Vapeur et silence" },
+  "titles": { "de": "Dampf und Schweigen", "en": "Steam and Silence", "es": "Vapor y silencio", "pt": "Vapor e Silêncio", "fr": "Vapeur et silence", "ru": "Пар и молчание" },
   "size": {
     "width": 8,
     "height": 8

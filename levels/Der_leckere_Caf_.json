@@ -2,7 +2,7 @@
   "schema": 1,
   "id": "editor-der-leckere-caf",
   "title": "Der letzte Cappuccino",
-  "titles": { "de": "Der letzte Cappuccino", "en": "The Last Cappuccino", "es": "El último capuchino", "pt": "O Último Galão", "fr": "L'Addition, s'il vous plaît" },
+  "titles": { "de": "Der letzte Cappuccino", "en": "The Last Cappuccino", "es": "El último capuchino", "pt": "O Último Galão", "fr": "L'Addition, s'il vous plaît", "ru": "Последний капучино" },
   "size": {
     "width": 6,
     "height": 6

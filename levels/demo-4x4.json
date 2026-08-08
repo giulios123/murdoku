@@ -3,7 +3,7 @@
   "id": "demo-4x4",
   "difficulty": "tutorial",
   "title": "Tutorial",
-  "titles": { "de": "Tutorial", "en": "Tutorial", "es": "Tutorial", "pt": "Tutorial", "fr": "Tutoriel" },
+  "titles": { "de": "Tutorial", "en": "Tutorial", "es": "Tutorial", "pt": "Tutorial", "fr": "Tutoriel", "ru": "Обучение" },
   "size": { "width": 4, "height": 4 },
   "rooms": {
     "L": { "nameKey": "room.living", "color": "#cdb4db" },

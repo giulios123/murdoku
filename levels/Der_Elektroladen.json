@@ -2,7 +2,7 @@
   "schema": 1,
   "id": "editor-der-elektroladen",
   "title": "Kurzschluss",
-  "titles": { "de": "Kurzschluss", "en": "Short Circuit", "es": "Cortocircuito", "pt": "Curto-Circuito", "fr": "Court-circuit" },
+  "titles": { "de": "Kurzschluss", "en": "Short Circuit", "es": "Cortocircuito", "pt": "Curto-Circuito", "fr": "Court-circuit", "ru": "Короткое замыкание" },
   "size": {
     "width": 8,
     "height": 8

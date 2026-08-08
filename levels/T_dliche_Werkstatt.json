@@ -2,7 +2,7 @@
   "schema": 1,
   "id": "editor-t-dliche-werkstatt",
   "title": "Die letzte Ölung",
-  "titles": { "de": "Die letzte Ölung", "en": "Last Rites", "es": "La última unción", "pt": "A Extrema-Unção", "fr": "L'Extrême-Onction" },
+  "titles": { "de": "Die letzte Ölung", "en": "Last Rites", "es": "La última unción", "pt": "A Extrema-Unção", "fr": "L'Extrême-Onction", "ru": "Последняя замена масла" },
   "size": {
     "width": 7,
     "height": 7

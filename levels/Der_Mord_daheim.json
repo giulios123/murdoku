@@ -2,7 +2,7 @@
   "schema": 1,
   "id": "editor-der-mord-daheim",
   "title": "Trautes Heim, Mord allein",
-  "titles": { "de": "Trautes Heim, Mord allein", "en": "Home Deadly Home", "es": "Hogar, dulce muerte", "pt": "Lar, Doce Morte", "fr": "Meurtre, doux meurtre" },
+  "titles": { "de": "Trautes Heim, Mord allein", "en": "Home Deadly Home", "es": "Hogar, dulce muerte", "pt": "Lar, Doce Morte", "fr": "Meurtre, doux meurtre", "ru": "Дом, смертельный дом" },
   "size": {
     "width": 9,
     "height": 9

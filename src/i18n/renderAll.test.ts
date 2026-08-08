@@ -2,7 +2,8 @@ import { describe, it, expect } from 'vitest'
 import { readFileSync, readdirSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { loadLevel } from '../engine/io/LevelLoader.ts'
-import { createBoardClue } from '../engine/clues/index.ts'
+import { createBoardClue, createClue } from '../engine/clues/index.ts'
+import type { ClueJson } from '../engine/clues/index.ts'
 import { Renderer } from './Renderer.ts'
 import type { BoardClueJson, LevelJson } from '../engine/io/LevelSchema.ts'
 
@@ -18,7 +19,7 @@ const dir = resolve(process.cwd(), 'levels')
 const files = readdirSync(dir).filter((f) => f.endsWith('.json')).sort()
 const readLevel = (f: string): LevelJson => JSON.parse(readFileSync(resolve(dir, f), 'utf8'))
 
-const LANGS = ['de', 'en', 'es', 'pt', 'fr'] as const
+const LANGS = ['de', 'en', 'es', 'pt', 'fr', 'ru'] as const
 const dicts = Object.fromEntries(
   LANGS.map((lg) => [lg, JSON.parse(readFileSync(resolve(process.cwd(), `src/i18n/locales/${lg}.json`), 'utf8'))]),
 )
@@ -86,6 +87,25 @@ describe('every bundled level renders in every language', () => {
             const text = r.render(createBoardClue({ type: 'roomOccupancy', op, count, scope }).describe())
             expect(looksLikeKey(text), `${lg} ${op}/${scope}/${count} → ${text}`).toBe(false)
             expect(hasUnfilledSlot(text), `${lg} ${op}/${scope}/${count} → ${text}`).toBe(false)
+          }
+        }
+      }
+    }
+  })
+
+  it('every neighborRoomCountDir form renders (generator-only, no bundled level carries it)', () => {
+    const puzzle = loadLevel(readLevel(files[0]))
+    const subject = puzzle.suspects[0].id
+    for (const lg of LANGS) {
+      const r = new Renderer(dicts[lg], puzzle)
+      for (const dir of ['north', 'south', 'east', 'west'] as const) {
+        for (const count of [1, 2]) {
+          const pos: ClueJson = { type: 'neighborRoomCount', count, dir }
+          for (const json of [pos, { type: 'not', clue: pos } as ClueJson]) {
+            const text = r.clue(createClue(json).describe(), subject)
+            expect(looksLikeKey(text), `${lg} ${json.type}/${dir}/${count} → ${text}`).toBe(false)
+            expect(hasUnfilledSlot(text), `${lg} ${json.type}/${dir}/${count} → ${text}`).toBe(false)
+            expect(text.length).toBeGreaterThan(0)
           }
         }
       }

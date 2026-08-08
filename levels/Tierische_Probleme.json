@@ -2,7 +2,7 @@
   "schema": 1,
   "id": "editor-tierische-probleme",
   "title": "Ein tierisches Alibi",
-  "titles": { "de": "Ein tierisches Alibi", "en": "A Beastly Alibi", "es": "Una coartada animal", "pt": "Um Álibi Animal", "fr": "Un alibi bestial" },
+  "titles": { "de": "Ein tierisches Alibi", "en": "A Beastly Alibi", "es": "Una coartada animal", "pt": "Um Álibi Animal", "fr": "Un alibi bestial", "ru": "Звериное алиби" },
   "size": {
     "width": 8,
     "height": 8

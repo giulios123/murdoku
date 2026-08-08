@@ -2,7 +2,7 @@
   "schema": 1,
   "id": "editor-klinik-m-rdschen",
   "title": "Klinik Mördschen",
-  "titles": { "de": "Klinik Mördschen", "en": "The Killing Clinic", "es": "La clínica asesina", "pt": "A Clínica dos Horrores", "fr": "La Clinique des horreurs" },
+  "titles": { "de": "Klinik Mördschen", "en": "The Killing Clinic", "es": "La clínica asesina", "pt": "A Clínica dos Horrores", "fr": "La Clinique des horreurs", "ru": "Убийственная клиника" },
   "author": "Mika Aporius",
   "size": {
     "width": 7,

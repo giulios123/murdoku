@@ -2,7 +2,7 @@
   "schema": 1,
   "id": "editor-stille-wasser",
   "title": "Stille Wasser",
-  "titles": { "es": "Aguas tranquilas", "pt": "Águas Paradas", "fr": "Eaux dormantes" },
+  "titles": { "es": "Aguas tranquilas", "pt": "Águas Paradas", "fr": "Eaux dormantes", "ru": "Тихий омут" },
   "size": {
     "width": 6,
     "height": 6

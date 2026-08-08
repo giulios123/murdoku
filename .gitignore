@@ -27,6 +27,10 @@ android/key.properties
 *.keystore
 *.jks
 
+# Userlevel-API: echte DB-/OpenAI-Zugangsdaten bleiben lokal/auf dem Server
+# (Vorlage: php/db_config.example.php)
+php/db_config.php
+
 assets/feature-graphic-de.png
 
 assets/feature-graphic-en.png
@@ -34,3 +38,5 @@ assets/feature-graphic-en.png
 assets/store-icon-512.png
 
 PLAYSTORE-RELEASE.txt
+
+php/

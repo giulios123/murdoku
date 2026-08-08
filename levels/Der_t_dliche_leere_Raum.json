@@ -2,7 +2,7 @@
   "schema": 1,
   "id": "editor-der-t-dliche-leere-raum",
   "title": "Der stumme Raum",
-  "titles": { "de": "Der stumme Raum", "en": "The Silent Room", "es": "La habitación silenciosa", "pt": "O Quarto em Silêncio", "fr": "La Pièce muette" },
+  "titles": { "de": "Der stumme Raum", "en": "The Silent Room", "es": "La habitación silenciosa", "pt": "O Quarto em Silêncio", "fr": "La Pièce muette", "ru": "Немая комната" },
   "size": {
     "width": 9,
     "height": 9

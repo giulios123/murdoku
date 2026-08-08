@@ -34,7 +34,7 @@ export interface SavedProgress {
   past: SavedState[]
 }
 
-function read<T>(key: string, fallback: T): T {
+export function readStorage<T>(key: string, fallback: T): T {
   try {
     const raw = localStorage.getItem(key)
     return raw ? (JSON.parse(raw) as T) : fallback
@@ -43,13 +43,16 @@ function read<T>(key: string, fallback: T): T {
   }
 }
 
-function write(key: string, value: unknown): void {
+export function writeStorage(key: string, value: unknown): void {
   try {
     localStorage.setItem(key, JSON.stringify(value))
   } catch {
     /* storage unavailable / full — ignore */
   }
 }
+
+const read = readStorage
+const write = writeStorage
 
 export function loadSolved(): Set<string> {
   return new Set(read<string[]>(SOLVED_KEY, []))

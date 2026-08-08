@@ -2,7 +2,7 @@
   "schema": 1,
   "id": "editor-der-brettspielmord",
   "title": "Letzter Spielzug",
-  "titles": { "de": "Letzter Spielzug", "en": "The Final Move", "es": "La última jugada", "pt": "A Última Jogada", "fr": "Échec et mort" },
+  "titles": { "de": "Letzter Spielzug", "en": "The Final Move", "es": "La última jugada", "pt": "A Última Jogada", "fr": "Échec et mort", "ru": "Последний ход" },
   "size": {
     "width": 9,
     "height": 9
