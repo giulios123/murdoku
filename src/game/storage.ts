@@ -305,3 +305,15 @@ export async function exportLevelJson(level: LevelJson): Promise<void> {
   a.click()
   URL.revokeObjectURL(url)
 }
+
+/** Autoren-Werkzeuge (JSON-Export-Icons): versteckt hinter 5× Tippen auf das
+ *  MURDOKU-Wortzeichen des Startscreens — nur wer die Geste kennt, sieht sie. */
+const AUTHOR_TOOLS_KEY = 'murdoku.authortools.v1'
+
+export function loadAuthorTools(): boolean {
+  return readStorage<boolean>(AUTHOR_TOOLS_KEY, false) === true
+}
+
+export function saveAuthorTools(on: boolean): void {
+  writeStorage(AUTHOR_TOOLS_KEY, on)
+}

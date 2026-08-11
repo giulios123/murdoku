@@ -13,8 +13,10 @@ import {
   exportLevelJson,
   loadCustomLevels,
   loadEditorDraft,
+  loadAuthorTools,
   saveEditorDraft,
 } from '../game/storage.ts'
+import { exportLevelPdf } from '../game/pdfExport.ts'
 import {
   GROUND_OBJECTS,
   ROOM_COLORS,
@@ -137,6 +139,9 @@ function migrateDraft(draft: EditorDraft | null): EditorDraft | null {
 
 export default function EditorScreen({ onBack, onPlay, initialLevel }: Props) {
   const { t, i18n } = useTranslation()
+  // Autoren-Werkzeuge (geheime Wortzeichen-Geste): zeigen das JSON-Ecken-Icon im
+  // Speichern-Dialog — als sichtbare Zeile braucht den Export niemand mehr.
+  const [authorTools] = useState(() => loadAuthorTools())
   // Open the passed level for editing; otherwise restore the saved draft, else fresh.
   const [draft] = useState<EditorDraft | null>(() =>
     initialLevel ? draftFromLevel(initialLevel) : migrateDraft(loadEditorDraft<EditorDraft>()),
@@ -1377,6 +1382,47 @@ export default function EditorScreen({ onBack, onPlay, initialLevel }: Props) {
       {showSave && (
         <div className="mk-overlay" onClick={() => setShowSave(false)}>
           <div className="mk-dialog mk-savedlg" onClick={(e) => e.stopPropagation()}>
+            {/* Winziges Ecken-Icon (wie im Sieg-Dialog): den Fall als Druckbogen sichern —
+                hier oben RECHTS, die Ecke ist im Editor-Dialog frei. */}
+            <button
+              type="button"
+              className="mk-cornerbtn"
+              aria-label={t('game.pdfExport')}
+              title={t('game.pdfExport')}
+              onClick={() => {
+                let level: LevelJson
+                try {
+                  level = build(levelId())
+                } catch {
+                  setShowSave(false)
+                  setResult({ kind: 'error' })
+                  return
+                }
+                void exportLevelPdf(level, i18n, name.trim() || t('editor.name')).catch(() => {})
+              }}
+            >
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path
+                  d="M6 8V3h12v5M6 17H3v-7h18v7h-3M7 14h10v7H7z"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinejoin="round"
+                />
+              </svg>
+            </button>
+            {/* Autoren-JSON oben LINKS — die rechte Ecke gehört dem PDF (Dirks Wunsch). */}
+            {authorTools && (
+              <button
+                type="button"
+                className="mk-cornerbtn mk-cornerbtn--left"
+                aria-label={t('editor.saveExport')}
+                title={t('editor.saveExport')}
+                onClick={exportJson}
+              >
+                <span className="mk-cornerbtn__type" aria-hidden="true">{'{ }'}</span>
+              </button>
+            )}
             <h3>{t('editor.saveTitle')}</h3>
             <div className="mk-nameform">
               <label htmlFor="mk-savename">{t('result.nameLabel')}</label>
@@ -1464,13 +1510,8 @@ export default function EditorScreen({ onBack, onPlay, initialLevel }: Props) {
                       <span className="mk-saverow__sub">{t('editor.keepSub')}</span>
                     </span>
                   </button>
-                  <button type="button" className="mk-saverow" onClick={exportJson}>
-                    <span className="mk-saverow__ic" aria-hidden="true">↧</span>
-                    <span className="mk-saverow__text">
-                      <span className="mk-saverow__title">{t('editor.saveExport')}</span>
-                      <span className="mk-saverow__sub">{t('editor.jsonSub')}</span>
-                    </span>
-                  </button>
+                  {/* JSON ist keine sichtbare Zeile mehr — Autoren erreichen den Export
+                      über das versteckte Ecken-Icon oben rechts. */}
                 </div>
                 {/* Plain back — closes the dialog, deliberately set apart from the
                     destination list (it is navigation, not a destination). */}

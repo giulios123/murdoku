@@ -15,6 +15,8 @@
     "kicker": "Ein Logik-Krimi",
     "original_idea": "Originalidee von",
     "fan_version": "Diese Fan-Version von",
+    "authorOn": "Autoren-Werkzeuge an",
+    "authorOff": "Autoren-Werkzeuge aus",
     "play": "Fall öffnen",
     "generate": "Level generieren",
     "tutorial": "Tutorial",
@@ -525,7 +527,10 @@
     "victimStatement": "war allein mit dem Mörder.",
     "tools": "Werkzeuge",
     "openInEditor": "Im Editor öffnen",
-    "author": "Ein Fall von {{name}}"
+    "author": "Ein Fall von {{name}}",
+    "pdfExport": "Fall als PDF sichern",
+    "pdfStamp": "Offener Fall",
+    "pdfMurderer": "Der Mörder ist …"
   },
   "tool": {
     "erase": "Löschen",
@@ -580,6 +585,7 @@
     "backGen": "Zur Generierung",
     "save": "Behalten",
     "saved": "Gespeichert ✓",
+    "keepSub": "In deiner Levelauswahl",
     "export": "Als JSON",
     "new": "Neues Level",
     "groupSave": "Level speichern",

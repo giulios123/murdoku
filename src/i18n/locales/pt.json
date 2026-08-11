@@ -15,6 +15,8 @@
     "kicker": "Um enigma policial",
     "original_idea": "Ideia original de",
     "fan_version": "Esta versão de fã criada por",
+    "authorOn": "Ferramentas de autor ativadas",
+    "authorOff": "Ferramentas de autor desativadas",
     "play": "Abrir o caso",
     "generate": "Gerar um nível",
     "tutorial": "Tutorial",
@@ -525,7 +527,10 @@
     "victimStatement": "estava a sós com o assassino.",
     "tools": "Ferramentas",
     "openInEditor": "Abrir no editor",
-    "author": "Um caso de {{name}}"
+    "author": "Um caso de {{name}}",
+    "pdfExport": "Guardar o caso como PDF",
+    "pdfStamp": "Caso aberto",
+    "pdfMurderer": "O assassino é …"
   },
   "tool": {
     "erase": "Apagar",
@@ -580,6 +585,7 @@
     "backGen": "Voltar ao gerador",
     "save": "Manter",
     "saved": "Guardado ✓",
+    "keepSub": "Na tua lista de casos",
     "export": "Como JSON",
     "new": "Novo nível",
     "groupSave": "Guardar o nível",

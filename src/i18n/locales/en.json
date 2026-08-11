@@ -15,6 +15,8 @@
     "kicker": "A logic mystery",
     "original_idea": "Original idea by",
     "fan_version": "This fan version made by",
+    "authorOn": "Author tools on",
+    "authorOff": "Author tools off",
     "play": "Open the case",
     "generate": "Generate a level",
     "tutorial": "Tutorial",
@@ -525,7 +527,10 @@
     "victimStatement": "was alone with the murderer.",
     "tools": "Tools",
     "openInEditor": "Open in editor",
-    "author": "A case by {{name}}"
+    "author": "A case by {{name}}",
+    "pdfExport": "Save case as PDF",
+    "pdfStamp": "Open case",
+    "pdfMurderer": "The murderer is …"
   },
   "tool": {
     "erase": "Erase",
@@ -580,6 +585,7 @@
     "backGen": "To generator",
     "save": "Keep it",
     "saved": "Saved ✓",
+    "keepSub": "In your case list",
     "export": "As JSON",
     "new": "New level",
     "groupSave": "Save level",

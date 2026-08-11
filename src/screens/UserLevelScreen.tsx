@@ -245,6 +245,13 @@ export default function UserLevelScreen({ onPick, onBack }: Props) {
             </p>
           )}
           {rows.length > 0 && shown.length === 0 && <p className="mk-empty">{t('select.empty')}</p>}
+          {/* Kleine Anzahl über den Karten — dasselbe Zähl-Element wie die
+              Schwierigkeits-Gruppen der Levelauswahl (»N Fälle«). */}
+          {shown.length > 0 && (
+            <div className="mk-divider">
+              <span className="mk-divider__count">{t('select.cases', { count: shown.length })}</span>
+            </div>
+          )}
           {shown.map(({ entry, meta }) => {
             const hints = results[meta.id]?.hints
             const solo = hints === 0

@@ -55,6 +55,7 @@ import {
   titleOf,
   type LevelMeta,
 } from '../game/levels.ts'
+import { exportLevelPdf } from '../game/pdfExport.ts'
 import BloodText from '../components/BloodText.tsx'
 import BoardCanvas from '../components/BoardCanvas.tsx'
 import CluePanel from '../components/CluePanel.tsx'
@@ -710,6 +711,29 @@ export default function GameScreen({
               <span className="mk-game__edit-label">{t('game.openInEditor')}</span>
             </button>
           )}
+          {/* Druckbogen-Export direkt im Kopf (Dirks Vorgabe: nicht erst nach dem
+              Lösen). Desktop-exklusiv — mobil ist der Kopf zu voll, dort wohnt der
+              Export als Zeile im ?-Sheet der Legende. */}
+          {!tutorial && (
+            <button
+              type="button"
+              className="mk-game__edit mk-game__edit--pdf"
+              onClick={() => void exportLevelPdf(meta.json, i18n, title).catch(() => {})}
+              aria-label={t('game.pdfExport')}
+              title={t('game.pdfExport')}
+            >
+              <svg className="mk-game__pdficon" viewBox="0 0 24 24" aria-hidden="true">
+                <path
+                  d="M6 8V3h12v5M6 17H3v-7h18v7h-3M7 14h10v7H7z"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinejoin="round"
+                />
+              </svg>
+              <span className="mk-game__edit-label">PDF</span>
+            </button>
+          )}
         </div>
         <div className="mk-game__heading" ref={headingRef}>
           <div className="mk-game__titlewrap">
@@ -857,6 +881,33 @@ export default function GameScreen({
               ×
             </button>
             {legendNode}
+            {/* Mobil wohnt der Druckbogen-Export hier (der Kopf hat keinen Platz):
+                eine vertraute Share-Sheet-Zeile unter der Legende. */}
+            {!tutorial && (
+              <button
+                type="button"
+                className="mk-saverow mk-sheet__pdf"
+                onClick={() => {
+                  setLegendOpen(false)
+                  void exportLevelPdf(meta.json, i18n, title).catch(() => {})
+                }}
+              >
+                <span className="mk-saverow__ic" aria-hidden="true">
+                  <svg className="mk-game__pdficon" viewBox="0 0 24 24" aria-hidden="true">
+                    <path
+                      d="M6 8V3h12v5M6 17H3v-7h18v7h-3M7 14h10v7H7z"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinejoin="round"
+                    />
+                  </svg>
+                </span>
+                <span className="mk-saverow__text">
+                  <span className="mk-saverow__title">{t('game.pdfExport')}</span>
+                </span>
+              </button>
+            )}
           </div>
         </div>
       )}
@@ -887,7 +938,29 @@ export default function GameScreen({
           }
           onRate={
             result.win && result.rate
-              ? (stars, tags) => rateUserLevel(userDbId, stars, tags as UserLevelTag[])
+              ? (stars, tags) =>
+                  rateUserLevel(userDbId, stars, tags as UserLevelTag[]).then((ok) => {
+                    // Die »Community-Wertung«-Zeile zeigt die eben gesendete Bewertung
+                    // sofort: Ø + Anzahl frisch aus dem gerade aktualisierten Cache.
+                    // tags/nologic bleiben eingefroren — es dürfen keine Chips
+                    // erscheinen/verschwinden (die Dialoghöhe ändert sich nie).
+                    const own = ok ? loadUserLevels().find((e) => e.dbId === userDbId) : undefined
+                    if (own) {
+                      setResult((r) =>
+                        r?.community
+                          ? {
+                              ...r,
+                              community: {
+                                ...r.community,
+                                stars: averageStars(own.stats),
+                                ratings: own.stats.ratings,
+                              },
+                            }
+                          : r,
+                      )
+                    }
+                    return ok
+                  })
               : undefined
           }
           community={result.win ? result.community : undefined}
@@ -908,7 +981,14 @@ export default function GameScreen({
             saveCustomLevel({ ...meta.json, title: name })
             setSaved(true)
           }}
-          onExport={(name) => void exportLevelJson({ ...meta.json, title: name }).catch(() => {})}
+          onExport={(name) =>
+            // Ohne eingetippten Namen (JSON-Icon außerhalb des Generator-Flows) bleibt
+            // der Originaltitel erhalten — ein leerer Titel darf nie exportiert werden.
+            void exportLevelJson({
+              ...meta.json,
+              ...(name.trim() !== '' ? { title: name.trim() } : {}),
+            }).catch(() => {})
+          }
           onNew={onNew}
         />
       )}

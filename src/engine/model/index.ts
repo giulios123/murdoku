@@ -12,6 +12,7 @@ export {
   OBJECT_CATALOG,
   OCCUPIABLE_OBJECT_TYPES,
   BLOCKING_OBJECT_TYPES,
+  MERGE_INSTANCE_TYPES,
   type ObjectDef,
 } from './objects.ts'
 export { isWaterRoom, isWinterRoom } from './rooms.ts'

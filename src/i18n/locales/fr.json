@@ -15,6 +15,8 @@
     "kicker": "Une énigme policière",
     "original_idea": "Idée originale de",
     "fan_version": "Cette version de fan créée par",
+    "authorOn": "Outils d'auteur activés",
+    "authorOff": "Outils d'auteur désactivés",
     "play": "Ouvrir le dossier",
     "generate": "Générer un niveau",
     "tutorial": "Tutoriel",
@@ -525,7 +527,10 @@
     "victimStatement": "était seule avec le meurtrier.",
     "tools": "Outils",
     "openInEditor": "Ouvrir dans l'éditeur",
-    "author": "Une affaire de {{name}}"
+    "author": "Une affaire de {{name}}",
+    "pdfExport": "Enregistrer l'affaire en PDF",
+    "pdfStamp": "Affaire ouverte",
+    "pdfMurderer": "Le meurtrier est …"
   },
   "tool": {
     "erase": "Effacer",
@@ -580,6 +585,7 @@
     "backGen": "Vers le générateur",
     "save": "Conserver",
     "saved": "Enregistré ✓",
+    "keepSub": "Dans votre liste d'affaires",
     "export": "En JSON",
     "new": "Nouveau niveau",
     "groupSave": "Enregistrer le niveau",

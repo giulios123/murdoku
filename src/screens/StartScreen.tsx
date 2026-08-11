@@ -1,11 +1,11 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import LanguageSelect from '../components/LanguageSelect.tsx'
 import BloodText from '../components/BloodText.tsx'
 import BloodSplatter from '../components/BloodSplatter.tsx'
 import DailyName from '../components/DailyName.tsx'
 import { dailyLevelId, dayInfo, formatMonthShort, todayKey } from '../game/daily.ts'
-import { loadSolved } from '../game/storage.ts'
+import { loadAuthorTools, loadSolved, saveAuthorTools } from '../game/storage.ts'
 
 /* Hand-inked, line-art case-file icons (no emoji): brass strokes via currentColor,
  * crimson accents (threads / pins / fresh stamp) via the .mk-ic-red* classes. */
@@ -94,6 +94,25 @@ export default function StartScreen({
     return { info: dayInfo(key), solved: loadSolved().has(dailyLevelId(key)) }
   })
 
+  // Geheime Geste: 5× schnell auf das Wortzeichen tippen schaltet die Autoren-
+  // Werkzeuge (JSON-Export-Icons) um. Die Bestätigung schwebt absolut unter dem
+  // Wortzeichen — nichts im Layout springt.
+  const taps = useRef({ count: 0, last: 0 })
+  const [authorNote, setAuthorNote] = useState<string | null>(null)
+  const noteTimer = useRef(0)
+  const wordmarkTap = () => {
+    const now = Date.now()
+    taps.current.count = now - taps.current.last < 1500 ? taps.current.count + 1 : 1
+    taps.current.last = now
+    if (taps.current.count < 5) return
+    taps.current.count = 0
+    const on = !loadAuthorTools()
+    saveAuthorTools(on)
+    setAuthorNote(t(on ? 'start.authorOn' : 'start.authorOff'))
+    window.clearTimeout(noteTimer.current)
+    noteTimer.current = window.setTimeout(() => setAuthorNote(null), 2200)
+  }
+
   return (
     <div className="mk-screen">
       <svg className="mk-start__thread" preserveAspectRatio="none" viewBox="0 0 100 100">
@@ -108,8 +127,9 @@ export default function StartScreen({
       <main className="mk-start">
         <div className="mk-start__inner">
           <p className="mk-start__kicker">{t('start.kicker')}</p>
-          <h1 className="mk-wordmark">
+          <h1 className="mk-wordmark" onClick={wordmarkTap}>
             MURD<em>O</em>KU
+            {authorNote && <span className="mk-authorchip">{authorNote}</span>}
           </h1>
           <div className="mk-credits">
             <p className="mk-credits__line">

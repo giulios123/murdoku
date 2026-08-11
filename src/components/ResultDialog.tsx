@@ -4,6 +4,7 @@ import Avatar from './Avatar.tsx'
 import type { AvatarAttrs } from '../game/avatar.ts'
 import { USERLEVEL_TAGS } from '../game/userlevels.ts'
 import { keepFieldVisible } from '../game/keyboard.ts'
+import { loadAuthorTools } from '../game/storage.ts'
 
 interface Props {
   win: boolean
@@ -79,6 +80,9 @@ export default function ResultDialog({
   const backAlone = !showGen && !(win && onRestart)
   const [name, setName] = useState(defaultName ?? '')
   const value = () => name.trim() || (defaultName ?? '')
+  // Autoren-Werkzeuge (geheime Wortzeichen-Geste): erst dann erscheint das
+  // JSON-Ecken-Icon — normale Spieler brauchen JSON seit den Userleveln nicht mehr.
+  const [authorTools] = useState(() => loadAuthorTools())
   // A touch device pops the on-screen keyboard when the field auto-focuses, which is
   // annoying right after a generated win (mobile browser AND the Android app). Only
   // auto-focus where a physical keyboard exists (fine pointer = desktop mouse/trackpad).
@@ -94,6 +98,19 @@ export default function ResultDialog({
       onClick={onDismiss ? (e) => e.target === e.currentTarget && onDismiss() : undefined}
     >
       <div className="mk-dialog" role="dialog" aria-modal="true">
+        {/* PDF wohnt jetzt im Kopf des Spielbildschirms — hier bleibt nur das
+            versteckte Autoren-JSON in der linken Ecke (rechts: Solo-Medaille). */}
+        {win && authorTools && (
+          <button
+            type="button"
+            className="mk-cornerbtn mk-cornerbtn--left"
+            aria-label={t('result.export')}
+            title={t('result.export')}
+            onClick={() => onExport(value())}
+          >
+            <span className="mk-cornerbtn__type" aria-hidden="true">{'{ }'}</span>
+          </button>
+        )}
         {win && hintsUsed === 0 && (
           <span className="mk-dialog__medal" aria-hidden="true">
             <svg viewBox="0 0 40 46" fill="none" stroke="currentColor" strokeLinejoin="round">
@@ -239,7 +256,9 @@ export default function ResultDialog({
 
         {showGen && (
           // "Save level" section: the header sits above the name field (naming IS part of
-          // saving), then the name input, then the Keep / As JSON buttons.
+          // saving), then the name input, then the destinations as the SAME share-sheet
+          // rows the editor's save dialog uses (icon + name + subline) — one look for
+          // saving everywhere; only "Upload" stays editor-exclusive.
           <div className="mk-savegroup">
             <div className="mk-divider">
               <span className="mk-divider__label">{t('result.groupSave')}</span>
@@ -260,20 +279,24 @@ export default function ResultDialog({
                 }}
               />
             </div>
-            <div className="mk-actiongrid">
+            {/* JSON ist kein sichtbares Ziel mehr (seit den Userleveln braucht es kaum
+                jemand) — Autoren erreichen es über das versteckte Ecken-Icon. */}
+            <div className="mk-savelist">
               <button
                 type="button"
-                className="mk-btn mk-btn--ghost"
-                onClick={() => onSave(value())}
+                className="mk-saverow"
                 disabled={saved}
+                onClick={() => onSave(value())}
               >
-                {/* the "saved" label already carries a ✓ — drop the leading icon then */}
-                {!saved && <span className="mk-btn__ic" aria-hidden="true">✓</span>}
-                {saved ? t('result.saved') : t('result.save')}
-              </button>
-              <button type="button" className="mk-btn mk-btn--ghost" onClick={() => onExport(value())}>
-                <span className="mk-btn__ic" aria-hidden="true">↧</span>
-                {t('result.export')}
+                <span className="mk-saverow__ic" aria-hidden="true">✓</span>
+                <span className="mk-saverow__text">
+                  <span className="mk-saverow__title">{t('result.save')}</span>
+                  {/* after keeping, the subline turns into the confirmation — the row
+                      keeps its exact size, nothing in the dialog jumps */}
+                  <span className="mk-saverow__sub">
+                    {saved ? t('result.saved') : t('result.keepSub')}
+                  </span>
+                </span>
               </button>
             </div>
           </div>

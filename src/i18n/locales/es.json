@@ -15,6 +15,8 @@
     "kicker": "Un misterio de lógica",
     "original_idea": "Idea original de",
     "fan_version": "Esta versión fan creada por",
+    "authorOn": "Herramientas de autor activadas",
+    "authorOff": "Herramientas de autor desactivadas",
     "play": "Abrir el caso",
     "generate": "Generar un nivel",
     "tutorial": "Tutorial",
@@ -529,7 +531,10 @@
     "victimStatement": "estaba a solas con el asesino.",
     "tools": "Herramientas",
     "openInEditor": "Abrir en el editor",
-    "author": "Un caso de {{name}}"
+    "author": "Un caso de {{name}}",
+    "pdfExport": "Guardar el caso como PDF",
+    "pdfStamp": "Caso abierto",
+    "pdfMurderer": "El asesino es …"
   },
   "tool": {
     "erase": "Borrar",
@@ -584,6 +589,7 @@
     "backGen": "Al generador",
     "save": "Conservar",
     "saved": "Guardado ✓",
+    "keepSub": "En tu lista de casos",
     "export": "Como JSON",
     "new": "Nuevo nivel",
     "groupSave": "Guardar nivel",
