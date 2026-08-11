@@ -381,6 +381,55 @@ Tabellen in `php/schema.sql`: `murdoku_userlevel` + Drossel `murdoku_upload_ip`)
 - `php/db_config.php` ist **gitignored** (echte DB-/OpenAI-Secrets; Repo-Vorlage
   `db_config.example.php`). `DEBUG=true` schreibt echte PDO-Meldungen in die Antworten —
   nur zum Einrichten, danach wieder aus. Auswertung: `php/index.php` (Noir-Stil, Status-Spalte).
+- **`last_stars`/`last_rated`** (Spalten seit 08/2026, NUR Auswertung): jede Bewertung
+  schreibt Wert + Zeitpunkt der letzten Bewertung — der Sync-Cursor `updated` bleibt
+  dabei UNBERÜHRT, und das API von `rateUserlevel.php` ist unverändert (alte
+  App-Versionen bewerten weiter). `index.php` zeigt daraus „Zuletzt bewertet (Top 5)"
+  und das Datum in der Bewertungen-Kachel.
+- Sieg-Dialog: die „Community-Wertung"-Zeile übernimmt die EIGENE Bewertung sofort nach
+  Server-OK (Ø + Anzahl frisch aus dem eben aktualisierten Cache); Tags/nologic bleiben
+  bewusst eingefroren — sonst könnte die Zeile umbrechen (Dialoghöhen-Regel).
+- Screen: Sync-/Offline-Status (`mk-ul-status`) ist ein absolut positioniertes
+  Overlay-Chip zentriert unter dem sticky Kopf — nimmt keinen Platz im Fluss ein,
+  erscheint/verschwindet also ohne Layout-Sprung. Anzahl der gelisteten Fälle über den
+  Karten via `select.cases` (`mk-divider__count`, wie die Levelauswahl-Gruppen).
+
+## PDF-Druckbogen & Autoren-Werkzeuge (08/2026)
+
+`src/game/pdfExport.ts`: EIN A4-Bogen **immer quer** (Kopf: Titel/Autor/Stufe + „Offener
+Fall"-Stempel; links die Verdächtigen, rechts Brett · Objekt-Legende · SW-Skizze ·
+„Der Mörder ist …"-Feld), gerendert als 300-dpi-Canvas → PNG in jsPDF. So tragen alle
+Texte die Spiel-Schriften inkl. Kyrillisch-Fallback ohne TTF-Einbettung. **jsPDF nur
+dynamisch importieren** (~120 KB gehören nicht ins Start-Bundle). Android teilt wie der
+JSON-Export (Filesystem base64 OHNE `encoding` + Share-Sheet); komplett offline-fähig.
+
+- **Brett über das ECHTE `drawBoard`** (voller Pfad — `preview: true` ließe die
+  Bodentexturen weg); vorher `document.fonts.ready` UND `onArtReady` abwarten.
+  **IMMER das leere Brett**: das Opfer wird mitgerätselt (`autoPlaceVictim`), es gibt
+  KEIN Opfer-Token — das Opfer ist die letzte Personen-Karte (☠, „war allein mit dem
+  Mörder"). Verdächtigen-Karten mit Spielfarben-Falz + `avatarDataUri`-Köpfen, ab 7
+  Personen zweispaltig, Schrift-Stufen-Fit 42→18 px (EINE Seite, immer).
+- Papier braucht, was im Spiel Tooltip/Legende ist: Objekt-Legende (`drawObjectIcon`),
+  beide Grundregeln, „Draußen: …" bei `usesInsideOutside`. Hinweistexte = exakt die
+  ClueText-Logik über `renderer.render` (Pronomen-Form, ' · '-Join, Großanfang,
+  Schlusspunkt nur wenn nötig); Akten-Notizen wie `CluePanel.boardNotes`.
+- **SW-Skizze** (Lösefläche im Murdle-Buch-Stil): hell = begehbar, dunkel = blockiert,
+  dicke Wände an Raumgrenzen. Begehbare **top**-Objekte massiv umrandet; **ground**-
+  Beläge (Teppich/Weg/Straße) GESTRICHELT und dem exakten Zellmengen-Umriss folgend
+  (`strokeAreaOutline`, Endpunkt-Regel: konvex einrücken / gerade durchlaufen / konkav
+  überstehen). Verschmolzen wird NUR nach **`MERGE_INSTANCE_TYPES`** + gleicher Raum
+  (Board-Instanz-Semantik, aus engine/index exportiert) — zwei Stühle nebeneinander
+  sind IMMER zwei Umrisse, nie einer.
+- Einstieg: Desktop im GameScreen-Kopf (`mk-game__edit--pdf`, im portrait/≤860px-Block
+  ausgeblendet); **alle Kopf-Knöpfe haben FESTE 38 px** — der Inhalt (Glyphe vs. SVG)
+  darf nie die Höhe diktieren. Mobil als `mk-saverow`-Zeile unten im ?-Legenden-Sheet
+  (der Kopf hat dort keinen Platz). Im Editor-Speichern-Dialog als Ecken-Icon oben rechts.
+- **Autoren-Werkzeuge** (nur Dirk): 5× aufs MURDOKU-Wortzeichen im StartScreen tippen
+  (Toggle, `murdoku.authortools.v1`, `loadAuthorTools()` in storage.ts; Bestätigung
+  schwebt absolut). Erst dann erscheint das `{ }`-JSON-Ecken-Icon — Sieg-Dialog UND
+  Editor-Speichern jeweils oben LINKS (rechts wohnen Solo-Medaille bzw. PDF). Sichtbare
+  „Als JSON"-Zeilen gibt es NICHT mehr (seit den Userleveln braucht sie niemand);
+  GameScreen-`onExport` behält bei leerem Namen den Originaltitel.
 
 ## UI-Regeln (Dirk, gelten immer)
 
@@ -398,9 +447,12 @@ Tabellen in `php/schema.sql`: `murdoku_userlevel` + Drossel `murdoku_upload_ip`)
   `furnitureSig`) kennen den Stil; einmal gerendert, pro Frame nur Blit. Legende bleibt neutral.
   Der `BlockedStyle`-Typ lebt in `boardRender.ts`; `settings.ts` importiert ihn type-only —
   nie andersherum (kein React in boardRender, die Dev-Sheet-Scripts importieren es headless).
-- **Speichern-Dialog des Editors** = drei Ziel-Zeilen im Share-Sheet-Muster (`mk-saverow`:
-  Icon + Name + 3–5-Wörter-Unterzeile; gesperrtes Hochladen zeigt den GRUND als Unterzeile),
-  darunter abgesetzt „Abbrechen". Keine Hinweistext-Absätze, kein ⓘ.
+- **Speichern = überall das Share-Sheet-Muster** (`mk-saverow`: Icon + Name +
+  3–5-Wörter-Unterzeile; gesperrtes Hochladen zeigt den GRUND als Unterzeile), darunter
+  abgesetzt „Abbrechen". Editor: Hochladen + Behalten; Generator-Sieg: Behalten (Name-Feld
+  darüber, nach dem Behalten wird die UNTERZEILE zur Bestätigung — Zeilengröße bleibt).
+  „Als JSON" ist KEINE sichtbare Zeile mehr (→ Autoren-Werkzeuge). Keine
+  Hinweistext-Absätze, kein ⓘ.
 
 ## i18n-Konventionen
 

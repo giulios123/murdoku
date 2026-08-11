@@ -26,6 +26,7 @@
 - **A fresh case every day.** The daily mystery waits right on the front page — one date, one board, one culprit.
 - **Build your own — and share it.** A full editor lets you paint a crime scene, write the clues and verify it's solvable — then play it, save it, or **upload it for everyone**.
 - **A community archive.** Browse the **user levels** other detectives publish, filter by stars, size and status, and rate solved cases with stars and properties.
+- **Take the case to paper.** Every mystery prints as a one-page **PDF case sheet** — the crime scene in full colour, the suspects' testimony, and a black-and-white deduction grid to crack it in pencil.
 - **Learn by doing.** An interactive, guided tutorial cracks a real mini-case *with* you, one step at a time.
 - **A crime scene with character.** Hand-drawn suspects and **70+ themed props**, dressed in a moody "case-file" look down to the film grain.
 - **Anywhere, in your language.** Plays beautifully on desktop and phone, in English, German, Spanish, Portuguese, French or Russian, with your progress saved automatically. On touch, tap a suspect's face and their dossier note unfolds — every term explained, every named person with their traits.
@@ -85,7 +86,7 @@ Out of files to crack? Roll a new one. The generator builds **uniquely-solvable*
 
 - **14 themed settings** — apartment, mansion, grand hotel, police precinct, auto shop, school, hospital, farm, supermarket, campsite, castle, lido, zoo and ski resort — each with fitting rooms and props.
 - **Three difficulties**, on boards from a tight **4×4** up to a sprawling **12×12**.
-- Runs in a **pool of Web Workers** — several investigators hunt candidates in parallel and the best case wins — so the interface never stutters. Keep a case you like, export it as JSON, or simply play and move on.
+- Runs in a **pool of Web Workers** — several investigators hunt candidates in parallel and the best case wins — so the interface never stutters. Keep a case you like, print it as a PDF, or simply play and move on.
 
 ---
 
@@ -96,7 +97,7 @@ Got your own Murdoku puzzles on paper? Recreate them 1:1:
 - Paint **rooms, floor, objects and windows** straight onto the board (4×4 up to 11×11).
 - Create **suspects** (name, traits) and assemble their clues in the flat **clue builder** — including case-wide global clues.
 - **"Check"** tells you whether the case is solvable **and unique** — and who the murderer would be.
-- **"Play"** tests it instantly; **"Save"** offers three destinations: **upload** it for everyone as a user level, **keep** it in your local archive, or **export** it as a JSON file.
+- **"Play"** tests it instantly; **"Save"** offers two destinations: **upload** it for everyone as a user level or **keep** it in your local archive — and the little printer icon turns your draft into a PDF proof sheet.
 
 Room names follow the chosen theme — and can be swapped anytime.
 
@@ -110,6 +111,12 @@ Solved everything? Other detectives publish too:
 - **Browse and filter** the archive by stars, board size, solved status and — on desktop — theme and property.
 - **Rate once per case** after solving it: one to five stars plus up to two properties — *easy, hard, creative, confusing, fair, gripping, tricky, well built*. Cases that are unique but beyond the deduction engine are auto-tagged *trial & error* (the hint button can't help there).
 - **Light on your data plan.** The archive syncs incrementally and stays fully playable offline from its local cache — only rating and uploading need a connection.
+
+---
+
+## The paper edition (PDF)
+
+Some cases deserve a pencil. The **printer button** in a case's header (on phones: in the board's **?** legend sheet) turns any mystery into a one-page **A4 case sheet**: the crime scene in full game graphics, every suspect's dossier with portrait and testimony, a clean **black-and-white deduction grid** to solve on — and a *"The murderer is …"* line to fill in with a flourish. Always the unsolved case, always one page, fully offline; on Android it goes straight to the share sheet.
 
 ---
 
