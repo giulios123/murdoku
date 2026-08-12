@@ -198,7 +198,10 @@ function paintLegend(
     const groupLabel = it.status !== lastStatus ? `${t(`legend.${it.status}`)}: ` : ''
     const groupW = groupLabel ? ctx.measureText(groupLabel).width + 6 : 0
     const nameW = ctx.measureText(it.name).width
-    if (lx + groupW + tile + 10 + nameW + 30 > x0 + width && lx > x0) {
+    // Jede Gruppe (betretbar / blockiert / an der Wand) beginnt auf ihrer EIGENEN
+    // Zeile — sonst verschwimmt die Legende zu einem Band (Dirks Feedback).
+    // Innerhalb der Gruppe bricht weiterhin die Breite um.
+    if ((groupLabel || lx + groupW + tile + 10 + nameW + 30 > x0 + width) && lx > x0) {
       lx = x0
       rows++
     }
@@ -491,6 +494,44 @@ function paintHead(
   return y + 36
 }
 
+type TraitKey = 'beard' | 'glasses' | 'bald'
+
+/** Merkmal-Icons der Karten — 1:1 die Pfade aus AttrIcons.tsx (dort pflegen und
+ *  hier spiegeln: der Canvas braucht sie als Image statt JSX). */
+const TRAIT_SVGS: Record<TraitKey, string> = {
+  beard:
+    '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">' +
+    '<path d="M6 8 Q12 5.4 18 8 Q15 10.4 12 9.5 Q9 10.4 6 8 Z" fill="#7a4a28"/>' +
+    '<path d="M5 8.5 Q5 19 12 22.5 Q19 19 19 8.5 Q16.5 14 13 13.4 L12 15 L11 13.4 Q7.5 14 5 8.5 Z" fill="#7a4a28"/>' +
+    '</svg>',
+  glasses:
+    '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">' +
+    '<g fill="none" stroke="#2a2420" stroke-width="1.8" stroke-linejoin="round">' +
+    '<rect x="2.5" y="9" width="8" height="6.2" rx="2.6"/>' +
+    '<rect x="13.5" y="9" width="8" height="6.2" rx="2.6"/>' +
+    '<path d="M10.5 11.5 H13.5"/>' +
+    '<path d="M2.5 10.5 L1 10" stroke-linecap="round"/>' +
+    '<path d="M21.5 10.5 L23 10" stroke-linecap="round"/>' +
+    '</g></svg>',
+  bald:
+    '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">' +
+    '<ellipse cx="4.8" cy="13.6" rx="1.7" ry="2.1" fill="#f0c6a0" stroke="#a8744a" stroke-width="0.8"/>' +
+    '<ellipse cx="19.2" cy="13.6" rx="1.7" ry="2.1" fill="#f0c6a0" stroke="#a8744a" stroke-width="0.8"/>' +
+    '<path d="M5.8 12.5 Q5.8 3.2 12 3.2 Q18.2 3.2 18.2 12.5 Q18.2 20.5 12 21.5 Q5.8 20.5 5.8 12.5 Z" fill="#f0c6a0" stroke="#a8744a" stroke-width="1.1" stroke-linejoin="round"/>' +
+    '<path d="M8.4 7.2 Q11 4.9 15.2 6.8" fill="none" stroke="#fff" stroke-width="1.4" stroke-linecap="round" opacity="0.85"/>' +
+    '<circle cx="9.6" cy="13.2" r="1.05" fill="#2a2420"/>' +
+    '<circle cx="14.4" cy="13.2" r="1.05" fill="#2a2420"/>' +
+    '<path d="M9.7 16.6 Q12 18.4 14.3 16.6" fill="none" stroke="#2a2420" stroke-width="1" stroke-linecap="round"/>' +
+    '</svg>',
+}
+
+/** Die Geschlechts-Tönung der Dossier-Karten — exakt die Spiel-Farbverläufe
+ *  (.mk-clue[data-gender] in index.css). */
+const GENDER_TINT: Record<'m' | 'f', [string, string]> = {
+  f: ['#f0dade', '#e6c6cd'],
+  m: ['#d9e2ee', '#c6d4e4'],
+}
+
 interface PersonCard {
   name: string
   text: string
@@ -498,6 +539,8 @@ interface PersonCard {
   /** Avatarbild — fehlt beim Opfer (das bekommt die ☠-Marke wie im Spiel). */
   img?: HTMLImageElement
   gender?: 'm' | 'f'
+  /** Sichtbare Merkmale für die Chip-Zeile hinter dem Namen (wie AttrIcons). */
+  traits?: TraitKey[]
 }
 
 /** Baut den fertigen Druckbogen als Canvas (300 dpi, A4 quer). */
@@ -519,6 +562,8 @@ async function renderSheet(json: LevelJson, i18nInst: I18n, title: string): Prom
       text: clueLine(renderer, s.clues, s.id),
       accent: suspectColor(i),
       img: await loadImage(avatarDataUri(s.attributes, suspectColor(i), s.id)),
+      gender: s.attributes.gender === 'm' ? ('m' as const) : s.attributes.gender === 'f' ? ('f' as const) : undefined,
+      traits: (['beard', 'glasses', 'bald'] as const).filter((k) => s.attributes[k] === true),
     })),
   )
   const victimGender: 'm' | 'f' = puzzle.victim.attributes.gender === 'f' ? 'f' : 'm'
@@ -528,6 +573,13 @@ async function renderSheet(json: LevelJson, i18nInst: I18n, title: string): Prom
     accent: CRIMSON,
     gender: victimGender,
   })
+  // Die Merkmal-Icons (Bart/Brille/Glatze) einmal als Images vorbereiten.
+  const traitImgs = new Map<TraitKey, HTMLImageElement>()
+  await Promise.all(
+    (['beard', 'glasses', 'bald'] as const).map(async (k) => {
+      traitImgs.set(k, await loadImage(`data:image/svg+xml;charset=utf-8,${encodeURIComponent(TRAIT_SVGS[k])}`))
+    }),
+  )
 
   const canvas = document.createElement('canvas')
   canvas.width = PAGE_W
@@ -641,8 +693,12 @@ async function renderSheet(json: LevelJson, i18nInst: I18n, title: string): Prom
 
   // Schrift so groß wie möglich, aber ALLES muss in die Inhaltshöhe passen — bei
   // wenigen Verdächtigen wachsen die Karten und nutzen den freien Platz.
+  interface NoteBox {
+    lines: string[]
+    h: number
+  }
   let fontSize = 42
-  let layout: { cardH: number[]; lineH: number; avatar: number; pad: number; noteLines: string[]; noteLineH: number; noteH: number } | null = null
+  let layout: { cardH: number[]; lineH: number; avatar: number; pad: number; noteBoxes: NoteBox[]; noteH: number } | null = null
   for (; fontSize >= 18; fontSize -= 2) {
     const pad = Math.round(fontSize * 0.6)
     const avatar = Math.round(fontSize * 3.4)
@@ -663,16 +719,22 @@ async function renderSheet(json: LevelJson, i18nInst: I18n, title: string): Prom
         .reduce((sum, h) => sum + h + 16, 0)
       maxCol = Math.max(maxCol, colH)
     }
+    // Jede Akten-Notiz als EIGENE Box (wie die mk-boardclue-Kacheln im Spiel) —
+    // zusammengeschoben gingen „Wasserflächen …" und „Kein Raum war leer" unter.
     ctx.font = `${fontSize}px ${TYPE}`
-    const noteLineH = lineH
-    const noteLines = notes.flatMap((n) => wrapText(ctx, n, paneW - pad * 2 - 18))
-    const noteH = notes.length > 0 ? noteLines.length * noteLineH + pad * 2 + 20 : 0
+    const notePad = Math.round(fontSize * 0.5)
+    const lens = Math.round(fontSize * 1.35)
+    const noteBoxes: NoteBox[] = notes.map((n) => {
+      const lines = wrapText(ctx, n, paneW - notePad * 2 - lens - 14)
+      return { lines, h: Math.max(lines.length * lineH, lens) + notePad * 2 }
+    })
+    const noteH = notes.length > 0 ? noteBoxes.reduce((sum, b) => sum + b.h + 12, 0) + 8 : 0
     if (maxCol + noteH <= contentH || fontSize === 18) {
-      layout = { cardH, lineH, avatar, pad, noteLines, noteLineH, noteH }
+      layout = { cardH, lineH, avatar, pad, noteBoxes, noteH }
       break
     }
   }
-  const { cardH, lineH, avatar, pad, noteLines, noteLineH } = layout!
+  const { cardH, lineH, avatar, pad, noteBoxes } = layout!
   const rows = Math.ceil(cards.length / cols)
 
   // Überschrift »Verdächtige« als kleine Zeile über den Karten.
@@ -691,13 +753,25 @@ async function renderSheet(json: LevelJson, i18nInst: I18n, title: string): Prom
     let cy = cardsTop
     for (let k = col * rows; k < i; k++) cy += cardH[k] + 16
     const h = cardH[i]
-    // Kasten: helle Fläche, Hairline, Spielfarben-Falz links (wie die Entwurfsmappe).
+    // Kasten: Hairline + Spielfarben-Falz links; Verdächtige tragen die
+    // Geschlechts-Tönung des Spiels (rosé/blau) — auf Papier nur als HAUCH über
+    // der hellen Karte (α 0.35, Dirks Feedback: voll deckend lenkt vom Text ab).
     ctx.fillStyle = CARD_BG
     ctx.strokeStyle = LINE
     ctx.lineWidth = 2
     ctx.beginPath()
     ctx.roundRect(x, cy, colW, h, 10)
     ctx.fill()
+    if (card.img && card.gender) {
+      const tint = ctx.createLinearGradient(x, cy, x, cy + h)
+      tint.addColorStop(0, GENDER_TINT[card.gender][0])
+      tint.addColorStop(1, GENDER_TINT[card.gender][1])
+      ctx.save()
+      ctx.globalAlpha = 0.35
+      ctx.fillStyle = tint
+      ctx.fill()
+      ctx.restore()
+    }
     ctx.stroke()
     ctx.fillStyle = card.accent
     ctx.beginPath()
@@ -719,14 +793,46 @@ async function renderSheet(json: LevelJson, i18nInst: I18n, title: string): Prom
       ctx.font = `${Math.round(avatar * 0.52)}px ${DISPLAY}`
       ctx.fillText('☠', ax + avatar / 2, ay + avatar / 2 + avatar * 0.03)
     }
-    // Name + Hinweistext.
+    // Name + Merkmal-Chips (♂/♀, Bart, Brille, Glatze — wie AttrIcons im Spiel).
     const tx = ax + avatar + 16
     ctx.textAlign = 'left'
     ctx.textBaseline = 'alphabetic'
     ctx.fillStyle = INK
     ctx.font = `700 ${Math.round(fontSize * 1.15)}px ${DISPLAY}`
-    const nameSuffix = card.gender ? `  ${card.gender === 'm' ? '♂' : '♀'}` : ''
-    ctx.fillText(card.name + nameSuffix, tx, cy + pad + Math.round(fontSize * 1.05))
+    const nameBase = cy + pad + Math.round(fontSize * 1.05)
+    ctx.fillText(card.name, tx, nameBase)
+    let chipX = tx + ctx.measureText(card.name).width + 14
+    const chipH = Math.round(fontSize * 1.08)
+    const chipTop = nameBase - chipH + Math.round(fontSize * 0.14)
+    const pill = (w: number): void => {
+      ctx.fillStyle = 'rgba(42, 35, 23, 0.1)'
+      ctx.strokeStyle = 'rgba(42, 35, 23, 0.22)'
+      ctx.lineWidth = 1.5
+      ctx.beginPath()
+      ctx.roundRect(chipX, chipTop, w, chipH, chipH / 2)
+      ctx.fill()
+      ctx.stroke()
+    }
+    if (card.gender) {
+      const glyph = card.gender === 'm' ? '♂' : '♀'
+      ctx.font = `${Math.round(fontSize * 0.8)}px ${TYPE}`
+      const w = ctx.measureText(glyph).width + chipH * 0.7
+      pill(w)
+      ctx.fillStyle = INK
+      ctx.textAlign = 'center'
+      ctx.textBaseline = 'middle'
+      ctx.fillText(glyph, chipX + w / 2, chipTop + chipH * 0.56)
+      ctx.textAlign = 'left'
+      ctx.textBaseline = 'alphabetic'
+      chipX += w + 8
+    }
+    for (const trait of card.traits ?? []) {
+      const w = chipH * 1.35
+      pill(w)
+      const icon = chipH * 0.74
+      ctx.drawImage(traitImgs.get(trait)!, chipX + (w - icon) / 2, chipTop + (chipH - icon) / 2, icon, icon)
+      chipX += w + 8
+    }
     ctx.fillStyle = TEXT
     ctx.font = `${fontSize}px ${TYPE}`
     wrapText(ctx, card.text, colW - pad * 2 - avatar - 16).forEach((line, li) => {
@@ -737,24 +843,43 @@ async function renderSheet(json: LevelJson, i18nInst: I18n, title: string): Prom
     }
   })
 
-  // Akten-Notiz (Draußen-Legende, Wasser-Regel, globale Hinweise) unter den Karten.
-  if (noteLines.length > 0) {
-    const ny = noteY + 20
-    const nh = noteLines.length * noteLineH + pad * 2
-    ctx.fillStyle = 'rgba(255, 255, 255, 0.35)'
-    ctx.strokeStyle = LINE
-    ctx.lineWidth = 2
-    ctx.beginPath()
-    ctx.roundRect(paneX, ny, paneW, nh, 8)
-    ctx.fill()
-    ctx.stroke()
-    ctx.fillStyle = CRIMSON
-    ctx.fillRect(paneX, ny + 4, 7, nh - 8)
-    ctx.fillStyle = TEXT
-    ctx.font = `${fontSize}px ${TYPE}`
-    ctx.textAlign = 'left'
-    noteLines.forEach((line, i) => {
-      ctx.fillText(line, paneX + pad + 18, ny + pad + (i + 1) * noteLineH - 8)
+  // Akten-Notizen (Draußen-Legende, Wasser-Regel, globale Hinweise) unter den
+  // Karten — jede in ihrer eigenen blau getönten Box mit Lupe, wie im Spiel.
+  if (noteBoxes.length > 0) {
+    const notePad = Math.round(fontSize * 0.5)
+    const lens = Math.round(fontSize * 1.35)
+    let ny = noteY + 20
+    noteBoxes.forEach((box) => {
+      ctx.fillStyle = 'rgba(120, 150, 210, 0.14)'
+      ctx.strokeStyle = 'rgba(95, 122, 175, 0.6)'
+      ctx.lineWidth = 2
+      ctx.beginPath()
+      ctx.roundRect(paneX, ny, paneW, box.h, 10)
+      ctx.fill()
+      ctx.stroke()
+      // Die Lupe (Tinten-Zeichnung, kein Emoji): Glas + Griff, mittig zur Box.
+      const lx = paneX + notePad
+      const ly = ny + (box.h - lens) / 2
+      const r = lens * 0.34
+      ctx.strokeStyle = INK
+      ctx.lineWidth = Math.max(2, lens * 0.09)
+      ctx.lineCap = 'round'
+      ctx.beginPath()
+      ctx.arc(lx + r + lens * 0.06, ly + r + lens * 0.06, r, 0, Math.PI * 2)
+      ctx.stroke()
+      ctx.beginPath()
+      ctx.moveTo(lx + r + lens * 0.06 + r * 0.72, ly + r + lens * 0.06 + r * 0.72)
+      ctx.lineTo(lx + lens * 0.96, ly + lens * 0.96)
+      ctx.stroke()
+      // Text neben der Lupe, vertikal im Kasten zentriert.
+      ctx.fillStyle = INK
+      ctx.font = `${fontSize}px ${TYPE}`
+      ctx.textAlign = 'left'
+      const textTop = ny + (box.h - box.lines.length * lineH) / 2
+      box.lines.forEach((line, li) => {
+        ctx.fillText(line, paneX + notePad + lens + 14, textTop + fontSize + li * lineH - 2)
+      })
+      ny += box.h + 12
     })
   }
 
