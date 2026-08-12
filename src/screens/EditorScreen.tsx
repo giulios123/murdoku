@@ -16,7 +16,7 @@ import {
   loadAuthorTools,
   saveEditorDraft,
 } from '../game/storage.ts'
-import { exportLevelPdf } from '../game/pdfExport.ts'
+import PdfDialog from '../components/PdfDialog.tsx'
 import {
   GROUND_OBJECTS,
   ROOM_COLORS,
@@ -348,6 +348,10 @@ export default function EditorScreen({ onBack, onPlay, initialLevel }: Props) {
     regenHandle.current = null
     setRegenBusy(false)
   }
+
+  // PDF-Export aus dem Speichern-Dialog: das gebaute Level für den Vorschalt-Dialog
+  // „ohne / mit Auflösung" (null = Dialog zu).
+  const [pdfLevel, setPdfLevel] = useState<LevelJson | null>(null)
 
   // Back/ESC inside the editor closes the open dialog/spinner first, so you land
   // back IN the editor instead of leaving it.
@@ -1398,7 +1402,7 @@ export default function EditorScreen({ onBack, onPlay, initialLevel }: Props) {
                   setResult({ kind: 'error' })
                   return
                 }
-                void exportLevelPdf(level, i18n, name.trim() || t('editor.name')).catch(() => {})
+                setPdfLevel(level)
               }}
             >
               <svg viewBox="0 0 24 24" aria-hidden="true">
@@ -1524,6 +1528,14 @@ export default function EditorScreen({ onBack, onPlay, initialLevel }: Props) {
             )}
           </div>
         </div>
+      )}
+
+      {pdfLevel && (
+        <PdfDialog
+          json={pdfLevel}
+          title={name.trim() || t('editor.name')}
+          onClose={() => setPdfLevel(null)}
+        />
       )}
 
       {randomizing && (

@@ -530,7 +530,19 @@
     "author": "Une affaire de {{name}}",
     "pdfExport": "Enregistrer l'affaire en PDF",
     "pdfStamp": "Affaire ouverte",
-    "pdfMurderer": "Le meurtrier est …"
+    "pdfMurderer": "Le meurtrier est …",
+    "pdfPlain": "Sans la solution",
+    "pdfPlainSub": "Seulement l'affaire ouverte",
+    "pdfSolution": "Avec la solution",
+    "pdfSolutionSub": "Feuille 2 : raisonnement et coupable",
+    "pdfNoPath": "Aucun raisonnement purement logique disponible",
+    "pdfSolutionTitle": "Solution : {{title}}",
+    "pdfStampSolved": "Affaire classée",
+    "pdfSheet2": "Feuille 2 sur 2",
+    "pdfSolutionPath": "Le raisonnement",
+    "pdfSolutionBoard": "La solution",
+    "pdfConfidential": "Confidentiel — ne tournez la page qu'après avoir résolu l'affaire.",
+    "pdfConvicted": "Coupable"
   },
   "tool": {
     "erase": "Effacer",

@@ -530,7 +530,19 @@
     "author": "Ein Fall von {{name}}",
     "pdfExport": "Fall als PDF sichern",
     "pdfStamp": "Offener Fall",
-    "pdfMurderer": "Der Mörder ist …"
+    "pdfMurderer": "Der Mörder ist …",
+    "pdfPlain": "Ohne Auflösung",
+    "pdfPlainSub": "Nur der offene Fall",
+    "pdfSolution": "Mit Auflösung",
+    "pdfSolutionSub": "Blatt 2: Lösungsweg & Täter",
+    "pdfNoPath": "Kein reiner Logik-Weg verfügbar",
+    "pdfSolutionTitle": "Lösung für {{title}}",
+    "pdfStampSolved": "Fall gelöst",
+    "pdfSheet2": "Blatt 2 von 2",
+    "pdfSolutionPath": "Der Lösungsweg",
+    "pdfSolutionBoard": "Des Rätsels Lösung",
+    "pdfConfidential": "Vertraulich — erst nach dem Lösen umblättern.",
+    "pdfConvicted": "Überführt"
   },
   "tool": {
     "erase": "Löschen",

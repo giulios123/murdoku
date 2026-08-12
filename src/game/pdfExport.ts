@@ -15,8 +15,11 @@
  */
 import { Capacitor } from '@capacitor/core'
 import {
+  DeductionEngine,
   MERGE_INSTANCE_TYPES,
   OBJECT_CATALOG,
+  VICTIM_ID,
+  findMurderer,
   isWaterRoom,
   loadLevel,
   usesInsideOutside,
@@ -77,10 +80,17 @@ function loadImage(src: string): Promise<HTMLImageElement> {
   })
 }
 
+/** Erster Buchstabe groß, Schlusspunkt nur wenn nötig — die ClueText-Satzpolitur. */
+function polish(text: string): string {
+  if (text) text = text.charAt(0).toUpperCase() + text.slice(1)
+  if (text && !/[.!?]$/.test(text.trimEnd())) text += '.'
+  return text
+}
+
 /** Klartext eines Verdächtigen-Hinweises — exakt die ClueText-Logik (Pronomen-Form,
  *  ' · ' zwischen Teilen, erster Buchstabe groß, Schlusspunkt nur wenn nötig). */
 function clueLine(renderer: Renderer, clues: readonly Clue[], subjectId: string): string {
-  let text = clues
+  const text = clues
     .map((c) =>
       renderer.render(c.describe(), {
         name: subjectId,
@@ -90,9 +100,7 @@ function clueLine(renderer: Renderer, clues: readonly Clue[], subjectId: string)
       }),
     )
     .join(' · ')
-  if (text) text = text.charAt(0).toUpperCase() + text.slice(1)
-  if (text && !/[.!?]$/.test(text.trimEnd())) text += '.'
-  return text
+  return polish(text)
 }
 
 /** Alle Akten-Notizen des Levels — dieselbe Auswahl wie CluePanel.boardNotes. */
@@ -420,6 +428,69 @@ function drawMurderField(
   ctx.restore()
 }
 
+/** Gemeinsamer Bogen-Kopf beider Blätter: Wortmarke, eingepasster Titel, Meta-Zeile,
+ *  gedrehter Doppelrand-Stempel oben rechts, gestrichelte Trennlinie. Liefert die
+ *  Oberkante des Inhaltsbereichs. */
+function paintHead(
+  ctx: CanvasRenderingContext2D,
+  title: string,
+  metaLine: string,
+  stampText: string,
+): number {
+  const innerW = PAGE_W - 2 * MARGIN
+  ctx.textAlign = 'center'
+  ctx.textBaseline = 'alphabetic'
+  let y = MARGIN + 30
+  ctx.fillStyle = DIM
+  ctx.font = `30px ${TYPE}`
+  ctx.fillText('M U R D O K U', PAGE_W / 2, y)
+  y += 78
+  let titleSize = 84
+  ctx.font = `700 ${titleSize}px ${DISPLAY}`
+  while (titleSize > 40 && ctx.measureText(title).width > innerW * 0.66) {
+    titleSize -= 4
+    ctx.font = `700 ${titleSize}px ${DISPLAY}`
+  }
+  ctx.fillStyle = INK
+  ctx.fillText(title, PAGE_W / 2, y)
+  y += 52
+  ctx.fillStyle = DIM
+  ctx.font = `34px ${TYPE}`
+  ctx.fillText(metaLine, PAGE_W / 2, y)
+
+  const stamp = stampText.toUpperCase()
+  ctx.save()
+  ctx.translate(PAGE_W - MARGIN - 200, MARGIN + 70)
+  ctx.rotate((5 * Math.PI) / 180)
+  ctx.globalAlpha = 0.75
+  ctx.font = `34px ${TYPE}`
+  const stampW = ctx.measureText(stamp).width + 64
+  ctx.strokeStyle = CRIMSON
+  ctx.lineWidth = 4
+  ctx.beginPath()
+  ctx.roundRect(-stampW / 2, -40, stampW, 80, 14)
+  ctx.stroke()
+  ctx.lineWidth = 2
+  ctx.beginPath()
+  ctx.roundRect(-stampW / 2 + 9, -31, stampW - 18, 62, 9)
+  ctx.stroke()
+  ctx.fillStyle = CRIMSON
+  ctx.textBaseline = 'middle'
+  ctx.fillText(stamp, 0, 2)
+  ctx.restore()
+
+  y += 34
+  ctx.strokeStyle = LINE
+  ctx.lineWidth = 2
+  ctx.setLineDash([10, 12])
+  ctx.beginPath()
+  ctx.moveTo(MARGIN, y)
+  ctx.lineTo(PAGE_W - MARGIN, y)
+  ctx.stroke()
+  ctx.setLineDash([])
+  return y + 36
+}
+
 interface PersonCard {
   name: string
   text: string
@@ -467,61 +538,10 @@ async function renderSheet(json: LevelJson, i18nInst: I18n, title: string): Prom
   const innerW = PAGE_W - 2 * MARGIN
 
   // ---------------------------------- Kopf ----------------------------------
-  ctx.textAlign = 'center'
-  ctx.textBaseline = 'alphabetic'
-  let y = MARGIN + 30
-  ctx.fillStyle = DIM
-  ctx.font = `30px ${TYPE}`
-  ctx.fillText('M U R D O K U', PAGE_W / 2, y)
-  y += 78
-  let titleSize = 84
-  ctx.font = `700 ${titleSize}px ${DISPLAY}`
-  while (titleSize > 40 && ctx.measureText(title).width > innerW * 0.66) {
-    titleSize -= 4
-    ctx.font = `700 ${titleSize}px ${DISPLAY}`
-  }
-  ctx.fillStyle = INK
-  ctx.fillText(title, PAGE_W / 2, y)
-  y += 52
   const diff = t(`difficulty.${json.difficulty ?? 'medium'}`)
   const author = (json.author ?? '').trim()
   const metaLine = `${puzzle.board.width}×${puzzle.board.height} · ${diff}${author ? ` · ${t('game.author', { name: author })}` : ''}`
-  ctx.fillStyle = DIM
-  ctx.font = `34px ${TYPE}`
-  ctx.fillText(metaLine, PAGE_W / 2, y)
-
-  // »Offener Fall«-Stempel oben rechts, leicht gedreht, doppelter Rand.
-  const stamp = t('game.pdfStamp').toUpperCase()
-  ctx.save()
-  ctx.translate(PAGE_W - MARGIN - 200, MARGIN + 70)
-  ctx.rotate((5 * Math.PI) / 180)
-  ctx.globalAlpha = 0.75
-  ctx.font = `34px ${TYPE}`
-  const stampW = ctx.measureText(stamp).width + 64
-  ctx.strokeStyle = CRIMSON
-  ctx.lineWidth = 4
-  ctx.beginPath()
-  ctx.roundRect(-stampW / 2, -40, stampW, 80, 14)
-  ctx.stroke()
-  ctx.lineWidth = 2
-  ctx.beginPath()
-  ctx.roundRect(-stampW / 2 + 9, -31, stampW - 18, 62, 9)
-  ctx.stroke()
-  ctx.fillStyle = CRIMSON
-  ctx.textBaseline = 'middle'
-  ctx.fillText(stamp, 0, 2)
-  ctx.restore()
-
-  y += 34
-  ctx.strokeStyle = LINE
-  ctx.lineWidth = 2
-  ctx.setLineDash([10, 12])
-  ctx.beginPath()
-  ctx.moveTo(MARGIN, y)
-  ctx.lineTo(PAGE_W - MARGIN, y)
-  ctx.stroke()
-  ctx.setLineDash([])
-  const contentTop = y + 36
+  const contentTop = paintHead(ctx, title, metaLine, t('game.pdfStamp'))
 
   // ---------------------------------- Fuß ----------------------------------
   // Die zwei Grundregeln links, Absender rechts — beides in der Typewriter-Type.
@@ -741,15 +761,429 @@ async function renderSheet(json: LevelJson, i18nInst: I18n, title: string): Prom
   return canvas
 }
 
-/** Baut das PDF und lädt es herunter (Web) bzw. öffnet das Share-Sheet (Android). */
-export async function exportLevelPdf(json: LevelJson, i18nInst: I18n, title: string): Promise<void> {
+// ─────────────────────────── Blatt 2: Die Auflösung ───────────────────────────
+
+/** Eine Protokoll-Zeile des Lösungswegs (ein Deduktionsschritt der Engine). */
+interface StepLine {
+  text: string
+  /** Verdächtigen-Buchstabe bzw. VICTIM_ID — malt den Farb-Chip vor der Zeile. */
+  person?: string
+  /** Setz-Schritt („X muss auf … stehen") — fett, Feldangabe in Krimson. */
+  place: boolean
+  /** Die lokalisierte Feldangabe (renderer.cell), fürs Krimson-Highlight. */
+  cellText?: string
+}
+
+/** Chip-Farbe/-Buchstabe: Verdächtige in Spielfarbe, das Opfer als ☠ in Krimson. */
+function chipStyle(
+  person: string,
+  suspectIndex: Map<string, number>,
+): { color: string; label: string } {
+  if (person === VICTIM_ID) return { color: CRIMSON, label: '☠' }
+  return { color: suspectColor(suspectIndex.get(person) ?? 0), label: person }
+}
+
+/**
+ * Das nummerierte Protokoll in `cols` Spalten setzen ODER nur messen (draw=false):
+ * spaltenweise gefüllt, Setz-Schritte fett mit Personen-Chip, das Verdikt als
+ * Krimson-Kasten am Ende. Liefert false, wenn es NICHT in die Höhe passt — die
+ * Einpass-Schleife des Aufrufers verkleinert dann (und nur dann) die Schrift.
+ */
+function paintSteps(
+  ctx: CanvasRenderingContext2D,
+  steps: StepLine[],
+  verdict: { text: string; person?: string },
+  suspectIndex: Map<string, number>,
+  o: { x: number; w: number; top: number; bottom: number; font: number; cols: number },
+  draw: boolean,
+): boolean {
+  const COLGAP = 44
+  const colW = Math.floor((o.w - (o.cols - 1) * COLGAP) / o.cols)
+  const lineH = Math.round(o.font * 1.4)
+  const stepGap = Math.round(o.font * 0.55)
+  const chip = Math.round(o.font * 1.15)
+  const numFont = `${Math.round(o.font * 0.78)}px ${TYPE}`
+  ctx.save()
+  ctx.textAlign = 'left'
+  ctx.textBaseline = 'alphabetic'
+  ctx.font = numFont
+  const numW = Math.ceil(ctx.measureText('00').width) + 10
+
+  const drawChip = (person: string, cx: number, cy: number): void => {
+    const { color, label } = chipStyle(person, suspectIndex)
+    ctx.save()
+    ctx.fillStyle = color
+    ctx.beginPath()
+    ctx.arc(cx, cy, chip / 2, 0, Math.PI * 2)
+    ctx.fill()
+    ctx.strokeStyle = 'rgba(20, 18, 26, 0.35)'
+    ctx.lineWidth = Math.max(1.5, o.font * 0.06)
+    ctx.stroke()
+    ctx.fillStyle = '#fff'
+    ctx.font = `700 ${Math.round(chip * 0.62)}px ${DISPLAY}`
+    ctx.textAlign = 'center'
+    ctx.textBaseline = 'middle'
+    ctx.fillText(label, cx, cy + chip * 0.04)
+    ctx.restore()
+  }
+
+  let col = 0
+  let y = o.top
+  const colX = (): number => o.x + col * (colW + COLGAP)
+  // Platz reservieren, in den ein Block der Höhe h noch passen muss — sonst
+  // Spaltenwechsel; sind die Spalten aufgebraucht, passt das Layout nicht.
+  const fit = (h: number): boolean => {
+    if (y + h <= o.bottom || y === o.top) return true
+    col++
+    y = o.top
+    return col < o.cols
+  }
+
+  for (let i = 0; i < steps.length; i++) {
+    const s = steps[i]
+    const font = s.place ? `700 ${o.font}px ${TYPE}` : `${o.font}px ${TYPE}`
+    const textX = numW + (s.person ? chip + 10 : 0)
+    ctx.font = font
+    const lines = wrapText(ctx, s.text, colW - textX)
+    const stepH = lines.length * lineH
+    if (!fit(stepH + stepGap)) {
+      ctx.restore()
+      return false
+    }
+    if (draw) {
+      const x0 = colX()
+      ctx.fillStyle = DIM
+      ctx.font = numFont
+      ctx.fillText(String(i + 1).padStart(2, '0'), x0, y + o.font)
+      if (s.person) drawChip(s.person, x0 + numW + chip / 2, y + o.font * 0.62)
+      ctx.font = font
+      lines.forEach((line, li) => {
+        // Wortweise, damit die Feldangabe eines Setz-Schritts Krimson trägt.
+        let wx = x0 + textX
+        const ly = y + o.font + li * lineH
+        for (const word of line.split(' ')) {
+          ctx.fillStyle =
+            s.cellText && word.includes(s.cellText) ? CRIMSON : s.place ? INK : TEXT
+          ctx.fillText(word, wx, ly)
+          wx += ctx.measureText(`${word} `).width
+        }
+      })
+    }
+    y += stepH + stepGap
+  }
+
+  // Verdikt-Kasten: der Mörder-Schritt der Engine, gerahmt wie ein Stempelfeld.
+  const pad = Math.round(o.font * 0.6)
+  ctx.font = `700 ${o.font}px ${TYPE}`
+  const vTextX = pad + (verdict.person ? chip + 12 : 0)
+  const vLines = wrapText(ctx, verdict.text, colW - vTextX - pad)
+  const boxH = pad * 2 + vLines.length * lineH
+  if (!fit(boxH + 8)) {
+    ctx.restore()
+    return false
+  }
+  if (draw) {
+    const x0 = colX()
+    y += 8
+    ctx.fillStyle = 'rgba(178, 58, 49, 0.07)'
+    ctx.strokeStyle = CRIMSON
+    ctx.lineWidth = 4
+    ctx.beginPath()
+    ctx.roundRect(x0, y, colW, boxH, 12)
+    ctx.fill()
+    ctx.stroke()
+    if (verdict.person) drawChip(verdict.person, x0 + pad + chip / 2, y + pad + o.font * 0.62)
+    ctx.fillStyle = CRIMSON
+    ctx.font = `700 ${o.font}px ${TYPE}`
+    vLines.forEach((line, li) => {
+      ctx.fillText(line, x0 + vTextX, y + pad + o.font + li * lineH)
+    })
+    // Gestrichelte Trennlinien zwischen den benutzten Spalten (wie der Bogen-Kopf).
+    ctx.strokeStyle = LINE
+    ctx.lineWidth = 2
+    ctx.setLineDash([10, 12])
+    for (let b = 1; b <= col; b++) {
+      const bx = o.x + b * (colW + COLGAP) - COLGAP / 2
+      ctx.beginPath()
+      ctx.moveTo(bx, o.top - 6)
+      ctx.lineTo(bx, o.bottom)
+      ctx.stroke()
+    }
+    ctx.setLineDash([])
+  }
+  ctx.restore()
+  return true
+}
+
+/** Die Mörder-Karte unter dem Brett — der Sieg-Dialog des Spiels in Papierform:
+ *  der echte Avatar-Kopf (mit Buchstaben-Plakette) neben dem »Der Mörder war …«-Satz,
+ *  dazu der gedrehte Schuldspruch-Stempel. */
+function drawMurderCard(
+  ctx: CanvasRenderingContext2D,
+  o: { x: number; y: number; w: number; h: number; img: HTMLImageElement; sentence: string; stamp: string },
+): void {
+  ctx.save()
+  ctx.fillStyle = CARD_BG
+  ctx.strokeStyle = LINE
+  ctx.lineWidth = 2
+  ctx.beginPath()
+  ctx.roundRect(o.x, o.y, o.w, o.h, 12)
+  ctx.fill()
+  ctx.stroke()
+  ctx.fillStyle = CRIMSON
+  ctx.beginPath()
+  ctx.roundRect(o.x, o.y, 9, o.h, [12, 0, 0, 12])
+  ctx.fill()
+
+  const pad = 28
+  const A = o.h - 2 * pad
+  ctx.drawImage(o.img, o.x + pad + 8, o.y + pad, A, A)
+
+  // Stempel oben rechts — seine Breite bleibt dem Satz durchgehend reserviert,
+  // damit sich Text und Stempel nie überlappen (Papier-Regel: nichts kollidiert).
+  const stamp = o.stamp.toUpperCase()
+  ctx.font = `26px ${TYPE}`
+  const stampW = ctx.measureText(stamp).width + 44
+  ctx.save()
+  ctx.translate(o.x + o.w - stampW / 2 - 26, o.y + 48)
+  ctx.rotate((-8 * Math.PI) / 180)
+  ctx.globalAlpha = 0.85
+  ctx.strokeStyle = CRIMSON
+  ctx.lineWidth = 3
+  ctx.beginPath()
+  ctx.roundRect(-stampW / 2, -30, stampW, 60, 10)
+  ctx.stroke()
+  ctx.fillStyle = CRIMSON
+  ctx.textAlign = 'center'
+  ctx.textBaseline = 'middle'
+  ctx.fillText(stamp, 0, 2)
+  ctx.restore()
+
+  const tx = o.x + pad + 8 + A + 24
+  const textW = o.w - (tx - o.x) - pad - stampW - 20
+  ctx.font = `30px ${TYPE}`
+  ctx.textAlign = 'left'
+  ctx.textBaseline = 'alphabetic'
+  const lines = wrapText(ctx, o.sentence, Math.max(textW, o.w * 0.3))
+  const lineH = 42
+  let ty = o.y + (o.h - lines.length * lineH) / 2 + 30
+  ctx.fillStyle = CRIMSON
+  for (const line of lines) {
+    ctx.fillText(line, tx, ty)
+    ty += lineH
+  }
+  ctx.restore()
+}
+
+/**
+ * Blatt 2 — die Auflösung: links das nummerierte Ermittlungsprotokoll (die
+ * Deduktionsschritte der Engine wie in Strg+B, ohne Ausgangslage-Zeilen und ohne
+ * Wiederholungen), rechts das komplett gelöste Brett über das echte drawBoard —
+ * alle Figuren als Spiel-Avatare, jedes übrige begehbare Feld ausgekreuzt, der
+ * Mörder im Krimson-Ring (exakt die Auflösung im Spiel). `null`, wenn das Level
+ * keinen reinen Vorwärts-Lösungsweg hat (der Dialog sperrt die Option vorher).
+ */
+async function renderSolutionSheet(
+  json: LevelJson,
+  i18nInst: I18n,
+  title: string,
+): Promise<HTMLCanvasElement | null> {
+  const t = (key: string, params?: Record<string, unknown>): string => i18nInst.t(key, params) as string
+  const lang = i18nInst.resolvedLanguage ?? i18nInst.language
+  const puzzle = loadLevel(json)
+  const renderer = new Renderer(i18nInst.getResourceBundle(lang, 'translation'), puzzle)
+  const result = new DeductionEngine(puzzle).solve()
+  if (!result.solved || !result.solution) return null
+  const solution = result.solution
+
+  await document.fonts.ready
+  await new Promise<void>((resolve) => onArtReady(resolve))
+
+  const suspectIndex = new Map(puzzle.suspects.map((s, i) => [s.id, i] as const))
+  const avatars = new Map<string, HTMLImageElement>()
+  await Promise.all(
+    puzzle.suspects.map(async (s, i) => {
+      avatars.set(s.id, await loadImage(avatarDataUri(s.attributes, suspectColor(i), s.id)))
+    }),
+  )
+
+  // Schritte wie Strg+B, aber druckreif: Ausgangslage-Zählzeilen (clueCandidates)
+  // raus, exakt wiederholte Zeilen nur beim ersten Mal, der Mörder-Schritt wird
+  // zum Verdikt-Kasten. (Dirks Regeln für den Druckbogen.)
+  const steps: StepLine[] = []
+  const seen = new Set<string>()
+  let verdictText = ''
+  for (const step of result.steps) {
+    if (step.technique === 'murderer') {
+      verdictText = polish(renderer.render(step.explanation))
+      continue
+    }
+    if (step.technique === 'clueCandidates' || step.technique === 'stuck') continue
+    const raw = renderer.render(step.explanation)
+    if (raw.trim() === '' || seen.has(raw)) continue
+    seen.add(raw)
+    steps.push({
+      text: polish(raw),
+      person: step.personId,
+      place: step.placedCell !== undefined,
+      cellText: step.placedCell !== undefined ? renderer.cell(step.placedCell) : undefined,
+    })
+  }
+
+  const canvas = document.createElement('canvas')
+  canvas.width = PAGE_W
+  canvas.height = PAGE_H
+  const ctx = canvas.getContext('2d')!
+  ctx.fillStyle = PAPER
+  ctx.fillRect(0, 0, PAGE_W, PAGE_H)
+  const innerW = PAGE_W - 2 * MARGIN
+
+  // Kopf wie Blatt 1 — nur Titel-Schema und Stempel wechseln.
+  const diff = t(`difficulty.${json.difficulty ?? 'medium'}`)
+  const metaLine = `${puzzle.board.width}×${puzzle.board.height} · ${diff} · ${t('game.pdfSheet2')}`
+  const contentTop = paintHead(ctx, t('game.pdfSolutionTitle', { title }), metaLine, t('game.pdfStampSolved'))
+
+  // Fuß: statt der Grundregeln die Vertraulich-Zeile (links) + Absender (rechts).
+  const footRuleY = PAGE_H - MARGIN - 58
+  ctx.strokeStyle = LINE
+  ctx.lineWidth = 2
+  ctx.setLineDash([10, 12])
+  ctx.beginPath()
+  ctx.moveTo(MARGIN, footRuleY)
+  ctx.lineTo(PAGE_W - MARGIN, footRuleY)
+  ctx.stroke()
+  ctx.setLineDash([])
+  ctx.textAlign = 'left'
+  ctx.textBaseline = 'alphabetic'
+  ctx.font = `27px ${TYPE}`
+  ctx.fillStyle = CRIMSON
+  ctx.fillText(t('game.pdfConfidential'), MARGIN, PAGE_H - MARGIN)
+  ctx.fillStyle = DIM
+  ctx.textAlign = 'right'
+  ctx.fillText('murdoku · apo-games.de', PAGE_W - MARGIN, PAGE_H - MARGIN)
+  const contentBottom = footRuleY - 40
+  const contentH = contentBottom - contentTop
+
+  // ---- Rechte Spalte: das gelöste Brett + die Mörder-Karte darunter ----
+  const W = puzzle.board.width
+  const H = puzzle.board.height
+  const rightW = Math.round(innerW * 0.42)
+  const rightX = PAGE_W - MARGIN - rightW
+  const LABEL_H = 38
+  const CARD_GAP = 44
+  const CARD_H = 230
+  let cell = Math.floor(rightW / Math.max(W, H))
+  while (cell > 40 && LABEL_H + cell * H + CARD_GAP + CARD_H > contentH) cell--
+  const bw = cell * W
+  const bh = cell * H
+  const boardX = rightX + Math.round((rightW - bw) / 2)
+  const boardY = contentTop + LABEL_H
+
+  ctx.textAlign = 'left'
+  ctx.textBaseline = 'alphabetic'
+  ctx.fillStyle = CRIMSON
+  ctx.font = `26px ${TYPE}`
+  ctx.fillText(t('game.pdfSolutionBoard').toUpperCase(), boardX, contentTop + 8)
+
+  // Kreuz auf jedem begehbaren Feld ohne Person — der Zustand nach dem Lösen.
+  const placements = new Map(solution.entries())
+  const occupied = new Set(placements.values())
+  const crosses = new Set<number>()
+  for (let c = 0; c < W * H; c++) {
+    if (puzzle.board.isOccupiable(c) && !occupied.has(c)) crosses.add(c)
+  }
+  const m = findMurderer(puzzle, solution)
+  drawBoard(ctx, {
+    puzzle,
+    cell,
+    origin: { x: boardX, y: boardY },
+    roomName: (key) => t(key),
+    suspectIndex,
+    placements,
+    marks: new Map(),
+    crosses,
+    highlight: null,
+    reveal: { victimCell: solution.cellOf(VICTIM_ID), murdererId: m.suspectId },
+    avatars,
+    objectBadges: true,
+  })
+
+  if (m.suspectId) {
+    const room = puzzle.board.rooms.get(m.roomId)
+    drawMurderCard(ctx, {
+      x: boardX,
+      y: boardY + bh + CARD_GAP,
+      w: bw,
+      h: CARD_H,
+      img: avatars.get(m.suspectId)!,
+      sentence: t('result.winMurderer', {
+        name: puzzle.nameOf(m.suspectId),
+        room: room ? t(room.nameKey) : m.roomId,
+      }),
+      stamp: t('game.pdfConvicted'),
+    })
+  }
+
+  // ---- Linke Spalte: der Lösungsweg ----
+  const paneX = MARGIN
+  const paneW = rightX - 44 - paneX
+  ctx.textAlign = 'left'
+  ctx.fillStyle = CRIMSON
+  ctx.font = `26px ${TYPE}`
+  ctx.fillText(t('game.pdfSolutionPath').toUpperCase(), paneX, contentTop + 8)
+
+  // Grundgröße wie Blatt 1; verkleinert wird NUR, wenn der Weg sonst nicht passt
+  // (erst Schriftgrad, dann dritte Spalte — nie in den Fuß laufen).
+  const verdict = { text: verdictText, person: m.suspectId ?? undefined }
+  const area = { x: paneX, w: paneW, top: contentTop + LABEL_H, bottom: contentBottom }
+  let chosen: { font: number; cols: number } | null = null
+  for (let font = 30; font >= 18 && !chosen; font -= 2) {
+    for (const cols of [2, 3]) {
+      if (paintSteps(ctx, steps, verdict, suspectIndex, { ...area, font, cols }, false)) {
+        chosen = { font, cols }
+        break
+      }
+    }
+  }
+  if (!chosen) {
+    chosen = { font: 16, cols: paintSteps(ctx, steps, verdict, suspectIndex, { ...area, font: 16, cols: 3 }, false) ? 3 : 4 }
+  }
+  paintSteps(ctx, steps, verdict, suspectIndex, { ...area, ...chosen }, true)
+
+  return canvas
+}
+
+/** Gibt es für das Level einen reinen Vorwärts-Lösungsweg (und damit ein Blatt 2)?
+ *  Nein z. B. bei „Ausprobieren"-Userleveln — der Export-Dialog sperrt die Option. */
+export function hasSolutionSheet(json: LevelJson): boolean {
+  try {
+    const result = new DeductionEngine(loadLevel(json)).solve()
+    return result.solved && result.solution !== null
+  } catch {
+    return false
+  }
+}
+
+/** Baut das PDF und lädt es herunter (Web) bzw. öffnet das Share-Sheet (Android).
+ *  `opts.solution` hängt Blatt 2 (die Auflösung) an. */
+export async function exportLevelPdf(
+  json: LevelJson,
+  i18nInst: I18n,
+  title: string,
+  opts: { solution?: boolean } = {},
+): Promise<void> {
   const canvas = await renderSheet(json, i18nInst, title)
+  const solutionCanvas = opts.solution ? await renderSolutionSheet(json, i18nInst, title) : null
   // Dynamisch wie die Capacitor-Plugins: jsPDF (~120 KB gzip) gehört nicht ins
   // Start-Bundle eines selten genutzten Features — der Chunk lädt beim ersten
   // Export (in der App aus den lokalen Assets, funktioniert also auch offline).
   const { jsPDF } = await import('jspdf')
   const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4', compress: true })
   doc.addImage(canvas.toDataURL('image/png'), 'PNG', 0, 0, 297, 210)
+  if (solutionCanvas) {
+    doc.addPage('a4', 'landscape')
+    doc.addImage(solutionCanvas.toDataURL('image/png'), 'PNG', 0, 0, 297, 210)
+  }
 
   const base = title.trim().replace(/[^\w-]+/g, '_') || json.id
   const filename = `${base}.pdf`

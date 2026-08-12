@@ -55,7 +55,7 @@ import {
   titleOf,
   type LevelMeta,
 } from '../game/levels.ts'
-import { exportLevelPdf } from '../game/pdfExport.ts'
+import PdfDialog from '../components/PdfDialog.tsx'
 import BloodText from '../components/BloodText.tsx'
 import BoardCanvas from '../components/BoardCanvas.tsx'
 import CluePanel from '../components/CluePanel.tsx'
@@ -266,6 +266,8 @@ export default function GameScreen({
   // button on the board corner opens it as a bottom sheet instead.
   const [legendOpen, setLegendOpen] = useState(false)
   useBackInterceptor(legendOpen, () => setLegendOpen(false))
+  // PDF-Export: kleiner Vorschalt-Dialog „ohne / mit Auflösung" (Blatt 2).
+  const [pdfOpen, setPdfOpen] = useState(false)
   // A short-lived note over the board. Two users: the phase-1 tutorial verdict, where
   // Restart / Back are LOCKED (they'd skip the second part) and a click just explains what
   // they'd do; and the eraser, which introduces its two reaches once.
@@ -718,7 +720,7 @@ export default function GameScreen({
             <button
               type="button"
               className="mk-game__edit mk-game__edit--pdf"
-              onClick={() => void exportLevelPdf(meta.json, i18n, title).catch(() => {})}
+              onClick={() => setPdfOpen(true)}
               aria-label={t('game.pdfExport')}
               title={t('game.pdfExport')}
             >
@@ -889,7 +891,7 @@ export default function GameScreen({
                 className="mk-saverow mk-sheet__pdf"
                 onClick={() => {
                   setLegendOpen(false)
-                  void exportLevelPdf(meta.json, i18n, title).catch(() => {})
+                  setPdfOpen(true)
                 }}
               >
                 <span className="mk-saverow__ic" aria-hidden="true">
@@ -911,6 +913,8 @@ export default function GameScreen({
           </div>
         </div>
       )}
+
+      {pdfOpen && <PdfDialog json={meta.json} title={title} onClose={() => setPdfOpen(false)} />}
 
       {result && !dialogHidden && (
         <ResultDialog

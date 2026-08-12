@@ -534,7 +534,19 @@
     "author": "Автор дела: {{name}}",
     "pdfExport": "Сохранить дело в PDF",
     "pdfStamp": "Дело открыто",
-    "pdfMurderer": "Убийца — …"
+    "pdfMurderer": "Убийца — …",
+    "pdfPlain": "Без разгадки",
+    "pdfPlainSub": "Только открытое дело",
+    "pdfSolution": "С разгадкой",
+    "pdfSolutionSub": "Лист 2: ход решения и убийца",
+    "pdfNoPath": "Чисто логический путь недоступен",
+    "pdfSolutionTitle": "Разгадка: {{title}}",
+    "pdfStampSolved": "Дело раскрыто",
+    "pdfSheet2": "Лист 2 из 2",
+    "pdfSolutionPath": "Ход решения",
+    "pdfSolutionBoard": "Решение",
+    "pdfConfidential": "Секретно — переверните страницу только после решения.",
+    "pdfConvicted": "Виновен"
   },
   "tool": {
     "erase": "Стереть",

@@ -530,7 +530,19 @@
     "author": "Um caso de {{name}}",
     "pdfExport": "Guardar o caso como PDF",
     "pdfStamp": "Caso aberto",
-    "pdfMurderer": "O assassino é …"
+    "pdfMurderer": "O assassino é …",
+    "pdfPlain": "Sem resolução",
+    "pdfPlainSub": "Só o caso aberto",
+    "pdfSolution": "Com resolução",
+    "pdfSolutionSub": "Folha 2: raciocínio e culpado",
+    "pdfNoPath": "Sem caminho lógico puro",
+    "pdfSolutionTitle": "Solução: {{title}}",
+    "pdfStampSolved": "Caso resolvido",
+    "pdfSheet2": "Folha 2 de 2",
+    "pdfSolutionPath": "O raciocínio",
+    "pdfSolutionBoard": "A solução",
+    "pdfConfidential": "Confidencial — vira a página só depois de resolveres o caso.",
+    "pdfConvicted": "Culpado"
   },
   "tool": {
     "erase": "Apagar",

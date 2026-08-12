@@ -530,7 +530,19 @@
     "author": "A case by {{name}}",
     "pdfExport": "Save case as PDF",
     "pdfStamp": "Open case",
-    "pdfMurderer": "The murderer is …"
+    "pdfMurderer": "The murderer is …",
+    "pdfPlain": "Without solution",
+    "pdfPlainSub": "Just the open case",
+    "pdfSolution": "With solution",
+    "pdfSolutionSub": "Sheet 2: reasoning & culprit",
+    "pdfNoPath": "No pure-logic path available",
+    "pdfSolutionTitle": "Solution for {{title}}",
+    "pdfStampSolved": "Case closed",
+    "pdfSheet2": "Sheet 2 of 2",
+    "pdfSolutionPath": "The reasoning",
+    "pdfSolutionBoard": "The solution",
+    "pdfConfidential": "Confidential — turn over only after solving.",
+    "pdfConvicted": "Guilty"
   },
   "tool": {
     "erase": "Erase",
