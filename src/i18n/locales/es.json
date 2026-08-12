@@ -540,6 +540,7 @@
     "pdfSolution": "Con resolución",
     "pdfSolutionSub": "Hoja 2: razonamiento y culpable",
     "pdfNoPath": "No hay camino lógico puro",
+    "pdfCreating": "Creando el PDF …",
     "pdfSolutionTitle": "Solución: {{title}}",
     "pdfStampSolved": "Caso resuelto",
     "pdfSheet2": "Hoja 2 de 2",

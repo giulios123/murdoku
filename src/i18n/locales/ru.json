@@ -540,6 +540,7 @@
     "pdfSolution": "С разгадкой",
     "pdfSolutionSub": "Лист 2: ход решения и убийца",
     "pdfNoPath": "Чисто логический путь недоступен",
+    "pdfCreating": "PDF создаётся …",
     "pdfSolutionTitle": "Разгадка: {{title}}",
     "pdfStampSolved": "Дело раскрыто",
     "pdfSheet2": "Лист 2 из 2",

@@ -5911,6 +5911,22 @@ button {
   line-height: 1.3;
 }
 
+/* PDF-Dialog: die gewählte Zeile ARBEITET — volle Deckkraft trotz disabled, der
+   kleine Spinner ersetzt das Icon. Transform-Animation = Compositor: sie dreht
+   auch weiter, während der Hauptthread die 300-dpi-Seiten zeichnet. */
+.mk-saverow--busy:disabled {
+  opacity: 1;
+}
+.mk-saverow--busy:disabled .mk-saverow__ic {
+  color: var(--brass);
+  border-color: var(--brass-dim);
+}
+.mk-spinner--row {
+  width: 20px;
+  height: 20px;
+  border-width: 3px;
+}
+
 /* Schlichte Trennlinie im Sieg-Dialog (Bewertung ↔ normale Buttons). Volle Breite
    (der Dialog zentriert Kinder auf Inhaltsbreite — ein leerer .mk-divider kollabiert
    dort auf 0px) und mit negativem Margin enger als der 1rem-Dialog-Rhythmus. */

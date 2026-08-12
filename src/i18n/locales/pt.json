@@ -536,6 +536,7 @@
     "pdfSolution": "Com resolução",
     "pdfSolutionSub": "Folha 2: raciocínio e culpado",
     "pdfNoPath": "Sem caminho lógico puro",
+    "pdfCreating": "A criar o PDF …",
     "pdfSolutionTitle": "Solução: {{title}}",
     "pdfStampSolved": "Caso resolvido",
     "pdfSheet2": "Folha 2 de 2",

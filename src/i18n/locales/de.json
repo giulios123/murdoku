@@ -536,6 +536,7 @@
     "pdfSolution": "Mit Auflösung",
     "pdfSolutionSub": "Blatt 2: Lösungsweg & Täter",
     "pdfNoPath": "Kein reiner Logik-Weg verfügbar",
+    "pdfCreating": "PDF wird erstellt …",
     "pdfSolutionTitle": "Lösung für {{title}}",
     "pdfStampSolved": "Fall gelöst",
     "pdfSheet2": "Blatt 2 von 2",

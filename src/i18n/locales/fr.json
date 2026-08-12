@@ -536,6 +536,7 @@
     "pdfSolution": "Avec la solution",
     "pdfSolutionSub": "Feuille 2 : raisonnement et coupable",
     "pdfNoPath": "Aucun raisonnement purement logique disponible",
+    "pdfCreating": "Création du PDF …",
     "pdfSolutionTitle": "Solution : {{title}}",
     "pdfStampSolved": "Affaire classée",
     "pdfSheet2": "Feuille 2 sur 2",

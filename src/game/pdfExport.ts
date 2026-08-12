@@ -1289,41 +1289,114 @@ export function hasSolutionSheet(json: LevelJson): boolean {
   }
 }
 
+/** Doppel-rAF: erst nach dem nächsten Paint weitermachen — so ist der
+ *  „Wird erstellt …"-Zustand des Dialogs sichtbar, BEVOR der Hauptthread die
+ *  300-dpi-Seiten zeichnet, und zwischen den Blättern bleibt die UI ansprechbar. */
+function nextPaint(): Promise<void> {
+  return new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(() => resolve())))
+}
+
+/** PNG-Encoding + jsPDF im Web Worker — die beiden teuren Schritte (je Seite
+ *  ~8,7 Mio. Pixel) blockieren so nie den Hauptthread. Die Seiten wandern als
+ *  ImageBitmap (Transfer, keine Kopie) hinein, das fertige PDF als ArrayBuffer
+ *  heraus. Wirft, wenn Worker/OffscreenCanvas fehlen oder der Worker stirbt —
+ *  der Aufrufer fällt dann auf den Inline-Weg zurück. */
+function buildPdfInWorker(pages: HTMLCanvasElement[]): Promise<ArrayBuffer> {
+  return new Promise((resolve, reject) => {
+    if (typeof Worker === 'undefined' || typeof OffscreenCanvas === 'undefined') {
+      reject(new Error('worker unavailable'))
+      return
+    }
+    let worker: Worker
+    try {
+      worker = new Worker(new URL('./pdf.worker.ts', import.meta.url), { type: 'module' })
+    } catch (err) {
+      reject(err instanceof Error ? err : new Error(String(err)))
+      return
+    }
+    const done = (fn: () => void): void => {
+      worker.terminate()
+      fn()
+    }
+    worker.onmessage = (e: MessageEvent) => {
+      const msg = e.data as { ok: true; pdf: ArrayBuffer } | { ok: false; error: string }
+      done(() => (msg.ok ? resolve(msg.pdf) : reject(new Error(msg.error))))
+    }
+    worker.onerror = (e) => done(() => reject(new Error(e.message || 'pdf worker failed')))
+    Promise.all(pages.map((c) => createImageBitmap(c))).then(
+      (bitmaps) => worker.postMessage({ pages: bitmaps }, bitmaps),
+      (err: unknown) => done(() => reject(err instanceof Error ? err : new Error(String(err)))),
+    )
+  })
+}
+
+/** Inline-Fallback (der alte Weg): jsPDF auf dem Hauptthread — nur wenn der
+ *  Worker-Pfad nicht verfügbar ist. Dynamisch wie die Capacitor-Plugins: jsPDF
+ *  (~120 KB gzip) gehört nicht ins Start-Bundle eines selten genutzten Features. */
+async function buildPdfInline(pages: HTMLCanvasElement[]): Promise<ArrayBuffer> {
+  const { jsPDF } = await import('jspdf')
+  const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4', compress: true })
+  pages.forEach((canvas, i) => {
+    if (i > 0) doc.addPage('a4', 'landscape')
+    doc.addImage(canvas.toDataURL('image/png'), 'PNG', 0, 0, 297, 210)
+  })
+  return doc.output('arraybuffer')
+}
+
+/** Web lädt direkt herunter, Android teilt über das Share-Sheet (dasselbe
+ *  Muster wie der JSON-Export). base64 entsteht per FileReader asynchron. */
+async function deliverPdf(pdf: ArrayBuffer, filename: string): Promise<void> {
+  const blob = new Blob([pdf], { type: 'application/pdf' })
+  if (Capacitor.isNativePlatform()) {
+    const { Filesystem, Directory } = await import('@capacitor/filesystem')
+    const { Share } = await import('@capacitor/share')
+    const dataUri = await new Promise<string>((resolve, reject) => {
+      const reader = new FileReader()
+      reader.onload = () => resolve(reader.result as string)
+      reader.onerror = () => reject(reader.error ?? new Error('read failed'))
+      reader.readAsDataURL(blob)
+    })
+    // Ohne `encoding` schreibt Capacitor base64-Bytes — genau was ein PDF braucht.
+    const { uri } = await Filesystem.writeFile({
+      path: filename,
+      data: dataUri.split(',')[1],
+      directory: Directory.Cache,
+    })
+    await Share.share({ title: filename, files: [uri], dialogTitle: filename })
+    return
+  }
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = filename
+  a.click()
+  setTimeout(() => URL.revokeObjectURL(url), 60_000)
+}
+
 /** Baut das PDF und lädt es herunter (Web) bzw. öffnet das Share-Sheet (Android).
- *  `opts.solution` hängt Blatt 2 (die Auflösung) an. */
+ *  `opts.solution` hängt Blatt 2 (die Auflösung) an. Das Zeichnen der Bogen braucht
+ *  den DOM (Schriften, Bilder) und bleibt im Hauptthread; alles Teure danach
+ *  (PNG-Encoding + jsPDF) läuft im Worker, damit die UI nie einfriert. */
 export async function exportLevelPdf(
   json: LevelJson,
   i18nInst: I18n,
   title: string,
   opts: { solution?: boolean } = {},
 ): Promise<void> {
-  const canvas = await renderSheet(json, i18nInst, title)
-  const solutionCanvas = opts.solution ? await renderSolutionSheet(json, i18nInst, title) : null
-  // Dynamisch wie die Capacitor-Plugins: jsPDF (~120 KB gzip) gehört nicht ins
-  // Start-Bundle eines selten genutzten Features — der Chunk lädt beim ersten
-  // Export (in der App aus den lokalen Assets, funktioniert also auch offline).
-  const { jsPDF } = await import('jspdf')
-  const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4', compress: true })
-  doc.addImage(canvas.toDataURL('image/png'), 'PNG', 0, 0, 297, 210)
-  if (solutionCanvas) {
-    doc.addPage('a4', 'landscape')
-    doc.addImage(solutionCanvas.toDataURL('image/png'), 'PNG', 0, 0, 297, 210)
+  await nextPaint()
+  const pages = [await renderSheet(json, i18nInst, title)]
+  if (opts.solution) {
+    await nextPaint()
+    const solutionCanvas = await renderSolutionSheet(json, i18nInst, title)
+    if (solutionCanvas) pages.push(solutionCanvas)
   }
-
+  await nextPaint()
+  let pdf: ArrayBuffer
+  try {
+    pdf = await buildPdfInWorker(pages)
+  } catch {
+    pdf = await buildPdfInline(pages)
+  }
   const base = title.trim().replace(/[^\w-]+/g, '_') || json.id
-  const filename = `${base}.pdf`
-
-  if (Capacitor.isNativePlatform()) {
-    const { Filesystem, Directory } = await import('@capacitor/filesystem')
-    const { Share } = await import('@capacitor/share')
-    // Ohne `encoding` schreibt Capacitor base64-Bytes — genau was ein PDF braucht.
-    const { uri } = await Filesystem.writeFile({
-      path: filename,
-      data: doc.output('datauristring').split(',')[1],
-      directory: Directory.Cache,
-    })
-    await Share.share({ title: filename, files: [uri], dialogTitle: filename })
-    return
-  }
-  doc.save(filename)
+  await deliverPdf(pdf, `${base}.pdf`)
 }

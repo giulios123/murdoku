@@ -536,6 +536,7 @@
     "pdfSolution": "With solution",
     "pdfSolutionSub": "Sheet 2: reasoning & culprit",
     "pdfNoPath": "No pure-logic path available",
+    "pdfCreating": "Creating PDF …",
     "pdfSolutionTitle": "Solution for {{title}}",
     "pdfStampSolved": "Case closed",
     "pdfSheet2": "Sheet 2 of 2",
