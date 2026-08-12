@@ -22,6 +22,7 @@ import { TECHNIQUE_RANK } from '../engine/solver/DeductionStep.ts'
 import { levelHash } from './levelHash.ts'
 import { normalizeBoardClues } from './editorModel.ts'
 import { readStorage, writeStorage } from './storage.ts'
+import { LEVELS } from './levels.ts'
 
 /** Basis-URL der PHP-API (Deploy-Ziel des php/-Ordners). */
 export const USERLEVEL_API = 'https://apo-games.de/murdoku/'
@@ -340,15 +341,40 @@ export type UploadError = 'duplicate' | 'content' | 'tooFast' | 'network' | 'rej
 
 export type UploadResult = { ok: true; id: number } | { ok: false; error: UploadError }
 
+/** Fingerprints aller offiziellen Level — einmal gerechnet und gemerkt (das Bundle
+ *  ändert sich zur Laufzeit nie). */
+let bundledHashes: Promise<Set<string>> | null = null
+function officialLevelHashes(): Promise<Set<string>> {
+  bundledHashes ??= (async () => {
+    const set = new Set<string>()
+    for (const meta of LEVELS) set.add(await levelHash(meta.json))
+    return set
+  })()
+  return bundledHashes
+}
+
+/** Lokale Duplikat-Prüfung VOR dem Upload: offizielle Level + Userlevel-Sync-Cache.
+ *  Rechnet immer mit dem AKTUELLEN Hash-Algorithmus (unabhängig davon, welcher Build
+ *  die Hashes in der DB geschrieben hat) und braucht kein Netz; der Server prüft
+ *  danach nochmal per String-Vergleich als zweites Netz. */
+async function isDuplicateLocally(hash: string): Promise<boolean> {
+  if ((await officialLevelHashes()).has(hash)) return true
+  for (const entry of loadUserLevelCache().levels) {
+    if ((await levelHash(entry.json)) === hash) return true
+  }
+  return false
+}
+
 /**
  * Level hochladen — SCHNELL: der Server speichert nur (status 'pending') und
  * antwortet sofort; Moderation + Übersetzung stoßen wir danach fire-and-forget an
  * und niemand wartet darauf. Die fachlichen Tore (eineindeutig, Mörder existiert)
- * prüft der Aufrufer vor dem Upload über `checkLevel` (Editor-Save-Gate); der
- * Fingerprint (levelHash) lässt den Server Kopien erkennen.
+ * prüft der Aufrufer vor dem Upload über `checkLevel` (Editor-Save-Gate); Kopien
+ * fängt zuerst die LOKALE Fingerprint-Prüfung (ohne Netz), danach der Server.
  */
 export async function uploadUserLevel(level: LevelJson): Promise<UploadResult> {
   const hash = await levelHash(level)
+  if (await isDuplicateLocally(hash)) return { ok: false, error: 'duplicate' }
   let body: { success: boolean; data?: { id: number }; error?: string }
   try {
     body = (await post('addUserlevel.php', {

@@ -363,7 +363,7 @@ export function editorStateFromLevel(level: LevelJson): EditorState {
   const map = roomCharMap(level.roomMap)
   const rm = (ch: string): string => map.get(ch) ?? ch
   const remapClue = (c: ClueJson): ClueJson => {
-    if (c.type === 'inRoom') return { ...c, room: rm(c.room) }
+    if (c.type === 'inRoom' || c.type === 'inRoomAdjacentTo') return { ...c, room: rm(c.room) }
     if (c.type === 'and' || c.type === 'or') return { ...c, clues: c.clues.map(remapClue) }
     if (c.type === 'not') return { ...c, clue: remapClue(c.clue) }
     return c

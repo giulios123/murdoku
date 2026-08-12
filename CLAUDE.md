@@ -363,9 +363,16 @@ Tabellen in `php/schema.sql`: `murdoku_userlevel` + Drossel `murdoku_upload_ip`)
   → `ok`/`rejected`. `sync.php` liefert NUR `ok`; Cursor = `updated` — wird NUR bei der Freigabe
   gebumpt, NIE durch Bewertungen (sonst liefert jeder Sync frisch bewertete Level komplett neu);
   der Client ERSETZT gelieferte Einträge idempotent (so kommen Nachübersetzungen an).
-- **Duplikat-Schutz:** `src/game/levelHash.ts` = SHA-256 der Puzzle-KERNSTRUKTUR (Titel/Autor/
-  Namen/Raumnamen/Farben = Flavor, zählen nicht ⇒ Re-Skin bleibt Duplikat). NUR der Client
-  rechnet; PHP vergleicht Strings. **Bei neuen offiziellen Leveln PFLICHT:**
+- **Duplikat-Schutz:** `src/game/levelHash.ts` = SHA-256 der KANONISIERTEN Puzzle-Kernstruktur.
+  Flavor zählt nicht: Titel/Autor/Namen/Raumnamen/Farben/**Theme**, Raum-BUCHSTABEN (kanonisch
+  nach erster Zelle relabelt, `inRoom`-Refs remappt), `outside`-Flags NUR wenn ein Hinweis
+  drinnen/draußen nutzt, Personen-Attribute NUR wenn ein Hinweis den Key referenziert (Opfer:
+  höchstens `gender` — Rest ist verdeckter Zufall), plus Schreibweisen-Normalisierung (leere
+  Layer, ausgeschriebene Defaults, `excludeSelf`, Fenster/Tür-Kanten zweiseitig) ⇒ Editor-
+  Roundtrip mit Themewechsel bleibt Duplikat (E2E gemessen: 170/175; die 5 Abweichler nutzen
+  drinnen/draußen — dort ändert das Theme das Puzzle wirklich). Vor dem Upload prüft der
+  CLIENT lokal (offizielle Level + Sync-Cache, `isDuplicateLocally`), der Server danach per
+  String-Vergleich als zweites Netz. **Bei neuen offiziellen Leveln PFLICHT:**
   `npx tsx src/dev/userlevel-hashes.ts` laufen lassen und `php/internal_hashes.php` neu
   deployen — sonst lassen sich offizielle Level als Userlevel hochladen.
 - **ratings-Zeilen sind positionscodiert:** Spaltenreihenfolge `TAG_KEYS` (php/db_config.php)
