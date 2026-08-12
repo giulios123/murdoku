@@ -26,7 +26,7 @@
 - **A fresh case every day.** The daily mystery waits right on the front page — one date, one board, one culprit.
 - **Build your own — and share it.** A full editor lets you paint a crime scene, write the clues and verify it's solvable — then play it, save it, or **upload it for everyone**.
 - **A community archive.** Browse the **user levels** other detectives publish, filter by stars, size and status, and rate solved cases with stars and properties.
-- **Take the case to paper.** Every mystery prints as a one-page **PDF case sheet** — the crime scene in full colour, the suspects' testimony, and a black-and-white deduction grid to crack it in pencil.
+- **Take the case to paper.** Every mystery prints as a one-page **PDF case sheet** — the crime scene in full colour, the suspects' testimony, and a black-and-white deduction grid to crack it in pencil. An optional **solution sheet** rides along, sealed until you need it.
 - **Learn by doing.** An interactive, guided tutorial cracks a real mini-case *with* you, one step at a time.
 - **A crime scene with character.** Hand-drawn suspects and **70+ themed props**, dressed in a moody "case-file" look down to the film grain.
 - **Anywhere, in your language.** Plays beautifully on desktop and phone, in English, German, Spanish, Portuguese, French or Russian, with your progress saved automatically. On touch, tap a suspect's face and their dossier note unfolds — every term explained, every named person with their traits.
@@ -116,7 +116,7 @@ Solved everything? Other detectives publish too:
 
 ## The paper edition (PDF)
 
-Some cases deserve a pencil. The **printer button** in a case's header (on phones: in the board's **?** legend sheet) turns any mystery into a one-page **A4 case sheet**: the crime scene in full game graphics, every suspect's dossier with portrait and testimony, a clean **black-and-white deduction grid** to solve on — and a *"The murderer is …"* line to fill in with a flourish. Always the unsolved case, always one page, fully offline; on Android it goes straight to the share sheet.
+Some cases deserve a pencil. The **printer button** in a case's header (on phones: in the board's **?** legend sheet) turns any mystery into a one-page **A4 case sheet**: the crime scene in full game graphics, every suspect's dossier with portrait and testimony, a clean **black-and-white deduction grid** to solve on — and a *"The murderer is …"* line to fill in with a flourish. On request, an optional **solution sheet** comes along: the solved board and the numbered chain of deductions that convicts the culprit — stamped *confidential*, so no peeking until you've cracked it yourself. The case sheet itself is always unsolved and always one page, fully offline; on Android it goes straight to the share sheet.
 
 ---
 

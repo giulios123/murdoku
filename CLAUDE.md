@@ -403,9 +403,12 @@ Tabellen in `php/schema.sql`: `murdoku_userlevel` + Drossel `murdoku_upload_ip`)
 
 ## PDF-Druckbogen & Autoren-Werkzeuge (08/2026)
 
-`src/game/pdfExport.ts`: EIN A4-Bogen **immer quer** (Kopf: Titel/Autor/Stufe + „Offener
+`src/game/pdfExport.ts`: A4-Bogen **immer quer** (Kopf: Titel/Autor/Stufe + „Offener
 Fall"-Stempel; links die Verdächtigen, rechts Brett · Objekt-Legende · SW-Skizze ·
-„Der Mörder ist …"-Feld), gerendert als 300-dpi-Canvas → PNG in jsPDF. So tragen alle
+„Der Mörder ist …"-Feld), gerendert als 300-dpi-Canvas → PNG in jsPDF. Vorschalt-Dialog
+`PdfDialog` (Share-Sheet-Muster): ohne oder mit **Blatt 2 „Auflösung"** (nummeriertes
+Deduktions-Protokoll + gelöstes Brett + Mörder-Karte; nur wenn ein reiner Vorwärts-Weg
+existiert — `hasSolutionSheet`, sonst Zeile gesperrt mit Grund). So tragen alle
 Texte die Spiel-Schriften inkl. Kyrillisch-Fallback ohne TTF-Einbettung. **jsPDF nur
 dynamisch importieren** (~120 KB gehören nicht ins Start-Bundle). Android teilt wie der
 JSON-Export (Filesystem base64 OHNE `encoding` + Share-Sheet); komplett offline-fähig.
@@ -427,6 +430,15 @@ JSON-Export (Filesystem base64 OHNE `encoding` + Share-Sheet); komplett offline-
   überstehen). Verschmolzen wird NUR nach **`MERGE_INSTANCE_TYPES`** + gleicher Raum
   (Board-Instanz-Semantik, aus engine/index exportiert) — zwei Stühle nebeneinander
   sind IMMER zwei Umrisse, nie einer.
+- **Kein Einfrieren beim Export:** PNG-Encoding + jsPDF-Zusammenbau laufen in
+  `pdf.worker.ts` (Seiten als ImageBitmap-Transfer hinein, PDF als ArrayBuffer zurück;
+  Inline-Fallback, wenn Worker/OffscreenCanvas fehlen). Das ZEICHNEN bleibt im
+  Hauptthread (braucht DOM-Fonts + Board-Art), mit Doppel-rAF-Yields (`nextPaint`)
+  davor/dazwischen. Der `PdfDialog` bleibt währenddessen OFFEN und eingefroren
+  (Dialoghöhen-Regel): gewählte Zeile = `mk-saverow--busy` + Spinner +
+  `game.pdfCreating`; Abbrechen/Overlay/Back gesperrt, Fehler ⇒ zurück auf idle.
+  Vites iife-Worker-Build inlined jsPDF in den Worker-Chunk (~800 KB, lädt erst beim
+  Export) — `worker.format` NICHT auf 'es' stellen (beträfe auch den generator.worker).
 - Einstieg: Desktop im GameScreen-Kopf (`mk-game__edit--pdf`, im portrait/≤860px-Block
   ausgeblendet); **alle Kopf-Knöpfe haben FESTE 38 px** — der Inhalt (Glyphe vs. SVG)
   darf nie die Höhe diktieren. Mobil als `mk-saverow`-Zeile unten im ?-Legenden-Sheet
