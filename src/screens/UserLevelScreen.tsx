@@ -5,6 +5,7 @@ import BloodText from '../components/BloodText.tsx'
 import BloodSplatter from '../components/BloodSplatter.tsx'
 import BoardPreview from '../components/BoardPreview.tsx'
 import FilterDropdown from '../components/FilterDropdown.tsx'
+import UlStars from '../components/UlStars.tsx'
 import { levelMetaFromJson, titleOf, type LevelMeta } from '../game/levels.ts'
 import { loadResults, loadSolved, readStorage, writeStorage } from '../game/storage.ts'
 import {
@@ -326,15 +327,7 @@ export default function UserLevelScreen({ onPick, onBack }: Props) {
                       chips/borders, single line: the photo keeps dictating the card
                       height, especially in the phone register rows. */}
                   <span className="mk-card__ulmeta">
-                    <span
-                      className="mk-ul-stars"
-                      data-unrated={avg === null || undefined}
-                      title={avg === null ? t('userlevel.unrated') : undefined}
-                    >
-                      {avg === null
-                        ? '★ –'
-                        : `★ ${avg.toLocaleString(lang, { minimumFractionDigits: 1, maximumFractionDigits: 1 })} (${entry.stats.ratings})`}
-                    </span>
+                    <UlStars stars={avg} ratings={entry.stats.ratings} />
                     {ratedIds.has(entry.dbId) && (
                       <span
                         className="mk-ul-tag"

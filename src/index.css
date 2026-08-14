@@ -486,11 +486,6 @@ button {
   .mk-topbar h1 {
     font-size: 1.3rem;
   }
-  /* Below this width the centred title needs every pixel — drop the author byline
-     rather than let it crowd or wrap the header (it stays on roomier phones). */
-  .mk-game__author {
-    display: none;
-  }
   /* Phones: 2×2 — Tutorial + Userlevel share row 1, Editor + Generierung row 2
      (Dirks Vorgabe: Userlevel neben Tutorial, Tutorial nicht mehr überbreit). */
   .mk-start__more {
@@ -3823,8 +3818,23 @@ button {
   letter-spacing: -0.04em;
 }
 /* PDF-Zeile im mobilen Legenden-Sheet: abgesetzt unter den Objekt-Einträgen. */
-.mk-sheet__pdf {
-  margin-top: 0.7rem;
+/* Die drei ?-Sheet-Abschnitte (Community-Wertung · Legende · PDF) lesen sich als
+   getrennte Blöcke: die Wertung steht ZUERST, trägt dieselbe kleine Abschnitts-
+   Überschrift wie die Legende und schließt mit einer Haarlinie ab; vor der
+   PDF-Zeile trennt dieselbe Haarlinie die Legende vom Export. */
+.mk-sheet__community {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  padding-bottom: 0.6rem;
+  margin-bottom: 0.6rem;
+  border-bottom: 1px solid var(--line);
+}
+/* Zwei Klassen: das spätere `border: 0` der .mk-saverow-Basis darf die
+   Trennlinie nicht wieder wegräumen. */
+.mk-sheet .mk-sheet__pdf {
+  margin-top: 0.6rem;
+  border-top: 1px solid var(--line);
 }
 .mk-sheet__pdf .mk-game__pdficon {
   width: 1rem;
@@ -5015,19 +5025,33 @@ button {
   .mk-game .mk-game__edit--pdf {
     display: none;
   }
+  /* Auch die Community-Wertung wohnt mobil im ?-Sheet: der Badge-Cluster bleibt so
+     schmal wie bisher und fliegt bei langen Titeln nicht noch öfter raus. */
+  .mk-game .mk-game__stars {
+    display: none;
+  }
   /* Compact the dossier headline on phones: title and size tag share one row.
-     When they don't both fit, GameScreen drops the tag first (JS measure); if the
-     title alone is still too wide it's clipped with an ellipsis. The size tag sits
-     upright here to save width. */
+     When they don't both fit, GameScreen drops the tag first (JS measure); the
+     title then SHRINKS to the remaining width instead of clipping (--fit-* from
+     the same measure, linear font scale) down to a readability floor (~11px) —
+     only beyond that the base ellipsis still kicks in as a last resort. With an
+     author byline underneath the title starts a step smaller so both lines fit
+     the header. The size tag sits upright here to save width. */
   .mk-game__heading {
     align-items: center;
     gap: 0.25rem 0.6rem;
   }
   .mk-game__title {
-    font-size: 1.15rem;
+    font-size: max(0.7rem, calc(1.15rem * var(--fit-title, 1)));
+  }
+  .mk-game__titlewrap[data-author] .mk-game__title {
+    font-size: max(0.7rem, calc(1rem * var(--fit-title, 1)));
   }
   .mk-game__author {
-    font-size: 0.8rem;
+    font-size: max(0.6rem, calc(0.8rem * var(--fit-author, 1)));
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
   .mk-game__sz {
     transform: none;

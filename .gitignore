@@ -31,6 +31,10 @@ android/key.properties
 # (Vorlage: php/db_config.example.php)
 php/db_config.php
 
+# Buch-Pipeline (scripts/make-book.ts): gerenderte Seiten + Probe-PDF sind
+# Build-Artefakte, nie versionieren
+book/
+
 assets/feature-graphic-de.png
 
 assets/feature-graphic-en.png

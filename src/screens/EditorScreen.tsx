@@ -49,7 +49,7 @@ type Mode = 'rooms' | 'ground' | 'top' | 'window' | 'door' | 'global'
 /** The four board layers shown as tabs; windows & doors live inside 'top' (Objekte). */
 const LAYERS: Mode[] = ['rooms', 'ground', 'top', 'global']
 type CheckResult = {
-  kind: 'ok' | 'multi' | 'none' | 'contradiction' | 'aborted' | 'error' | 'saved' | 'exported' | 'loaded' | 'genfail' | 'genfailVorgaben' | 'uploaded' | 'uploadDuplicate' | 'uploadContent' | 'uploadTooFast' | 'uploadNetwork' | 'uploadFailed'
+  kind: 'ok' | 'multi' | 'none' | 'contradiction' | 'aborted' | 'error' | 'saved' | 'exported' | 'loaded' | 'genfail' | 'genfailVorgaben' | 'uploaded' | 'uploadDuplicate' | 'uploadDaily' | 'uploadContent' | 'uploadTooFast' | 'uploadNetwork' | 'uploadFailed'
   murderer?: string
   /** For a solvable level: did pure forward deduction crack it ('pure'), or were
    *  proof-by-contradiction steps (forcing/SAT search) required ('contradiction')? */
@@ -479,13 +479,15 @@ export default function EditorScreen({ onBack, onPlay, initialLevel }: Props) {
         ? 'uploaded'
         : res.error === 'duplicate'
           ? 'uploadDuplicate'
-          : res.error === 'content'
-            ? 'uploadContent'
-            : res.error === 'tooFast'
-              ? 'uploadTooFast'
-              : res.error === 'network'
-                ? 'uploadNetwork'
-                : 'uploadFailed',
+          : res.error === 'daily'
+            ? 'uploadDaily'
+            : res.error === 'content'
+              ? 'uploadContent'
+              : res.error === 'tooFast'
+                ? 'uploadTooFast'
+                : res.error === 'network'
+                  ? 'uploadNetwork'
+                  : 'uploadFailed',
     })
   }
 

@@ -63,6 +63,7 @@ import Toolbar from '../components/Toolbar.tsx'
 import Legend from '../components/Legend.tsx'
 import ResultDialog from '../components/ResultDialog.tsx'
 import SettingsButton from '../components/SettingsButton.tsx'
+import UlStars from '../components/UlStars.tsx'
 import Coach from '../components/Coach.tsx'
 import { useSettings } from '../game/settings.ts'
 import { hasMarks, helpMarks, type HelpMarks } from '../game/helpMarks.ts'
@@ -197,6 +198,22 @@ export default function GameScreen({
   const storageId = tutorial ? '__tutorial__' : meta.id
   // Community level: the DB id is baked into the level id (`ul-<n>`).
   const userDbId = userLevel ? Number(/^ul-(\d+)$/.exec(meta.id)?.[1] ?? 0) : 0
+  // Its community verdict (Ø stars + top properties) from the local sync cache —
+  // read once on mount (the screen is keyed per level id), refreshed after the
+  // player's own rating. Shown in the header cluster (desktop) and the ?-sheet
+  // (phones — the header cluster usually gets dropped there).
+  const [ulStats, setUlStats] = useState<Result['community']>(() => {
+    if (!userLevel || userDbId <= 0) return null
+    const own = loadUserLevels().find((e) => e.dbId === userDbId)
+    return own
+      ? {
+          stars: averageStars(own.stats),
+          ratings: own.stats.ratings,
+          tags: topTags(own.stats),
+          nologic: !own.logic,
+        }
+      : null
+  })
   const puzzle = useMemo(() => loadLevel(meta.json), [meta])
   // The precomputed answer key is ONLY needed to steer the tutorial (win/submit check
   // the placement directly). Skipping it for normal play also keeps degenerate boards
@@ -293,6 +310,7 @@ export default function GameScreen({
   // clips it with an ellipsis.
   const headingRef = useRef<HTMLDivElement>(null)
   const titleRef = useRef<HTMLHeadingElement>(null)
+  const authorRef = useRef<HTMLSpanElement>(null)
   const badgeRef = useRef<HTMLSpanElement>(null)
   const badgeWidthRef = useRef(0)
   const [hideBadge, setHideBadge] = useState(false)
@@ -313,8 +331,23 @@ export default function GameScreen({
       const badge = badgeRef.current
       if (badge) badgeWidthRef.current = badge.offsetWidth // remember it while shown
       const gap = parseFloat(getComputedStyle(heading).columnGap) || 0
-      const needed = title.scrollWidth + (badgeWidthRef.current ? badgeWidthRef.current + gap : 0)
-      setHideBadge(needed > heading.clientWidth + 1)
+      // Natürliche Breiten bei Faktor 1 messen — der Mobil-Fit skaliert die
+      // Schrift linear, also erst zurücksetzen, dann lesen (das Lesen von
+      // scrollWidth erzwingt das Layout; Desktop ignoriert die Variablen).
+      heading.style.setProperty('--fit-title', '1')
+      heading.style.setProperty('--fit-author', '1')
+      const badgeNeed = badgeWidthRef.current ? badgeWidthRef.current + gap : 0
+      const naturalTitle = title.scrollWidth
+      const hide = naturalTitle + badgeNeed > heading.clientWidth + 1
+      setHideBadge(hide)
+      // Mobil schrumpfen Titel und Autor danach stufenlos auf die verfügbare
+      // Breite (statt „…"); den Lesbarkeits-Boden zieht das CSS per max() ein.
+      const avail = heading.clientWidth - (hide ? 0 : badgeNeed)
+      if (avail > 0 && naturalTitle > avail)
+        heading.style.setProperty('--fit-title', String(avail / naturalTitle))
+      const author = authorRef.current
+      if (author && avail > 0 && author.scrollWidth > avail)
+        heading.style.setProperty('--fit-author', String(avail / author.scrollWidth))
     }
     measure()
     const ro = new ResizeObserver(measure)
@@ -324,7 +357,7 @@ export default function GameScreen({
       alive = false
       ro.disconnect()
     }
-  }, [title, meta.author, meta.width, meta.height, meta.difficulty, meta.custom])
+  }, [title, meta.author, meta.width, meta.height, meta.difficulty, meta.custom, ulStats])
 
   // The hint stays on screen (with its highlight) until it's DONE or invalidated:
   //  - PLACING or removing a figure clears it (a different suspect set, or the hinted
@@ -738,10 +771,12 @@ export default function GameScreen({
           )}
         </div>
         <div className="mk-game__heading" ref={headingRef}>
-          <div className="mk-game__titlewrap">
+          <div className="mk-game__titlewrap" data-author={meta.author ? '' : undefined}>
             <h2 className="mk-game__title" ref={titleRef}><BloodText text={title} /></h2>
             {meta.author && (
-              <span className="mk-game__author">{t('game.author', { name: meta.author })}</span>
+              <span className="mk-game__author" ref={authorRef}>
+                {t('game.author', { name: meta.author })}
+              </span>
             )}
           </div>
           {!hideBadge && (
@@ -755,6 +790,9 @@ export default function GameScreen({
                 {meta.custom && <span className="mk-game__case-own">{t('select.custom')}</span>}
               </span>
               <span className="mk-game__sz">{meta.width}×{meta.height}</span>
+              {/* Community-Wertung neben der Größe (Desktop; mobil per CSS aus —
+                  dort wohnt sie im ?-Sheet, und der Cluster bliebe sonst öfter weg). */}
+              {ulStats && <UlStars className="mk-game__stars" stars={ulStats.stars} ratings={ulStats.ratings} />}
             </span>
           )}
         </div>
@@ -882,6 +920,28 @@ export default function GameScreen({
             >
               ×
             </button>
+            {/* Mobil wohnt die Community-Wertung hier (der Kopf wirft den Badge-
+                Cluster meist ab) — als ERSTER der drei Sheet-Abschnitte
+                (Wertung · Legende · PDF), mit derselben kleinen Abschnitts-
+                Überschrift wie die Legende. */}
+            {ulStats && (
+              <div className="mk-sheet__community">
+                <span className="mk-legend__title">{t('rate.community')}</span>
+                <p className="mk-dialog__community">
+                  <UlStars stars={ulStats.stars} ratings={ulStats.ratings} />
+                  {ulStats.tags.map((tag) => (
+                    <span key={tag} className="mk-ul-tag">
+                      {t(`tag.${tag}`)}
+                    </span>
+                  ))}
+                  {ulStats.nologic && (
+                    <span className="mk-ul-tag" data-nologic="true">
+                      {t('tag.nologic')}
+                    </span>
+                  )}
+                </p>
+              </div>
+            )}
             {legendNode}
             {/* Mobil wohnt der Druckbogen-Export hier (der Kopf hat keinen Platz):
                 eine vertraute Share-Sheet-Zeile unter der Legende. */}
@@ -950,6 +1010,14 @@ export default function GameScreen({
                     // erscheinen/verschwinden (die Dialoghöhe ändert sich nie).
                     const own = ok ? loadUserLevels().find((e) => e.dbId === userDbId) : undefined
                     if (own) {
+                      // Kopf + ?-Sheet ziehen sofort mit (außerhalb des Dialogs —
+                      // dessen Einfrier-Regel gilt hier nicht).
+                      setUlStats({
+                        stars: averageStars(own.stats),
+                        ratings: own.stats.ratings,
+                        tags: topTags(own.stats),
+                        nologic: !own.logic,
+                      })
                       setResult((r) =>
                         r?.community
                           ? {

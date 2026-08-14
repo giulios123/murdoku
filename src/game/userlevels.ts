@@ -21,7 +21,7 @@ import { DeductionEngine, loadLevel } from '../engine/index.ts'
 import { TECHNIQUE_RANK } from '../engine/solver/DeductionStep.ts'
 import { levelHash } from './levelHash.ts'
 import { normalizeBoardClues } from './editorModel.ts'
-import { readStorage, writeStorage } from './storage.ts'
+import { loadDailyLevels, readStorage, writeStorage } from './storage.ts'
 import { LEVELS } from './levels.ts'
 
 /** Basis-URL der PHP-API (Deploy-Ziel des php/-Ordners). */
@@ -337,7 +337,7 @@ export function saveAuthorName(name: string): void {
   writeStorage(AUTHOR_KEY, name.trim())
 }
 
-export type UploadError = 'duplicate' | 'content' | 'tooFast' | 'network' | 'rejected'
+export type UploadError = 'duplicate' | 'daily' | 'content' | 'tooFast' | 'network' | 'rejected'
 
 export type UploadResult = { ok: true; id: number } | { ok: false; error: UploadError }
 
@@ -365,6 +365,21 @@ async function isDuplicateLocally(hash: string): Promise<boolean> {
   return false
 }
 
+/** Ist das ein UNVERÄNDERTES Rätsel des Tages? Dailys entstehen nur auf DIESEM
+ *  Gerät (deterministisch generiert und für immer gespeichert) — wer das JSON
+ *  hat, hat also auch den Eintrag in `loadDailyLevels()`. Der kanonische Hash
+ *  ignoriert Flavor: auch ein nur umbenanntes/umgefärbtes Daily bleibt erkannt;
+ *  echt umgebaute Level fallen durch und dürfen hochgeladen werden. Ein
+ *  Server-Zweitnetz ist hier prinzipiell unmöglich (gespeicherte Tage
+ *  regenerieren nie — je nach App-Version beim Erstöffnen können Spieler für
+ *  denselben Tag VERSCHIEDENE Level haben, es gibt also nicht DEN Tages-Hash). */
+async function isStoredDaily(hash: string): Promise<boolean> {
+  for (const level of Object.values(loadDailyLevels())) {
+    if ((await levelHash(level)) === hash) return true
+  }
+  return false
+}
+
 /**
  * Level hochladen — SCHNELL: der Server speichert nur (status 'pending') und
  * antwortet sofort; Moderation + Übersetzung stoßen wir danach fire-and-forget an
@@ -374,6 +389,9 @@ async function isDuplicateLocally(hash: string): Promise<boolean> {
  */
 export async function uploadUserLevel(level: LevelJson): Promise<UploadResult> {
   const hash = await levelHash(level)
+  // Daily-Prüfung ZUERST: das eben hochgeladene Daily eines anderen könnte schon
+  // im Sync-Cache stehen — dann wäre „Duplikat" zwar wahr, aber die falsche Story.
+  if (await isStoredDaily(hash)) return { ok: false, error: 'daily' }
   if (await isDuplicateLocally(hash)) return { ok: false, error: 'duplicate' }
   let body: { success: boolean; data?: { id: number }; error?: string }
   try {

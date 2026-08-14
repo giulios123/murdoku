@@ -126,6 +126,7 @@
     "uploadNoLogic": "Solution unique, mais seulement par contradictions — l'affaire portera la caractéristique « Par tâtonnement » (l'indice ne pourra pas aider).",
     "result_uploaded": "Téléversé ✓ — votre affaire sera bientôt vérifiée et traduite, puis paraîtra parmi les niveaux de joueurs.",
     "result_uploadDuplicate": "Cette affaire existe déjà — en niveau officiel ou en niveau de joueur.",
+    "result_uploadDaily": "C’est une affaire du jour — les affaires quotidiennes ne peuvent pas être téléversées en niveaux de joueurs.",
     "result_uploadNetwork": "Pas de connexion aux archives — réessayez plus tard.",
     "result_uploadContent": "Téléversement refusé — le titre, l'auteur ou les noms enfreignent les règles (aucun contenu pornographique, haineux ou illicite).",
     "result_uploadTooFast": "Un téléversement toutes les 5 secondes suffit — patientez un instant et réessayez.",
@@ -1830,5 +1831,54 @@
     "lastCandidateVictim": "En {{cells}}, seule la victime pouvait encore se trouver — aucun suspect n'y est possible.",
     "crossThis": "→ personne ne peut se trouver ici : barrez {{cells}}.",
     "caseAssume": "→ Si {{name}} était en {{cell}} :"
+  },
+  "book": {
+    "brand": "Crimedoku",
+    "case": "Affaire {{no}}",
+    "thanks": {
+      "head": "Remerciements",
+      "family": "À ma famille — merci pour votre patience, vos déductions partagées et toutes ces soirées où « une dernière affaire » est devenue trois.",
+      "garand": "Et un merci tout particulier à Manuel Garand — pour l'idée d'origine sans laquelle ce livre n'existerait pas."
+    },
+    "cover": {
+      "eyebrow": "Un polar logique à résoudre au crayon",
+      "hook": "Tout le monde est suspect. Un seul est coupable.",
+      "subtitle": "Le livre d'énigmes",
+      "tagline": "60 affaires — de facile à diaboliquement difficile",
+      "volume": "Tome 1",
+      "evidence": "Pièce à conviction A — la scène de crime"
+    },
+    "tut": {
+      "welcomeHead": "Bienvenue, détective !",
+      "welcome1": "La nuit dernière, il y a eu un meurtre. La bonne nouvelle : nous avons une poignée de suspects — et un dossier sur chacun d'eux. La mauvaise : un seul d'entre eux est le meurtrier, et personne ne parle.",
+      "welcome2": "Heureusement, il ne vous faut que trois choses : de la logique, un crayon et ce livre.",
+      "goalHead": "Votre objectif",
+      "goal": "Découvrez qui est le meurtrier : déterminez qui s'est retrouvé en tête-à-tête avec la victime dans la même pièce.",
+      "sceneHead": "La scène de crime",
+      "rule3": "Les lits, les chaises et les tapis peuvent être occupés ; les tables, les téléviseurs et les plantes, non. La légende sous chaque scène indique ce qui s'applique.",
+      "rule4": "La victime occupe elle aussi sa propre ligne et sa propre colonne. Elle n'apparaît pas sur le plateau — vous la déduisez également.",
+      "stepHead": "Pas à pas",
+      "stepIntro": "Voyons cela ensemble. Dans cette affaire, il y a trois suspects et une victime. Les quatre personnes doivent être placées sur cette scène de 4×4 comptant deux pièces.",
+      "labelScene": "Scène de crime",
+      "labelRooms": "{{count}} pièces",
+      "labelWindow": "Fenêtre",
+      "hint": "Remarque — « à côté de » signifie : {{tip}}",
+      "cluesHead": "Examinons les indices.",
+      "candidates": "D'après les indices, seules les cases marquées sont possibles pour chaque suspect — la lettre indique à qui la case peut appartenir.",
+      "importantHead": "Important !",
+      "ifHere": "Si {{name}} se trouve ici…",
+      "thenNot": "…toute la ligne et toute la colonne sont bloquées.",
+      "place": "Il ne reste qu'une case pour {{name}}. Nous y plaçons {{name}} et barrons toute la ligne et la colonne.",
+      "finale": "Il reste exactement une case pour {{name}} — et {{victim}} prend la dernière case libre. {{murderer}} avait pour seule compagnie {{victim}} : l'affaire est résolue !",
+      "part2Head": "La seconde affaire",
+      "part2Intro": "Une scène plus grande, davantage de suspects — mais la résolution reste la même. Parcourons aussi cette affaire pas à pas."
+    },
+    "back": {
+      "closed": "Affaire classée",
+      "head": "Toutes les affaires résolues ?",
+      "body": "Plus de 140 affaires vous attendent dans l'appli {{brand}}, avec une nouvelle énigme chaque jour, un éditeur de niveaux et les affaires de la communauté — jouable hors ligne, du 4×4 au 12×12.",
+      "evidence": "Dernière pièce à conviction — à la prochaine affaire",
+      "credit": "© {{year}} {{name}} — imaginé, construit et composé avec beaucoup de café."
+    }
   }
 }

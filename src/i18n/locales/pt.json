@@ -126,6 +126,7 @@
     "uploadNoLogic": "Solução única, mas só resolúvel com contradições — o caso levará a propriedade «Tentativa e erro» (a dica não pode ajudar aí).",
     "result_uploaded": "Enviado ✓ — o teu caso vai ser verificado e traduzido em breve e depois aparece nos níveis de jogadores.",
     "result_uploadDuplicate": "Este caso já existe — como nível oficial ou como nível de jogador.",
+    "result_uploadDaily": "Isto é um caso do dia — os casos diários não podem ser enviados como níveis de jogadores.",
     "result_uploadNetwork": "Sem ligação ao arquivo — tenta enviar novamente mais tarde.",
     "result_uploadContent": "Envio recusado — o título, o autor ou os nomes violam as regras (nada de conteúdo pornográfico, de ódio ou ilegal).",
     "result_uploadTooFast": "Um envio a cada 5 segundos chega — espera um momento e tenta de novo.",
@@ -1769,5 +1770,54 @@
     "lastCandidateVictim": "Em {{cells}} já só podia estar a vítima — nenhum suspeito é possível aí.",
     "crossThis": "→ aqui não pode estar ninguém: risca {{cells}}.",
     "caseAssume": "→ Se {{name}} estivesse em {{cell}}:"
+  },
+  "book": {
+    "brand": "Crimedoku",
+    "case": "Caso {{no}}",
+    "thanks": {
+      "head": "Agradecimentos",
+      "family": "Para a minha família — obrigado pela paciência, por deduzirem comigo e por todas as noites em que «só mais um caso» se tornou em três.",
+      "garand": "E um agradecimento especial a Manuel Garand — pela ideia original sem a qual este livro não existiria."
+    },
+    "cover": {
+      "eyebrow": "Um mistério de lógica para resolver a lápis",
+      "hook": "Todos são suspeitos. Só um o fez.",
+      "subtitle": "O livro de enigmas",
+      "tagline": "60 casos — do fácil ao mortalmente difícil",
+      "volume": "Volume 1",
+      "evidence": "Prova A — a cena do crime"
+    },
+    "tut": {
+      "welcomeHead": "Bem-vindo, detetive!",
+      "welcome1": "Ontem à noite houve um homicídio. A boa notícia: temos uma mão-cheia de suspeitos — e um dossiê sobre cada um. A má: só um deles é o assassino, e ninguém fala.",
+      "welcome2": "Felizmente só precisas de três coisas: lógica, um lápis e este livro.",
+      "goalHead": "O teu objetivo",
+      "goal": "Descobre quem é o assassino: apura quem esteve a sós com a vítima na mesma divisão.",
+      "sceneHead": "A cena do crime",
+      "rule3": "As camas, as cadeiras e os tapetes podem ser ocupados; as mesas, os televisores e as plantas, não. A legenda por baixo de cada cena mostra o que vale.",
+      "rule4": "Também a vítima ocupa a sua própria linha e coluna. Não aparece no tabuleiro — deduzes tu.",
+      "stepHead": "Passo a passo",
+      "stepIntro": "Vamos ver tudo em conjunto. Neste caso há três suspeitos e uma vítima. As quatro pessoas têm de ser colocadas nesta cena de 4×4 com duas divisões.",
+      "labelScene": "Cena do crime",
+      "labelRooms": "{{count}} divisões",
+      "labelWindow": "Janela",
+      "hint": "Nota — «ao lado de» significa: {{tip}}",
+      "cluesHead": "Vejamos as pistas.",
+      "candidates": "Segundo as pistas, para cada suspeito só as casas marcadas são possíveis — a letra mostra de quem pode ser a casa.",
+      "importantHead": "Importante!",
+      "ifHere": "Se {{name}} estiver aqui…",
+      "thenNot": "…toda a linha e a coluna ficam bloqueadas.",
+      "place": "Para {{name}} só resta uma casa. Colocamos {{name}} aí e riscamos toda a linha e a coluna.",
+      "finale": "Para {{name}} resta exatamente uma casa — e {{victim}} fica com a última livre. {{murderer}} esteve a sós com {{victim}}: caso resolvido!",
+      "part2Head": "O segundo caso",
+      "part2Intro": "Uma cena maior, mais suspeitos — mas resolve-se da mesma forma. Vamos percorrer também este caso passo a passo."
+    },
+    "back": {
+      "closed": "Caso encerrado",
+      "head": "Resolveste todos os casos?",
+      "body": "Na app {{brand}} esperam-te mais de 140 casos, um novo enigma todos os dias, um editor de níveis e os casos da comunidade — jogável offline, de 4×4 a 12×12.",
+      "evidence": "Última prova — até ao próximo caso",
+      "credit": "© {{year}} {{name}} — idealizado, construído e composto com muito café."
+    }
   }
 }

@@ -126,6 +126,7 @@
     "uploadNoLogic": "Eindeutig lösbar, aber nur mit Widersprüchen — der Fall erscheint mit der Eigenschaft »Ausprobieren« (der Tipp kann dort nicht helfen).",
     "result_uploaded": "Hochgeladen ✓ — dein Fall wird kurz geprüft und übersetzt und erscheint dann bei den Userleveln.",
     "result_uploadDuplicate": "Diesen Fall gibt es schon — als offizielles Level oder als Userlevel.",
+    "result_uploadDaily": "Das ist ein Rätsel des Tages — Tagesfälle lassen sich nicht als Userlevel teilen.",
     "result_uploadNetwork": "Keine Verbindung zum Archiv — bitte später noch einmal hochladen.",
     "result_uploadContent": "Upload abgelehnt — Titel, Autor oder Namen verstoßen gegen die Regeln (keine pornografischen, hetzerischen oder rechtswidrigen Inhalte).",
     "result_uploadTooFast": "Ein Upload alle 5 Sekunden reicht — bitte kurz warten und erneut senden.",
@@ -1833,5 +1834,54 @@
     "lastCandidateVictim": "Auf {{cells}} konnte sonst nur noch das Opfer stehen – kein Verdächtiger kommt dort infrage.",
     "crossThis": "→ hier kann niemand stehen: kreuze {{cells}} aus.",
     "caseAssume": "→ Wäre {{name}} auf {{cell}}:"
+  },
+  "book": {
+    "brand": "Krimdoku",
+    "case": "Fall {{no}}",
+    "thanks": {
+      "head": "Danksagung",
+      "family": "Für meine Familie — danke für eure Geduld, euer Mitraten und all die Abende, an denen aus »nur noch ein Fall« drei wurden.",
+      "garand": "Und ein besonderer Dank an Manuel Garand — für die Grundidee, ohne die es dieses Buch nicht gäbe."
+    },
+    "cover": {
+      "eyebrow": "Ein Logik-Krimi zum Mitschreiben",
+      "hook": "Alle sind verdächtig. Nur einer war es.",
+      "subtitle": "Das Rätselbuch",
+      "tagline": "60 Fälle — von leicht bis mörderisch schwer",
+      "volume": "Band 1",
+      "evidence": "Beweisstück A — der Tatort"
+    },
+    "tut": {
+      "welcomeHead": "Willkommen, Detektiv!",
+      "welcome1": "Letzte Nacht gab es einen Mord. Die gute Nachricht: Wir haben eine Handvoll Verdächtige — und über jede Person eine Akte. Die schlechte: Nur eine von ihnen ist der Mörder, und keiner redet.",
+      "welcome2": "Zum Glück brauchst du nur drei Dinge: Logik, einen Bleistift und dieses Buch.",
+      "goalHead": "Dein Ziel",
+      "goal": "Finde heraus, wer der Mörder ist: Ermittle, wer mit dem Opfer allein im selben Raum war.",
+      "sceneHead": "Der Tatort",
+      "rule3": "Betten, Stühle und Teppiche können besetzt werden — Tische, Fernseher und Pflanzen nicht. Die Legende unter jedem Tatort zeigt, was gilt.",
+      "rule4": "Auch das Opfer belegt eine eigene Zeile und Spalte. Es steht nicht auf dem Brett — du rätselst es mit.",
+      "stepHead": "Schritt für Schritt",
+      "stepIntro": "Gehen wir das Ganze einmal gemeinsam durch. In diesem Fall gibt es drei Verdächtige und ein Opfer. Alle vier Personen müssen auf diesem 4×4-Tatort mit zwei Räumen platziert werden.",
+      "labelScene": "Tatort",
+      "labelRooms": "{{count}} Räume",
+      "labelWindow": "Fenster",
+      "hint": "Hinweis — »neben« heißt: {{tip}}",
+      "cluesHead": "Sehen wir uns die Hinweise an.",
+      "candidates": "Den Hinweisen zufolge kommen für jede verdächtige Person nur die markierten Felder infrage — der Buchstabe zeigt, wessen Feld es sein kann.",
+      "importantHead": "Wichtig!",
+      "ifHere": "Wenn {{name}} hier steht …",
+      "thenNot": "… ist die ganze Zeile und Spalte gesperrt.",
+      "place": "Für {{name}} bleibt nur noch ein Feld. Wir setzen {{name}} dorthin und streichen die ganze Zeile und Spalte.",
+      "finale": "Für {{name}} bleibt genau ein Feld — und {{victim}} bekommt das letzte freie. {{murderer}} war allein mit {{victim}}: Der Fall ist gelöst!",
+      "part2Head": "Der zweite Fall",
+      "part2Intro": "Ein größerer Tatort, mehr Verdächtige — gelöst wird aber genauso. Gehen wir auch diesen Fall gemeinsam Schritt für Schritt durch."
+    },
+    "back": {
+      "closed": "Akte geschlossen",
+      "head": "Alle Fälle gelöst?",
+      "body": "In der {{brand}}-App warten über 140 weitere Fälle, jeden Tag ein neues Rätsel des Tages, ein Level-Editor und die Fälle der Community — offline spielbar, von 4×4 bis 12×12.",
+      "evidence": "Letztes Beweisstück — bis zum nächsten Fall",
+      "credit": "© {{year}} {{name}} — erdacht, gebaut und gesetzt mit viel Kaffee."
+    }
   }
 }

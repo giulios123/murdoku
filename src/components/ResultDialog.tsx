@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import Avatar from './Avatar.tsx'
+import UlStars from './UlStars.tsx'
 import type { AvatarAttrs } from '../game/avatar.ts'
 import { USERLEVEL_TAGS } from '../game/userlevels.ts'
 import { keepFieldVisible } from '../game/keyboard.ts'
@@ -61,8 +62,7 @@ export default function ResultDialog({
   onRate,
   community,
 }: Props) {
-  const { t, i18n } = useTranslation()
-  const lang = i18n.resolvedLanguage ?? i18n.language
+  const { t } = useTranslation()
   const showGen = win && generated
   // One-time community rating: the five (initially hollow) stars are always visible —
   // one slim, universally readable "rate me" row. Only once a star is tapped do the
@@ -148,11 +148,7 @@ export default function ResultDialog({
           // The case's community verdict — same vocabulary as the picker cards.
           <p className="mk-dialog__community">
             <span className="mk-dialog__community-label">{t('rate.community')}</span>
-            <span className="mk-ul-stars" data-unrated={community.stars === null || undefined}>
-              {community.stars === null
-                ? '★ –'
-                : `★ ${community.stars.toLocaleString(lang, { minimumFractionDigits: 1, maximumFractionDigits: 1 })} (${community.ratings})`}
-            </span>
+            <UlStars stars={community.stars} ratings={community.ratings} />
             {community.tags.map((tag) => (
               <span key={tag} className="mk-ul-tag">
                 {t(`tag.${tag}`)}

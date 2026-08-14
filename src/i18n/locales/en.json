@@ -126,6 +126,7 @@
     "uploadNoLogic": "Uniquely solvable, but only via contradictions — the case will carry the “Trial & error” property (the hint button can't help there).",
     "result_uploaded": "Uploaded ✓ — your case will be checked and translated shortly, then appear among the user levels.",
     "result_uploadDuplicate": "This case already exists — as an official level or a user level.",
+    "result_uploadDaily": "This is a Case of the Day — daily cases can't be shared as user levels.",
     "result_uploadNetwork": "No connection to the archive — please try uploading again later.",
     "result_uploadContent": "Upload rejected — the title, author or names break the rules (no pornographic, hateful or unlawful content).",
     "result_uploadTooFast": "One upload every 5 seconds is plenty — wait a moment and send again.",
@@ -1668,5 +1669,54 @@
     "lastCandidateVictim": "Only the victim could still go on {{cells}} – no suspect can be there.",
     "crossThis": "→ no one can be here: cross out {{cells}}.",
     "caseAssume": "→ If {{name}} were on {{cell}}:"
+  },
+  "book": {
+    "brand": "Crimedoku",
+    "case": "Case {{no}}",
+    "thanks": {
+      "head": "Acknowledgements",
+      "family": "For my family — thank you for your patience, your co-sleuthing and all the evenings when “just one more case” turned into three.",
+      "garand": "And special thanks to Manuel Garand — for the original idea without which this book would not exist."
+    },
+    "cover": {
+      "eyebrow": "A logic whodunit to solve with a pencil",
+      "hook": "Everyone is a suspect. Only one did it.",
+      "subtitle": "The Puzzle Book",
+      "tagline": "60 cases — from easy to murderously hard",
+      "volume": "Volume 1",
+      "evidence": "Exhibit A — the crime scene"
+    },
+    "tut": {
+      "welcomeHead": "Welcome, Detective!",
+      "welcome1": "There was a murder last night. The good news: we have a handful of suspects — and a file on every one of them. The bad news: only one of them is the murderer, and nobody is talking.",
+      "welcome2": "Luckily you only need three things: logic, a pencil and this book.",
+      "goalHead": "Your goal",
+      "goal": "Find out who the murderer is: work out who was alone in the same room as the victim.",
+      "sceneHead": "The crime scene",
+      "rule3": "Beds, chairs and carpets can be occupied — tables, TVs and plants cannot. The legend under each crime scene shows what applies.",
+      "rule4": "The victim also takes up a row and a column of their own. They are not shown on the board — you deduce them too.",
+      "stepHead": "Step by step",
+      "stepIntro": "Let's walk through it together. In this case there are three suspects and one victim. All four people must be placed on this 4×4 crime scene with two rooms.",
+      "labelScene": "Crime scene",
+      "labelRooms": "{{count}} rooms",
+      "labelWindow": "Window",
+      "hint": "Note — “next to” means: {{tip}}",
+      "cluesHead": "Let's look at the clues.",
+      "candidates": "According to the clues, only the marked cells are possible for each suspect — the letter shows whose cell it could be.",
+      "importantHead": "Important!",
+      "ifHere": "If {{name}} is here …",
+      "thenNot": "… the whole row and column are blocked.",
+      "place": "Only one cell is left for {{name}}. We place {{name}} there and cross out the whole row and column.",
+      "finale": "Exactly one cell remains for {{name}} — and {{victim}} takes the last free one. {{murderer}} was alone with {{victim}}: case closed!",
+      "part2Head": "The second case",
+      "part2Intro": "A bigger crime scene, more suspects — but it is solved just the same. Let's walk through this case together, step by step."
+    },
+    "back": {
+      "closed": "Case closed",
+      "head": "Solved every case?",
+      "body": "The {{brand}} app has over 140 more cases waiting, a new daily mystery every day, a level editor and the community's cases — playable offline, from 4×4 to 12×12.",
+      "evidence": "Final exhibit — until the next case",
+      "credit": "© {{year}} {{name}} — devised, built and typeset with plenty of coffee."
+    }
   }
 }

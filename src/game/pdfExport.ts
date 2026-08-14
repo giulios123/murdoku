@@ -24,6 +24,7 @@ import {
   loadLevel,
   usesInsideOutside,
   type Clue,
+  type DeductionStep,
   type LevelJson,
   type Puzzle,
 } from '../engine/index.ts'
@@ -41,21 +42,22 @@ const PAGE_H = Math.round(210 * PX)
 const MARGIN = Math.round(10 * PX)
 
 // Druck-Palette (Entwurfsmappe Akte 23): warmes Papier, Tinte statt Schwarz.
-const PAPER = '#f6f1e4'
-const INK = '#2e2936'
-const DIM = '#6d6577'
-const LINE = '#c9c0ac'
-const CRIMSON = '#b23a31'
-const TEXT = '#4b4454'
-const CARD_BG = 'rgba(255, 255, 255, 0.5)'
+// Exportiert für scripts/make-book.ts — der Buchdruck trägt dieselbe Palette.
+export const PAPER = '#f6f1e4'
+export const INK = '#2e2936'
+export const DIM = '#6d6577'
+export const LINE = '#c9c0ac'
+export const CRIMSON = '#b23a31'
+export const TEXT = '#4b4454'
+export const CARD_BG = 'rgba(255, 255, 255, 0.5)'
 /** Board-Pastell hinter den Legenden-Icons — wie ObjectIcon.TILE_BG. */
-const TILE_BG = '#e8d8b0'
+export const TILE_BG = '#e8d8b0'
 
 // Schrift-Stacks aus src/index.css (--font-display / --font-type / --font-ui).
-const DISPLAY = "'Fraunces Variable', 'Playfair Display Variable', Georgia, serif"
-const TYPE = "'Special Elite', 'PT Mono', 'Courier New', monospace"
+export const DISPLAY = "'Fraunces Variable', 'Playfair Display Variable', Georgia, serif"
+export const TYPE = "'Special Elite', 'PT Mono', 'Courier New', monospace"
 
-function wrapText(ctx: CanvasRenderingContext2D, text: string, maxW: number): string[] {
+export function wrapText(ctx: CanvasRenderingContext2D, text: string, maxW: number): string[] {
   const lines: string[] = []
   let cur = ''
   for (const word of text.split(' ')) {
@@ -81,7 +83,7 @@ function loadImage(src: string): Promise<HTMLImageElement> {
 }
 
 /** Erster Buchstabe groß, Schlusspunkt nur wenn nötig — die ClueText-Satzpolitur. */
-function polish(text: string): string {
+export function polish(text: string): string {
   if (text) text = text.charAt(0).toUpperCase() + text.slice(1)
   if (text && !/[.!?]$/.test(text.trimEnd())) text += '.'
   return text
@@ -89,7 +91,7 @@ function polish(text: string): string {
 
 /** Klartext eines Verdächtigen-Hinweises — exakt die ClueText-Logik (Pronomen-Form,
  *  ' · ' zwischen Teilen, erster Buchstabe groß, Schlusspunkt nur wenn nötig). */
-function clueLine(renderer: Renderer, clues: readonly Clue[], subjectId: string): string {
+export function clueLine(renderer: Renderer, clues: readonly Clue[], subjectId: string): string {
   const text = clues
     .map((c) =>
       renderer.render(c.describe(), {
@@ -104,7 +106,7 @@ function clueLine(renderer: Renderer, clues: readonly Clue[], subjectId: string)
 }
 
 /** Alle Akten-Notizen des Levels — dieselbe Auswahl wie CluePanel.boardNotes. */
-function boardNotes(puzzle: Puzzle, renderer: Renderer, t: (k: string) => string): string[] {
+export function boardNotes(puzzle: Puzzle, renderer: Renderer, t: (k: string) => string): string[] {
   const notes: string[] = []
   const outside = [...puzzle.board.rooms.values()].filter((r) => r.outside).map((r) => t(r.nameKey))
   if (usesInsideOutside(puzzle) && outside.length > 0) {
@@ -119,7 +121,7 @@ function boardNotes(puzzle: Puzzle, renderer: Renderer, t: (k: string) => string
 }
 
 /** Legenden-Einträge wie Legend.tsx: begehbar zuerst, dann blockiert, dann Wandstücke. */
-function legendItems(
+export function legendItems(
   puzzle: Puzzle,
   t: (k: string) => string,
 ): { type: string; name: string; status: 'occupiable' | 'blocked' | 'wall' }[] {
@@ -150,7 +152,7 @@ function legendItems(
 }
 
 /** Ein Legenden-Icon wie ObjectIcon: abgerundete Pastell-Kachel, echte Objektzeichnung. */
-function drawLegendTile(ctx: CanvasRenderingContext2D, type: string, x: number, y: number, size: number, occupiable: boolean): void {
+export function drawLegendTile(ctx: CanvasRenderingContext2D, type: string, x: number, y: number, size: number, occupiable: boolean): void {
   ctx.save()
   ctx.translate(x, y)
   ctx.beginPath()
@@ -174,7 +176,7 @@ function drawLegendTile(ctx: CanvasRenderingContext2D, type: string, x: number, 
 
 /** Objekt-Legende zeichnen ODER nur ihre Höhe messen (draw=false) — die Höhe wird
  *  gebraucht, BEVOR Brett- und Skizzengröße eingepasst werden können. */
-function paintLegend(
+export function paintLegend(
   ctx: CanvasRenderingContext2D,
   items: ReturnType<typeof legendItems>,
   t: (k: string) => string,
@@ -187,6 +189,7 @@ function paintLegend(
   const tile = 56
   const rowH = tile + 14
   const font = `26px ${TYPE}`
+  const groupFont = `700 26px ${TYPE}` // Gruppen-Wörter fett (Dirks Vorgabe)
   ctx.save()
   ctx.textAlign = 'left'
   ctx.textBaseline = 'middle'
@@ -194,9 +197,10 @@ function paintLegend(
   let rows = 1
   let lastStatus = ''
   for (const it of items) {
-    ctx.font = font
     const groupLabel = it.status !== lastStatus ? `${t(`legend.${it.status}`)}: ` : ''
+    ctx.font = groupFont
     const groupW = groupLabel ? ctx.measureText(groupLabel).width + 6 : 0
+    ctx.font = font
     const nameW = ctx.measureText(it.name).width
     // Jede Gruppe (betretbar / blockiert / an der Wand) beginnt auf ihrer EIGENEN
     // Zeile — sonst verschwimmt die Legende zu einem Band (Dirks Feedback).
@@ -210,7 +214,9 @@ function paintLegend(
       lastStatus = it.status
       if (draw) {
         ctx.fillStyle = DIM
+        ctx.font = groupFont
         ctx.fillText(groupLabel, lx, ly + tile / 2)
+        ctx.font = font
       }
       lx += groupW
     }
@@ -337,7 +343,7 @@ function strokeAreaOutline(
 /** Die Schwarz-Weiß-Lösefläche (wie die Skizze im Murdle-Buch): helle begehbare
  *  Felder, dunkle blockierte, dicke Wände an Raumgrenzen, begehbare Objekte als
  *  abgerundete Umrisse (mehrzellige als EIN Umriss). */
-function drawSketch(ctx: CanvasRenderingContext2D, puzzle: Puzzle, x: number, y: number, S: number): void {
+export function drawSketch(ctx: CanvasRenderingContext2D, puzzle: Puzzle, x: number, y: number, S: number): void {
   const board = puzzle.board
   const W = board.width
   const H = board.height
@@ -402,7 +408,7 @@ function drawSketch(ctx: CanvasRenderingContext2D, puzzle: Puzzle, x: number, y:
 }
 
 /** Das »Der Mörder ist …«-Feld zum Selbst-Eintragen: helle Karte mit Schreiblinie. */
-function drawMurderField(
+export function drawMurderField(
   ctx: CanvasRenderingContext2D,
   t: (k: string) => string,
   x: number,
@@ -494,11 +500,11 @@ function paintHead(
   return y + 36
 }
 
-type TraitKey = 'beard' | 'glasses' | 'bald'
+export type TraitKey = 'beard' | 'glasses' | 'bald'
 
 /** Merkmal-Icons der Karten — 1:1 die Pfade aus AttrIcons.tsx (dort pflegen und
  *  hier spiegeln: der Canvas braucht sie als Image statt JSX). */
-const TRAIT_SVGS: Record<TraitKey, string> = {
+export const TRAIT_SVGS: Record<TraitKey, string> = {
   beard:
     '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">' +
     '<path d="M6 8 Q12 5.4 18 8 Q15 10.4 12 9.5 Q9 10.4 6 8 Z" fill="#7a4a28"/>' +
@@ -527,12 +533,12 @@ const TRAIT_SVGS: Record<TraitKey, string> = {
 
 /** Die Geschlechts-Tönung der Dossier-Karten — exakt die Spiel-Farbverläufe
  *  (.mk-clue[data-gender] in index.css). */
-const GENDER_TINT: Record<'m' | 'f', [string, string]> = {
+export const GENDER_TINT: Record<'m' | 'f', [string, string]> = {
   f: ['#f0dade', '#e6c6cd'],
   m: ['#d9e2ee', '#c6d4e4'],
 }
 
-interface PersonCard {
+export interface PersonCard {
   name: string
   text: string
   accent: string
@@ -541,6 +547,107 @@ interface PersonCard {
   gender?: 'm' | 'f'
   /** Sichtbare Merkmale für die Chip-Zeile hinter dem Namen (wie AttrIcons). */
   traits?: TraitKey[]
+}
+
+/** Eine Dossier-Karte: Hairline-Kasten mit Spielfarben-Falz, Geschlechts-Hauch,
+ *  Avatar bzw. ☠-Marke des Opfers, Name + Merkmal-Chips, Hinweistext — geteilt
+ *  zwischen A4-Druckbogen und Buch-Skript (scripts/make-book.ts). */
+export function drawPersonCard(
+  ctx: CanvasRenderingContext2D,
+  card: PersonCard,
+  x: number,
+  cy: number,
+  w: number,
+  h: number,
+  o: { fontSize: number; pad: number; avatar: number; lineH: number; traitImgs: Map<TraitKey, HTMLImageElement> },
+): void {
+  const { fontSize, pad, avatar, lineH, traitImgs } = o
+  // Kasten: Hairline + Spielfarben-Falz links; alle Personen (auch das Opfer)
+  // tragen die Geschlechts-Tönung des Spiels (rosé/blau) — auf Papier nur als
+  // HAUCH über der hellen Karte (α 0.35, Dirks Feedback: voll deckend lenkt
+  // vom Text ab).
+  ctx.fillStyle = CARD_BG
+  ctx.strokeStyle = LINE
+  ctx.lineWidth = 2
+  ctx.beginPath()
+  ctx.roundRect(x, cy, w, h, 10)
+  ctx.fill()
+  if (card.gender) {
+    const tint = ctx.createLinearGradient(x, cy, x, cy + h)
+    tint.addColorStop(0, GENDER_TINT[card.gender][0])
+    tint.addColorStop(1, GENDER_TINT[card.gender][1])
+    ctx.save()
+    ctx.globalAlpha = 0.35
+    ctx.fillStyle = tint
+    ctx.fill()
+    ctx.restore()
+  }
+  ctx.stroke()
+  ctx.fillStyle = card.accent
+  ctx.beginPath()
+  ctx.roundRect(x, cy, 9, h, [10, 0, 0, 10])
+  ctx.fill()
+  // Avatar (Spiel-SVG) oder ☠-Marke des Opfers.
+  const ax = x + pad + 4
+  const ay = cy + pad
+  if (card.img) {
+    ctx.drawImage(card.img, ax, ay, avatar, avatar)
+  } else {
+    ctx.fillStyle = CRIMSON
+    ctx.beginPath()
+    ctx.arc(ax + avatar / 2, ay + avatar / 2, avatar / 2, 0, Math.PI * 2)
+    ctx.fill()
+    ctx.fillStyle = '#fff'
+    ctx.textAlign = 'center'
+    ctx.textBaseline = 'middle'
+    ctx.font = `${Math.round(avatar * 0.52)}px ${DISPLAY}`
+    ctx.fillText('☠', ax + avatar / 2, ay + avatar / 2 + avatar * 0.03)
+  }
+  // Name + Merkmal-Chips (♂/♀, Bart, Brille, Glatze — wie AttrIcons im Spiel).
+  const tx = ax + avatar + 16
+  ctx.textAlign = 'left'
+  ctx.textBaseline = 'alphabetic'
+  ctx.fillStyle = INK
+  ctx.font = `700 ${Math.round(fontSize * 1.15)}px ${DISPLAY}`
+  const nameBase = cy + pad + Math.round(fontSize * 1.05)
+  ctx.fillText(card.name, tx, nameBase)
+  let chipX = tx + ctx.measureText(card.name).width + 14
+  const chipH = Math.round(fontSize * 1.08)
+  const chipTop = nameBase - chipH + Math.round(fontSize * 0.14)
+  const pill = (pw: number): void => {
+    ctx.fillStyle = 'rgba(42, 35, 23, 0.1)'
+    ctx.strokeStyle = 'rgba(42, 35, 23, 0.22)'
+    ctx.lineWidth = 1.5
+    ctx.beginPath()
+    ctx.roundRect(chipX, chipTop, pw, chipH, chipH / 2)
+    ctx.fill()
+    ctx.stroke()
+  }
+  if (card.gender) {
+    const glyph = card.gender === 'm' ? '♂' : '♀'
+    ctx.font = `${Math.round(fontSize * 0.8)}px ${TYPE}`
+    const pw = ctx.measureText(glyph).width + chipH * 0.7
+    pill(pw)
+    ctx.fillStyle = INK
+    ctx.textAlign = 'center'
+    ctx.textBaseline = 'middle'
+    ctx.fillText(glyph, chipX + pw / 2, chipTop + chipH * 0.56)
+    ctx.textAlign = 'left'
+    ctx.textBaseline = 'alphabetic'
+    chipX += pw + 8
+  }
+  for (const trait of card.traits ?? []) {
+    const pw = chipH * 1.35
+    pill(pw)
+    const icon = chipH * 0.74
+    ctx.drawImage(traitImgs.get(trait)!, chipX + (pw - icon) / 2, chipTop + (chipH - icon) / 2, icon, icon)
+    chipX += pw + 8
+  }
+  ctx.fillStyle = TEXT
+  ctx.font = `${fontSize}px ${TYPE}`
+  wrapText(ctx, card.text, w - pad * 2 - avatar - 16).forEach((line, li) => {
+    ctx.fillText(line, tx, cy + pad + Math.round(fontSize * 1.35) + 8 + (li + 1) * lineH - 6)
+  })
 }
 
 /** Baut den fertigen Druckbogen als Canvas (300 dpi, A4 quer). */
@@ -753,91 +860,7 @@ async function renderSheet(json: LevelJson, i18nInst: I18n, title: string): Prom
     let cy = cardsTop
     for (let k = col * rows; k < i; k++) cy += cardH[k] + 16
     const h = cardH[i]
-    // Kasten: Hairline + Spielfarben-Falz links; Verdächtige tragen die
-    // Geschlechts-Tönung des Spiels (rosé/blau) — auf Papier nur als HAUCH über
-    // der hellen Karte (α 0.35, Dirks Feedback: voll deckend lenkt vom Text ab).
-    ctx.fillStyle = CARD_BG
-    ctx.strokeStyle = LINE
-    ctx.lineWidth = 2
-    ctx.beginPath()
-    ctx.roundRect(x, cy, colW, h, 10)
-    ctx.fill()
-    if (card.img && card.gender) {
-      const tint = ctx.createLinearGradient(x, cy, x, cy + h)
-      tint.addColorStop(0, GENDER_TINT[card.gender][0])
-      tint.addColorStop(1, GENDER_TINT[card.gender][1])
-      ctx.save()
-      ctx.globalAlpha = 0.35
-      ctx.fillStyle = tint
-      ctx.fill()
-      ctx.restore()
-    }
-    ctx.stroke()
-    ctx.fillStyle = card.accent
-    ctx.beginPath()
-    ctx.roundRect(x, cy, 9, h, [10, 0, 0, 10])
-    ctx.fill()
-    // Avatar (Spiel-SVG) oder ☠-Marke des Opfers.
-    const ax = x + pad + 4
-    const ay = cy + pad
-    if (card.img) {
-      ctx.drawImage(card.img, ax, ay, avatar, avatar)
-    } else {
-      ctx.fillStyle = CRIMSON
-      ctx.beginPath()
-      ctx.arc(ax + avatar / 2, ay + avatar / 2, avatar / 2, 0, Math.PI * 2)
-      ctx.fill()
-      ctx.fillStyle = '#fff'
-      ctx.textAlign = 'center'
-      ctx.textBaseline = 'middle'
-      ctx.font = `${Math.round(avatar * 0.52)}px ${DISPLAY}`
-      ctx.fillText('☠', ax + avatar / 2, ay + avatar / 2 + avatar * 0.03)
-    }
-    // Name + Merkmal-Chips (♂/♀, Bart, Brille, Glatze — wie AttrIcons im Spiel).
-    const tx = ax + avatar + 16
-    ctx.textAlign = 'left'
-    ctx.textBaseline = 'alphabetic'
-    ctx.fillStyle = INK
-    ctx.font = `700 ${Math.round(fontSize * 1.15)}px ${DISPLAY}`
-    const nameBase = cy + pad + Math.round(fontSize * 1.05)
-    ctx.fillText(card.name, tx, nameBase)
-    let chipX = tx + ctx.measureText(card.name).width + 14
-    const chipH = Math.round(fontSize * 1.08)
-    const chipTop = nameBase - chipH + Math.round(fontSize * 0.14)
-    const pill = (w: number): void => {
-      ctx.fillStyle = 'rgba(42, 35, 23, 0.1)'
-      ctx.strokeStyle = 'rgba(42, 35, 23, 0.22)'
-      ctx.lineWidth = 1.5
-      ctx.beginPath()
-      ctx.roundRect(chipX, chipTop, w, chipH, chipH / 2)
-      ctx.fill()
-      ctx.stroke()
-    }
-    if (card.gender) {
-      const glyph = card.gender === 'm' ? '♂' : '♀'
-      ctx.font = `${Math.round(fontSize * 0.8)}px ${TYPE}`
-      const w = ctx.measureText(glyph).width + chipH * 0.7
-      pill(w)
-      ctx.fillStyle = INK
-      ctx.textAlign = 'center'
-      ctx.textBaseline = 'middle'
-      ctx.fillText(glyph, chipX + w / 2, chipTop + chipH * 0.56)
-      ctx.textAlign = 'left'
-      ctx.textBaseline = 'alphabetic'
-      chipX += w + 8
-    }
-    for (const trait of card.traits ?? []) {
-      const w = chipH * 1.35
-      pill(w)
-      const icon = chipH * 0.74
-      ctx.drawImage(traitImgs.get(trait)!, chipX + (w - icon) / 2, chipTop + (chipH - icon) / 2, icon, icon)
-      chipX += w + 8
-    }
-    ctx.fillStyle = TEXT
-    ctx.font = `${fontSize}px ${TYPE}`
-    wrapText(ctx, card.text, colW - pad * 2 - avatar - 16).forEach((line, li) => {
-      ctx.fillText(line, tx, cy + pad + Math.round(fontSize * 1.35) + 8 + (li + 1) * lineH - 6)
-    })
+    drawPersonCard(ctx, card, x, cy, colW, h, { fontSize, pad, avatar, lineH, traitImgs })
     if (inCol === rows - 1 || i === cards.length - 1) {
       noteY = Math.max(noteY, cy + h)
     }
@@ -846,39 +869,9 @@ async function renderSheet(json: LevelJson, i18nInst: I18n, title: string): Prom
   // Akten-Notizen (Draußen-Legende, Wasser-Regel, globale Hinweise) unter den
   // Karten — jede in ihrer eigenen blau getönten Box mit Lupe, wie im Spiel.
   if (noteBoxes.length > 0) {
-    const notePad = Math.round(fontSize * 0.5)
-    const lens = Math.round(fontSize * 1.35)
     let ny = noteY + 20
     noteBoxes.forEach((box) => {
-      ctx.fillStyle = 'rgba(120, 150, 210, 0.14)'
-      ctx.strokeStyle = 'rgba(95, 122, 175, 0.6)'
-      ctx.lineWidth = 2
-      ctx.beginPath()
-      ctx.roundRect(paneX, ny, paneW, box.h, 10)
-      ctx.fill()
-      ctx.stroke()
-      // Die Lupe (Tinten-Zeichnung, kein Emoji): Glas + Griff, mittig zur Box.
-      const lx = paneX + notePad
-      const ly = ny + (box.h - lens) / 2
-      const r = lens * 0.34
-      ctx.strokeStyle = INK
-      ctx.lineWidth = Math.max(2, lens * 0.09)
-      ctx.lineCap = 'round'
-      ctx.beginPath()
-      ctx.arc(lx + r + lens * 0.06, ly + r + lens * 0.06, r, 0, Math.PI * 2)
-      ctx.stroke()
-      ctx.beginPath()
-      ctx.moveTo(lx + r + lens * 0.06 + r * 0.72, ly + r + lens * 0.06 + r * 0.72)
-      ctx.lineTo(lx + lens * 0.96, ly + lens * 0.96)
-      ctx.stroke()
-      // Text neben der Lupe, vertikal im Kasten zentriert.
-      ctx.fillStyle = INK
-      ctx.font = `${fontSize}px ${TYPE}`
-      ctx.textAlign = 'left'
-      const textTop = ny + (box.h - box.lines.length * lineH) / 2
-      box.lines.forEach((line, li) => {
-        ctx.fillText(line, paneX + notePad + lens + 14, textTop + fontSize + li * lineH - 2)
-      })
+      drawNoteBox(ctx, box, paneX, ny, paneW, { fontSize, lineH })
       ny += box.h + 12
     })
   }
@@ -886,10 +879,55 @@ async function renderSheet(json: LevelJson, i18nInst: I18n, title: string): Prom
   return canvas
 }
 
+/** Eine Akten-Notiz-Box (blau getönt, mit Tinten-Lupe, Text vertikal zentriert) —
+ *  geteilt zwischen A4-Druckbogen und Buch-Skript. `box.h` misst der Aufrufer
+ *  vorab (wrapText), damit er den Platz VOR dem Zeichnen einplanen kann. */
+export function drawNoteBox(
+  ctx: CanvasRenderingContext2D,
+  box: { lines: string[]; h: number },
+  x: number,
+  ny: number,
+  w: number,
+  o: { fontSize: number; lineH: number },
+): void {
+  const { fontSize, lineH } = o
+  const notePad = Math.round(fontSize * 0.5)
+  const lens = Math.round(fontSize * 1.35)
+  ctx.fillStyle = 'rgba(120, 150, 210, 0.14)'
+  ctx.strokeStyle = 'rgba(95, 122, 175, 0.6)'
+  ctx.lineWidth = 2
+  ctx.beginPath()
+  ctx.roundRect(x, ny, w, box.h, 10)
+  ctx.fill()
+  ctx.stroke()
+  // Die Lupe (Tinten-Zeichnung, kein Emoji): Glas + Griff, mittig zur Box.
+  const lx = x + notePad
+  const ly = ny + (box.h - lens) / 2
+  const r = lens * 0.34
+  ctx.strokeStyle = INK
+  ctx.lineWidth = Math.max(2, lens * 0.09)
+  ctx.lineCap = 'round'
+  ctx.beginPath()
+  ctx.arc(lx + r + lens * 0.06, ly + r + lens * 0.06, r, 0, Math.PI * 2)
+  ctx.stroke()
+  ctx.beginPath()
+  ctx.moveTo(lx + r + lens * 0.06 + r * 0.72, ly + r + lens * 0.06 + r * 0.72)
+  ctx.lineTo(lx + lens * 0.96, ly + lens * 0.96)
+  ctx.stroke()
+  // Text neben der Lupe, vertikal im Kasten zentriert.
+  ctx.fillStyle = INK
+  ctx.font = `${fontSize}px ${TYPE}`
+  ctx.textAlign = 'left'
+  const textTop = ny + (box.h - box.lines.length * lineH) / 2
+  box.lines.forEach((line, li) => {
+    ctx.fillText(line, x + notePad + lens + 14, textTop + fontSize + li * lineH - 2)
+  })
+}
+
 // ─────────────────────────── Blatt 2: Die Auflösung ───────────────────────────
 
 /** Eine Protokoll-Zeile des Lösungswegs (ein Deduktionsschritt der Engine). */
-interface StepLine {
+export interface StepLine {
   text: string
   /** Verdächtigen-Buchstabe bzw. VICTIM_ID — malt den Farb-Chip vor der Zeile. */
   person?: string
@@ -899,8 +937,38 @@ interface StepLine {
   cellText?: string
 }
 
+/** Druckreifes Protokoll aus den Engine-Schritten (wie Strg+B, aber für Papier):
+ *  Ausgangslage-Zählzeilen (clueCandidates) raus, exakt wiederholte Zeilen nur beim
+ *  ersten Mal, der Mörder-Schritt wird zum Verdikt. (Dirks Regeln für den Bogen;
+ *  geteilt zwischen A4-Auflösungsblatt und den Buch-Lösungsseiten.) */
+export function buildStepLines(
+  engineSteps: readonly DeductionStep[],
+  renderer: Renderer,
+): { steps: StepLine[]; verdictText: string } {
+  const steps: StepLine[] = []
+  const seen = new Set<string>()
+  let verdictText = ''
+  for (const step of engineSteps) {
+    if (step.technique === 'murderer') {
+      verdictText = polish(renderer.render(step.explanation))
+      continue
+    }
+    if (step.technique === 'clueCandidates' || step.technique === 'stuck') continue
+    const raw = renderer.render(step.explanation)
+    if (raw.trim() === '' || seen.has(raw)) continue
+    seen.add(raw)
+    steps.push({
+      text: polish(raw),
+      person: step.personId,
+      place: step.placedCell !== undefined,
+      cellText: step.placedCell !== undefined ? renderer.cell(step.placedCell) : undefined,
+    })
+  }
+  return { steps, verdictText }
+}
+
 /** Chip-Farbe/-Buchstabe: Verdächtige in Spielfarbe, das Opfer als ☠ in Krimson. */
-function chipStyle(
+export function chipStyle(
   person: string,
   suspectIndex: Map<string, number>,
 ): { color: string; label: string } {
@@ -914,7 +982,7 @@ function chipStyle(
  * Krimson-Kasten am Ende. Liefert false, wenn es NICHT in die Höhe passt — die
  * Einpass-Schleife des Aufrufers verkleinert dann (und nur dann) die Schrift.
  */
-function paintSteps(
+export function paintSteps(
   ctx: CanvasRenderingContext2D,
   steps: StepLine[],
   verdict: { text: string; person?: string },
@@ -1043,7 +1111,7 @@ function paintSteps(
 /** Die Mörder-Karte unter dem Brett — der Sieg-Dialog des Spiels in Papierform:
  *  der echte Avatar-Kopf (mit Buchstaben-Plakette) neben dem »Der Mörder war …«-Satz,
  *  dazu der gedrehte Schuldspruch-Stempel. */
-function drawMurderCard(
+export function drawMurderCard(
   ctx: CanvasRenderingContext2D,
   o: { x: number; y: number; w: number; h: number; img: HTMLImageElement; sentence: string; stamp: string },
 ): void {
@@ -1132,28 +1200,7 @@ async function renderSolutionSheet(
     }),
   )
 
-  // Schritte wie Strg+B, aber druckreif: Ausgangslage-Zählzeilen (clueCandidates)
-  // raus, exakt wiederholte Zeilen nur beim ersten Mal, der Mörder-Schritt wird
-  // zum Verdikt-Kasten. (Dirks Regeln für den Druckbogen.)
-  const steps: StepLine[] = []
-  const seen = new Set<string>()
-  let verdictText = ''
-  for (const step of result.steps) {
-    if (step.technique === 'murderer') {
-      verdictText = polish(renderer.render(step.explanation))
-      continue
-    }
-    if (step.technique === 'clueCandidates' || step.technique === 'stuck') continue
-    const raw = renderer.render(step.explanation)
-    if (raw.trim() === '' || seen.has(raw)) continue
-    seen.add(raw)
-    steps.push({
-      text: polish(raw),
-      person: step.personId,
-      place: step.placedCell !== undefined,
-      cellText: step.placedCell !== undefined ? renderer.cell(step.placedCell) : undefined,
-    })
-  }
+  const { steps, verdictText } = buildStepLines(result.steps, renderer)
 
   const canvas = document.createElement('canvas')
   canvas.width = PAGE_W
