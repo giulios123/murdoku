@@ -1545,6 +1545,13 @@ export default function EditorScreen({ onBack, onPlay, initialLevel }: Props) {
           <div className="mk-dialog">
             <span className="mk-spinner" />
             <p>{t('editor.randomizing')}</p>
+            {/* Same budgets as the generator screen (the fill runs through the same pool):
+                big boards hunt for most of 45s, 12×12 hard up to 90s — say so. */}
+            {state.size >= 10 && (
+              <p className="mk-genhint">
+                {t('generate.generatingLong', { seconds: state.size >= 12 && difficulty === 'hard' ? 90 : 45 })}
+              </p>
+            )}
             <button type="button" className="mk-btn mk-btn--ghost" onClick={cancelRandom}>
               {t('generate.cancel')}
             </button>
@@ -1557,6 +1564,11 @@ export default function EditorScreen({ onBack, onPlay, initialLevel }: Props) {
           <div className="mk-dialog">
             <span className="mk-spinner" />
             <p>{t('editor.randomizingBoard')}</p>
+            {state.size >= 10 && (
+              <p className="mk-genhint">
+                {t('generate.generatingLong', { seconds: state.size >= 12 && difficulty === 'hard' ? 90 : 45 })}
+              </p>
+            )}
             <button type="button" className="mk-btn mk-btn--ghost" onClick={cancelRegen}>
               {t('generate.cancel')}
             </button>
