@@ -416,6 +416,7 @@
     "theme": "Thema",
     "create": "Erstellen",
     "generating": "Generiere Level …",
+    "generatingLong": "Ein großer Fall — die Ermittlung kann bis zu {{seconds}} Sekunden dauern.",
     "hint": "Größere Boards und „Schwer\" können einige Sekunden dauern.",
     "cancel": "Abbrechen",
     "failed": "Kein Level gefunden — bitte nochmal versuchen oder andere Einstellungen wählen."

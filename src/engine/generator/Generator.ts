@@ -306,6 +306,17 @@ const CHAIN_TECHNIQUES = [
   'roomCapacity', 'roomCoverage', 'companionPairing', 'companionFit',
 ] as const
 
+/**
+ * Node budget for EVERY uniqueness search the generator runs (same idea as the editor's
+ * CHECK_BUDGET, and the same fail-closed rule): the worst bundled level proves uniqueness
+ * in ≈18k nodes, i.e. 27× headroom — but a rare 11×11/12×12 candidate ran 12–32 SECONDS
+ * unbudgeted (measured), silently eating half a worker's whole budget. An aborted search
+ * NEVER counts as unique; the candidate (or prune step) is simply discarded. One shared
+ * constant everywhere, so a candidate accepted in pickBestLevel deterministically passes
+ * the identical re-checks in pruneClues and assertShippable.
+ */
+const UNIQUE_NODE_BUDGET = 500_000
+
 function logicRating(level: LevelJson): LogicRating {
   return logicRatingOn(loadLevel(level))
 }
@@ -371,7 +382,13 @@ function logicRatingOn(puzzle: Puzzle): LogicRating {
     stuck,
     get unique(): boolean {
       if (uniqueCache === undefined) {
-        uniqueCache = result.solved && new SearchSolver(puzzle).isUnique()
+        if (!result.solved) {
+          uniqueCache = false
+        } else {
+          // Budgeted + fail-closed: an aborted search is NOT a uniqueness proof.
+          const solver = new SearchSolver(puzzle)
+          uniqueCache = solver.countSolutions(2, UNIQUE_NODE_BUDGET) === 1 && !solver.aborted
+        }
       }
       return uniqueCache
     },
@@ -746,31 +763,45 @@ function pickBestLevel(
   let best: LevelJson | null = null
   let bestScore = Infinity
   for (let a = 0; a < maxAttempts; a++) {
-    const result = attempt(new Rng(baseSeed + a * 7919), baseSeed + a)
-    if (result) {
-      const rating = logicRating(result.level)
-      // Only human-solvable levels are eligible — the player must be able to solve by a
-      // clean forward/convergent chain, never "assume X → contradiction". For hard the
-      // score then maximises hard relational clues + breadth (rank only a floor); for
-      // easy/medium it prefers the exact target rank. `rating.unique` is the SearchSolver
-      // uniqueness check (guarantees uniqueness independent of engine soundness — a dense
-      // object layout can shift the solution space, and a non-unique level must never slip).
-      // EVERY clue must earn its place from MEDIUM up: a level where some clue could be
-      // dropped and the case still cracks is rejected outright, however good it scores.
-      // The user's call — they would rather get nothing than a level with a decorative clue.
-      // Easy is exempt: its "Vorgaben" ride along on an already-pinned suspect and are
-      // redundant BY DESIGN (a relational clue can't pin, and making it load-bearing would
-      // push the level past rank 2, i.e. out of "easy").
-      const tightnessRequired = target !== 'easy'
-      if (rating.solved && rating.unique && !(tightnessRequired && hasRedundantClue(result.level))) {
-        result.level.difficulty = tierFor(result.level, target, rating.maxRank)
-        const score = scoreLevel(result.level, target, rating.maxRank, result.pins, rating.chainSteps, rating.openingSteps)
-        if (score < bestScore) {
-          best = result.level
-          bestScore = score
+    // A crashing attempt counts as a FAILED attempt, nothing more: with ~40s budgets on
+    // big boards, one rare edge case in attempt N would otherwise throw away every
+    // candidate the run already paid for — and kill the worker with it (exactly how the
+    // ">9 rooms" bug turned every 11×11/12×12 run into a 1-second failure).
+    try {
+      const result = attempt(new Rng(baseSeed + a * 7919), baseSeed + a)
+      if (result) {
+        const rating = logicRating(result.level)
+        // Only human-solvable levels are eligible — the player must be able to solve by a
+        // clean forward/convergent chain, never "assume X → contradiction". For hard the
+        // score then maximises hard relational clues + breadth (rank only a floor); for
+        // easy/medium it prefers the exact target rank. `rating.unique` is the SearchSolver
+        // uniqueness check (guarantees uniqueness independent of engine soundness — a dense
+        // object layout can shift the solution space, and a non-unique level must never slip).
+        // EVERY clue must earn its place from MEDIUM up: a level where some clue could be
+        // dropped and the case still cracks is rejected outright, however good it scores.
+        // The user's call — they would rather get nothing than a level with a decorative clue.
+        // Easy is exempt: its "Vorgaben" ride along on an already-pinned suspect and are
+        // redundant BY DESIGN (a relational clue can't pin, and making it load-bearing would
+        // push the level past rank 2, i.e. out of "easy").
+        //
+        // GATE ORDER: cheap before expensive. hasRedundantClue is a handful of forward
+        // solves (ms) and rejects the large majority of candidates; rating.unique is a
+        // (budgeted) full search that can cost ~0.5s on big boards — and it is LAZY, so
+        // putting it last skips it entirely for every redundancy reject. Same conjunction,
+        // same verdict, fingerprint-identical.
+        const tightnessRequired = target !== 'easy'
+        if (rating.solved && !(tightnessRequired && hasRedundantClue(result.level)) && rating.unique) {
+          result.level.difficulty = tierFor(result.level, target, rating.maxRank)
+          const score = scoreLevel(result.level, target, rating.maxRank, result.pins, rating.chainSteps, rating.openingSteps)
+          if (score < bestScore) {
+            best = result.level
+            bestScore = score
+          }
+          if (isIdeal(result.level, target, rating.maxRank, result.pins)) break
         }
-        if (isIdeal(result.level, target, rating.maxRank, result.pins)) break
       }
+    } catch {
+      // see above — a crashed attempt must never end the hunt
     }
     // Once we hold a candidate, stop at the soft deadline; with nothing yet keep hunting
     // to the attempt cap / hard deadline (the worker passes a long budget, the
@@ -887,7 +918,7 @@ export function selectBestLevel(
  *  straight forward deduction (no case split — the generator's fairness bar)? Uses the SAME
  *  `checkLevel` the editor's Check/Save use (DRY) — only `forwardOnly` tightens the bar. */
 function isShippable(level: LevelJson): boolean {
-  const c = checkLevel(loadLevel(level), { forwardOnly: true })
+  const c = checkLevel(loadLevel(level), { forwardOnly: true, budget: UNIQUE_NODE_BUDGET })
   return c.unique && c.solvable
 }
 
@@ -896,7 +927,7 @@ function isShippable(level: LevelJson): boolean {
  *  always better than handing a player an ambiguous or unsolvable case. Should never fire
  *  (earlier stages guarantee it); it exists so a future regression can't ship a broken level. */
 function assertShippable(level: LevelJson): LevelJson {
-  const c = checkLevel(loadLevel(level), { forwardOnly: true })
+  const c = checkLevel(loadLevel(level), { forwardOnly: true, budget: UNIQUE_NODE_BUDGET })
   if (!c.unique || !c.solvable) {
     throw new Error(`Generated level failed final validation (forwardSolvable=${c.solvable}, unique=${c.unique})`)
   }
@@ -915,24 +946,35 @@ export function generateLevel(options: GenerateOptions): LevelJson {
   // construction up to the budget (fast-failing attempts), and if nothing lands,
   // fall back to generic selection rated nearest to easy so we ALWAYS return a level.
   if (options.difficulty === 'easy') {
-    const deadline = performance.now() + (options.budget?.hardMs ?? 20000)
+    // ONE wall clock for BOTH phases: the construction loop gets ~60% of it, the generic
+    // fallback the rest. Each phase used to run its own FULL hardMs, so the two could add
+    // up to twice the budget — past the user's "never more than ~45s" line on big boards.
+    const totalMs = options.budget?.hardMs ?? 20000
+    const start = performance.now()
+    const constructDeadline = start + totalMs * 0.6
     const easyCap = options.budget?.easyAttempts ?? 200000
-    for (let a = 0; a < easyCap && performance.now() < deadline; a++) {
-      const result = tryGenerate(options, new Rng(baseSeed + a * 7919), baseSeed + a)
-      if (result) {
-        // The construction already guarantees an easy-typical puzzle (rank ≤ 2,
-        // hidden singles at most) — so it IS easy. Label it directly instead of
-        // re-rating: difficultyOf treats a hidden single (rank 2) as "medium",
-        // which would mislabel almost every constructed easy level.
-        result.level.difficulty = 'easy'
-        return assertShippable(pruneClues(result.level, 'easy'))
+    for (let a = 0; a < easyCap && performance.now() < constructDeadline; a++) {
+      // A crashing attempt counts as a failed one — never end the hunt (see pickBestLevel).
+      try {
+        const result = tryGenerate(options, new Rng(baseSeed + a * 7919), baseSeed + a)
+        if (result) {
+          // The construction already guarantees an easy-typical puzzle (rank ≤ 2,
+          // hidden singles at most) — so it IS easy. Label it directly instead of
+          // re-rating: difficultyOf treats a hidden single (rank 2) as "medium",
+          // which would mislabel almost every constructed easy level.
+          result.level.difficulty = 'easy'
+          return assertShippable(pruneClues(result.level, 'easy'))
+        }
+      } catch {
+        // crashed attempt — keep hunting
       }
     }
+    const remainMs = Math.max(2000, totalMs - (performance.now() - start))
     const fallback = pickBestLevel(
       (rng, seedIndex) => tryGenerate(options, rng, seedIndex, false),
       baseSeed + 104729,
       'easy',
-      pick,
+      { ...pick, hardTimeBudgetMs: Math.min(pick.hardTimeBudgetMs ?? remainMs, remainMs) },
     )
     if (fallback) return assertShippable(pruneClues(fallback, 'easy'))
     throw new Error(`Could not generate an easy ${width}x${height} level for ${suspects} suspects`)
@@ -991,12 +1033,17 @@ export function fillBoardClues(board: LevelJson, options: FillBoardOptions = {})
     const deadline = performance.now() + (options.budget?.hardMs ?? 20000)
     const easyCap = options.budget?.easyAttempts ?? 200000
     for (let a = 0; a < easyCap && performance.now() < deadline; a++) {
-      const result = fillAttempt(board, suspectIds, new Rng(baseSeed + a * 7919), 'easy', options.requiredClues, options.requiredAttributes)
-      if (result && isShippable(result.level)) {
-        // Constructed easy fill (rank ≤ 2, verified in fillAttempt) — label it easy
-        // directly; difficultyOf would mislabel a hidden-single level as "medium".
-        result.level.difficulty = 'easy'
-        return result.level
+      // A crashing attempt counts as a failed one — never end the hunt (see pickBestLevel).
+      try {
+        const result = fillAttempt(board, suspectIds, new Rng(baseSeed + a * 7919), 'easy', options.requiredClues, options.requiredAttributes)
+        if (result && isShippable(result.level)) {
+          // Constructed easy fill (rank ≤ 2, verified in fillAttempt) — label it easy
+          // directly; difficultyOf would mislabel a hidden-single level as "medium".
+          result.level.difficulty = 'easy'
+          return result.level
+        }
+      } catch {
+        // crashed attempt — keep hunting
       }
     }
     return null
@@ -1117,7 +1164,7 @@ function fillAttempt(
     // Confirm the construction is genuinely unique and solvable by SHORT, simple steps —
     // hidden singles / "only one on X" / row-column cross-out (rank ≤ 2), no harder
     // technique and never a contradiction. Same `checkLevel` the editor / ship-gate use.
-    const c = checkLevel(finalPuzzle)
+    const c = checkLevel(finalPuzzle, { budget: UNIQUE_NODE_BUDGET })
     if (!c.unique || !c.solvable || c.deduction.maxRank > 2) return null
   }
   return { level, pins: countPins(chosen) }
@@ -1274,7 +1321,15 @@ function tryGenerate(
   // so free generation shipped hard levels with a suspect nailed to a single cell by their own
   // clue (measured), which is the exact opposite of the "spät setzen von Eindeutigkeiten" that
   // makes a level hard. Same rule and same call as the editor fill (`fillAttempt`).
-  if (countAnchors(chosen, suspectIds, basePuzzle.board) > (easyConstruct ? 1 : 0)) return null
+  //
+  // The bar hangs on the DIFFICULTY, not the construction mode (exactly like `fillAttempt`):
+  // the easy FALLBACK builds generically (easyConstruct=false) but is still an easy level,
+  // where one anchor is allowed. Judged by mode it got the medium bar of ZERO anchors — and
+  // since the generic path never widens clues at target rank 1 (the loosen passes cap on the
+  // target), suspects keep their tightest 1-cell openers and nearly every fallback attempt
+  // died here: measured 0 easy levels out of 4×40s single streams at 11/12.
+  const anchorCap = options.difficulty === 'easy' ? 1 : 0
+  if (countAnchors(chosen, suspectIds, basePuzzle.board) > anchorCap) return null
 
   for (const meta of base.suspects) meta.clues = [chosen.get(meta.id)!]
   // Guard: the solution must leave the victim alone with exactly ONE suspect (a well-defined
@@ -1288,7 +1343,7 @@ function tryGenerate(
   // (hidden singles / "only one on X" / row-column cross-out — rank ≤ 2, never a
   // contradiction), exactly like the editor's easy fill.
   if (easyConstruct) {
-    const c = checkLevel(finalPuzzle)
+    const c = checkLevel(finalPuzzle, { budget: UNIQUE_NODE_BUDGET })
     if (!c.unique || !c.solvable || c.deduction.maxRank > 2) return null
   }
 
@@ -1427,6 +1482,15 @@ function offerHardBoardClues(puzzle: Puzzle, solution: Solution, rng: Rng, suspe
 /** A room can never hold fewer cells than this (a 2-cell closet is the hand-made floor). */
 const MIN_ROOM_CELLS = 3
 
+/** Room ids, one SINGLE char each — the roomMap encodes one char per cell, so an id must
+ *  never be longer. `String(room + 1)` turned room 10 into the two chars "10" and silently
+ *  corrupted the map (the crash surfaced far away, in archetypeOf); 11×11/12×12 allow 10–11
+ *  rooms, so every big-board run died within a few attempts. Same alphabet as the editor's
+ *  room slots (editorModel.ROOM_IDS) — defined locally because the engine never imports
+ *  from game/ — and '1'–'9' stay identical to before, so boards with ≤9 rooms are
+ *  byte-for-byte unchanged (fingerprint-proven). */
+const ROOM_CHARS = '123456789ABCDEF'
+
 /**
  * How many rooms a level gets, drawn from the shape the 163 hand-made levels actually have:
  * rooms-per-suspect sits between 0.6 and 1.0, and NEVER above 1.0 (not one bundled level has
@@ -1496,12 +1560,15 @@ const balance = ([a, b]: [Rect, Rect]): number => Math.abs(rectArea(a) - rectAre
  * Always splits the LARGEST rectangle, so rooms come out similar in size rather than one
  * hall plus slivers. Returns fewer rooms than asked only if the board cannot be cut further.
  */
-function generateRooms(
+export function generateRooms(
   width: number,
   height: number,
   roomCount: number,
   rng: Rng,
 ): { roomMap: string[]; ids: string[] } {
+  // Hard safety: more rooms than ROOM_CHARS has ids cannot be encoded (roomCountFor never
+  // asks for more than 11, but this function is exported for tests).
+  roomCount = Math.min(roomCount, ROOM_CHARS.length)
   // Floor for a room on THIS board: no sliver next to a hall. Scaled to the average room
   // (≈45% of it) so a 9×9 with 6 rooms won't produce a 3-cell closet, matching the
   // hand-made corpus, whose smallest room averages ~6–7 cells.
@@ -1529,11 +1596,11 @@ function generateRooms(
 
   carveIrregularities(assign, width, height, rects.length, rng)
 
-  const ids = Array.from({ length: rects.length }, (_, room) => String(room + 1))
+  const ids = Array.from({ length: rects.length }, (_, room) => ROOM_CHARS[room])
   const roomMap: string[] = []
   for (let r = 0; r < height; r++) {
     let line = ''
-    for (let c = 0; c < width; c++) line += String(assign[r * width + c] + 1)
+    for (let c = 0; c < width; c++) line += ROOM_CHARS[assign[r * width + c]]
     roomMap.push(line)
   }
   return { roomMap, ids }

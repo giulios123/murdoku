@@ -39,9 +39,13 @@ function check(level: LevelJson, cfg: string, ms: number): Row {
 
 const rows: Row[] = []
 const matrix: { diff: GenDifficulty; sizes: number[]; seeds: number[] }[] = [
+  // 11/12 cost ~0.6–1.1s per ATTEMPT (many attempts per level) — fewer seeds there.
   { diff: 'hard', sizes: [6, 8, 9, 10], seeds: [1, 2, 3] },
+  { diff: 'hard', sizes: [11, 12], seeds: [1, 2] },
   { diff: 'medium', sizes: [6, 8, 9], seeds: [1, 2] },
+  { diff: 'medium', sizes: [11, 12], seeds: [1] },
   { diff: 'easy', sizes: [6, 8, 9], seeds: [1, 2] },
+  { diff: 'easy', sizes: [11, 12], seeds: [1] },
 ]
 for (const { diff, sizes, seeds } of matrix) {
   for (const size of sizes) {

@@ -416,6 +416,7 @@
     "theme": "Thème",
     "create": "Créer",
     "generating": "Génération du niveau …",
+    "generatingLong": "Une grande affaire — l'enquête peut prendre jusqu'à {{seconds}} secondes.",
     "hint": "Les grands plateaux et « Difficile » peuvent prendre quelques secondes.",
     "cancel": "Annuler",
     "failed": "Aucun niveau trouvé — réessayez ou choisissez d'autres réglages."

@@ -416,6 +416,7 @@
     "theme": "Tema",
     "create": "Criar",
     "generating": "A gerar o nível …",
+    "generatingLong": "Um caso grande — a investigação pode demorar até {{seconds}} segundos.",
     "hint": "Tabuleiros grandes e «Difícil» podem demorar alguns segundos.",
     "cancel": "Cancelar",
     "failed": "Não se encontrou nenhum nível — tenta outra vez ou escolhe outras definições."

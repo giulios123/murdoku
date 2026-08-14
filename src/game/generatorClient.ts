@@ -1,5 +1,5 @@
 import { fillBoardClues, generateLevel, selectBestLevel } from '../engine/generator/index.ts'
-import type { FillBoardOptions, GenBudget, GenerateOptions } from '../engine/generator/index.ts'
+import type { FillBoardOptions, GenBudget, GenDifficulty, GenerateOptions } from '../engine/generator/index.ts'
 import type { LevelJson } from '../engine/index.ts'
 import { makeClueMatchers, requiredAttrSeeds, type Condition } from './editorClues.ts'
 
@@ -17,11 +17,39 @@ type WorkerRequest =
   | { kind: 'generate'; opts: GenerateOptions }
   | { kind: 'fill'; board: LevelJson; opts: FillBoardOptions; palette?: Condition[] }
 
-// In the WORKER, Cancel = worker.terminate(), which kills the thread instantly at any
-// point — so we don't need tight time limits, just a high safety wall in case a config
-// is impossible. The user stops it whenever they like.
-const WORKER_BUDGET: GenBudget = { maxAttempts: 4000, softMs: 8000, hardMs: 90000 }
-const FAST_BUDGET: GenBudget = { maxAttempts: 4000, softMs: 2500, hardMs: 90000 }
+/** Width of the board a request targets — budgets, grace and pool size scale with it. */
+function requestWidth(request: WorkerRequest): number {
+  return request.kind === 'generate' ? request.opts.width : request.board.size.width
+}
+
+/**
+ * Per-size WORKER budget. `softMs` = how long a worker keeps improving once it HOLDS a
+ * gate-passing candidate (pure quality); `hardMs` = the absolute wall. Cancel is still
+ * worker.terminate() — the long soft budgets cost nothing when the user bails out.
+ *
+ * Why size-scaled: a gate-passing candidate needs ~1 in 12 attempts à ~0.4s at 10×10 but
+ * ~1 in 40 attempts à ~1.1s at 12×12 (measured). A flat 8s soft budget bought 12×12 about
+ * seven attempts — usually zero passers — so the first worker returned a mediocre level
+ * and the grace window cut everyone else off. hardMs sits under the user's "never more
+ * than ~45s" line INCLUDING the in-flight overrun of a running attempt (~2–4s at 12×12).
+ */
+function workerBudget(width: number, quality: GenQuality, difficulty?: GenDifficulty): GenBudget {
+  // 12×12 HARD is the one config where 40s genuinely isn't enough: an attempt costs ~3.1s
+  // and only ~1.1% pass every quality gate (measured over 360 attempts), so 40s left
+  // roughly every second run empty-handed. The user's explicit call: this config may take
+  // ~90s — that triples the attempts and drops P("kein Level") to ~15% on a 6-worker pool.
+  // The overlay says so (generate.generatingLong with a dynamic seconds figure).
+  if (width >= 12 && difficulty === 'hard') {
+    return { maxAttempts: 4000, softMs: quality === 'fast' ? 40000 : 80000, hardMs: 90000 }
+  }
+  const soft = width <= 9 ? 8000 : width <= 10 ? 18000 : width <= 11 ? 25000 : 32000
+  const fastSoft = width <= 9 ? 2500 : Math.round(soft / 2)
+  return {
+    maxAttempts: 4000,
+    softMs: quality === 'fast' ? fastSoft : soft,
+    hardMs: width <= 9 ? 42000 : 40000,
+  }
+}
 
 /**
  * How many workers hunt candidates IN PARALLEL. Level quality scales directly with the
@@ -30,10 +58,15 @@ const FAST_BUDGET: GenBudget = { maxAttempts: 4000, softMs: 2500, hardMs: 90000 
  * beyond that the marginal candidate is cheaper than the thermal/battery cost on phones —
  * and `cores - 1` keeps one core for the UI thread. A 2-core device gets a pool of 1 =
  * exactly the old single-worker behaviour, so weak phones are NEVER worse off than before.
+ *
+ * BIG boards (≥10) may use up to 6: there the user's red line is "never `kein Level`",
+ * and without a lifeline level (their call: the redundancy gate stays absolute) the
+ * candidate count is the only defence — measured pass rates put P(no gate passer) at
+ * 12×12 hard around ~2% with 4 workers and ~0.3% with 6. Phones stay capped by cores-1.
  */
-function poolSize(): number {
+function poolSize(width: number): number {
   const cores = typeof navigator !== 'undefined' && navigator.hardwareConcurrency ? navigator.hardwareConcurrency : 2
-  return Math.min(4, Math.max(1, cores - 1))
+  return Math.min(width >= 10 ? 6 : 4, Math.max(1, cores - 1))
 }
 
 /**
@@ -49,7 +82,7 @@ function poolSize(): number {
  * constant can break without anyone editing it, when the assumption underneath it moves.
  */
 function fallbackBudget(request: WorkerRequest): GenBudget {
-  const width = request.kind === 'generate' ? request.opts.width : request.board.size.width
+  const width = requestWidth(request)
   const hardMs = width <= 7 ? 8000 : width <= 10 ? 25000 : 40000
   return { maxAttempts: 4000, softMs: 2500, hardMs }
 }
@@ -157,8 +190,9 @@ function spawnWorker(request: WorkerRequest): GenHandle | null {
  * device ends up worse than before. Cancel terminates every worker instantly.
  */
 function runPool(request: WorkerRequest, quality: GenQuality): GenHandle {
-  const budget = quality === 'fast' ? FAST_BUDGET : WORKER_BUDGET
-  const size = poolSize()
+  const width = requestWidth(request)
+  const budget = workerBudget(width, quality, request.opts.difficulty)
+  const size = poolSize(width)
   const explicitSeed = request.opts.seed
   const baseSeed = explicitSeed ?? Math.floor(Math.random() * 1e9)
 
@@ -181,33 +215,57 @@ function runPool(request: WorkerRequest, quality: GenQuality): GenHandle {
     // 35.6s, purely from tail-waiting). After the FIRST success, give the others a short
     // grace to hand in what they hold, then cut them loose. Only when EVERY stream is still
     // empty do we keep waiting — a slow level beats "kein Level" (the user's red line).
-    // 2.5s: every worker that HOLDS a candidate breaks at softMs (8s) and only finishes its
+    // 2.5s: every worker that HOLDS a candidate breaks at softMs and only finishes its
     // in-flight attempt (~0.7–2s) — the grace must cover that overrun spread, or a second
     // worker's better level gets cut moments before arrival. Workers still empty past that
     // point stay empty for a long time (measured), so waiting longer buys nothing.
-    const GRACE_MS = 2500
+    // Big boards get 5s: their in-flight attempt alone runs ~1–4s (measured at 12×12).
+    const GRACE_MS = width >= 10 ? 5000 : 2500
     const levels: LevelJson[] = []
+    const failures: string[] = []
     let signalFirst = () => {}
     const firstSuccess = new Promise<void>((resolve) => {
       signalFirst = resolve
     })
     const collected = Promise.allSettled(
       handles.map((h) =>
-        h.promise.then((level) => {
-          levels.push(level)
-          signalFirst()
-        }),
+        h.promise.then(
+          (level) => {
+            levels.push(level)
+            signalFirst()
+          },
+          (err: unknown) => {
+            failures.push(err instanceof Error ? err.message : String(err))
+          },
+        ),
       ),
     )
+    // ABSOLUTE deadline on top of hardMs: pickBestLevel checks its wall clock only BETWEEN
+    // attempts, and a single pathological 12×12 attempt ran 69s (measured) — without this
+    // cap, one stuck worker holding nothing delays the verdict far past the user's ~45s
+    // line. hardMs already bounds the honest search; this only reins in the overrun tail.
+    let timedOut = false
     await Promise.race([
       collected,
       firstSuccess.then(() => new Promise((r) => setTimeout(r, GRACE_MS))),
+      new Promise<void>((resolve) =>
+        setTimeout(() => {
+          timedOut = true
+          resolve()
+        }, budget.hardMs + GRACE_MS),
+      ),
     ])
     if (cancelled) throw new Error('cancelled')
     for (const h of handles) h.cancel() // stragglers hold nothing — see above
     if (levels.length === 0) {
-      // Every worker failed (workers broken on this browser, or no board in budget on any
-      // stream). One synchronous retry on the main thread — the pre-pool behaviour.
+      // The synchronous main-thread retry exists for browsers whose WORKERS are broken —
+      // every stream died on the environment ('worker failed'), none ever reached the
+      // generator. If the workers RAN and simply found nothing within the budget (or the
+      // absolute deadline cut them off), a serial re-run would just freeze the UI for
+      // another full budget to reach the same verdict — report the failure instead.
+      const environmental =
+        !timedOut && failures.length === handles.length && failures.every((m) => m === 'worker failed')
+      if (!environmental) throw new Error('generation failed')
       fallback = runInline(request)
       return fallback.promise
     }

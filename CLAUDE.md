@@ -13,7 +13,7 @@ Ein Deduktions-Krimi: Verdächtige + Opfer werden per Hinweisen auf einem Raster
   **34 registrierte Techniken** (28 Klassen) in `forward.ts`.
 - **6 Sprachen** (de/en/es/pt/fr/ru; pt = **pt-PT** mit „tu", fr mit **„vous"**, ru mit
   **«вы»** — Personennamen bleiben lateinisch) ·
-  Brettgrößen **4×4–12×12** (Korpus & Generator; Editor bis 11×11).
+  Brettgrößen **4×4–12×12** (Korpus, Generator & Editor).
 - **Level-Titel:** `title` (de) + `titles {de,en,es,pt,fr}`, Krimi-/Christie-Ton, je Sprache
   eigenständig (nie wörtlich), **eindeutig über den GESAMTEN Korpus je Sprache** (vor dem
   Schreiben maschinell prüfen — Kollisionen kamen vor), kein Opfername, Garand-Level tabu.
@@ -230,8 +230,25 @@ Versuche, und `pickBestLevel` macht daraus wieder Qualität.
 **4. Konstanten brechen, ohne dass jemand sie anfasst.** `FALLBACK_BUDGET` (Hauptthread, 8 s hart)
 war für Versuche à 140 ms bemessen. Nachdem der Dedup-Deadlock weg war, kosteten Versuche 1,1 s —
 dieselben 8 s kauften 7 statt 57 Versuche, und 9×9 hard scheiterte 3 von 8 Mal („kein Level
-gefunden"). **Beide Budgets messen** (`generatorClient.ts`: `WORKER_BUDGET` **und**
+gefunden"). **Beide Budgets messen** (`generatorClient.ts`: `workerBudget()` **und**
 `fallbackBudget()`), nicht nur das Worker-Budget.
+
+**6. Große Bretter (Lehren vom 12×12-Ausbau, 14.08.2026, alles gemessen):**
+- **Raum-IDs sind EIN Zeichen** (`ROOM_CHARS = '123456789ABCDEF'`, deckungsgleich mit den
+  Editor-Slots). `String(room + 1)` machte aus Raum 10 die zwei Zeichen „10" und zerriss die
+  roomMap — der Crash tauchte erst weit weg in `archetypeOf` auf und tötete bei 11/12×12 fast
+  jeden Lauf nach ~1 s. Test: `generator/rooms.test.ts`.
+- **Ein crashender Versuch ist ein GESCHEITERTER Versuch**, nie das Ende der Jagd:
+  `pickBestLevel` und die easy-Schleifen fangen pro Versuch (try/catch), sonst wirft ein
+  Randfall in Versuch N alle schon bezahlten Kandidaten weg.
+- **Jede Eindeutigkeitssuche des Generators ist gedeckelt** (`UNIQUE_NODE_BUDGET = 500_000`
+  Knoten, fail-closed: Abbruch ≠ eindeutig). Ungedeckelt kostete EIN 11×11-Kandidat 12–32 s.
+  Schlimmstes Bundle-Level braucht ≈18k Knoten ⇒ 27× Marge; Knoten sind geräteunabhängig
+  (Daily bleibt deterministisch).
+- **Gates billig vor teuer:** `hasRedundantClue` (ms, lehnt ~80 % ab) VOR dem lazy
+  `rating.unique` (gedeckelte Vollsuche) — gleiche Konjunktion, fingerprint-identisch.
+- **easy hat EINE Wanduhr:** Konstruktion ~60 % von hardMs, generischer Fallback den Rest —
+  vorher konnten sich beide Phasen auf 2× hardMs addieren.
 
 **5. Performance-Verträge (16.07.2026, alle per Fest-Seed-Fingerprint verlustfrei bewiesen):**
 - `Clue.candidateCells` ist in der **Basisklasse memoisiert** (pro Board-Identität); Subklassen
@@ -254,14 +271,25 @@ gefunden"). **Beide Budgets messen** (`generatorClient.ts`: `WORKER_BUDGET` **un
 
 ## Worker-Pool (`generatorClient.ts`)
 
-Die Generierung läuft in einem **Pool paralleler Worker** (`poolSize() = min(4, Kerne−1)`), jeder
-mit disjunktem Seed-Strom; der Hauptthread wählt den Sieger per `selectBestLevel` — **derselben
-Skala**, mit der jeder Worker seine Kandidaten bewertet hat (Test: `generator/selection.test.ts`,
-museum muss Der_Burgfall schlagen). Level-Qualität skaliert direkt mit der Kandidatenzahl
-(gemessen: 1 Kandidat ⇒ Hürden sind Glückssache, 4+ ⇒ Normalfall). 2-Kern-Gerät ⇒ Pool = 1 =
-altes Verhalten, **mobil nie schlechter**. Fehlerleiter: toter Worker verkleinert den Pool; ALLE
-tot ⇒ ein Inline-Fallback (nie N parallele Hauptthread-Läufe — die frören die UI N-fach ein).
-`quality: 'fast' | 'max'` ist der vorverdrahtete UI-Regler (softMs 2500/8000).
+Die Generierung läuft in einem **Pool paralleler Worker** (`poolSize(width) = min(4, Kerne−1)`,
+ab 10×10 bis 6 — dort ist die Kandidatenzahl die einzige Verteidigung der „nie kein
+Level"-Linie), jeder mit disjunktem Seed-Strom; der Hauptthread wählt den Sieger per
+`selectBestLevel` — **derselben Skala**, mit der jeder Worker seine Kandidaten bewertet hat
+(Test: `generator/selection.test.ts`, museum muss Der_Burgfall schlagen). Level-Qualität
+skaliert direkt mit der Kandidatenzahl (gemessen: 1 Kandidat ⇒ Hürden sind Glückssache, 4+ ⇒
+Normalfall). 2-Kern-Gerät ⇒ Pool = 1 = altes Verhalten, **mobil nie schlechter**. Fehlerleiter:
+toter Worker verkleinert den Pool; ALLE tot ⇒ ein Inline-Fallback (nie N parallele
+Hauptthread-Läufe — die frören die UI N-fach ein). `quality: 'fast' | 'max'` ist der
+vorverdrahtete UI-Regler. **Budgets sind größengestaffelt** (`workerBudget(width, quality,
+difficulty)`): softMs 8 s (≤9) / 18 s (10) / 25 s (11) / 32 s (12), hardMs 42/40 s (Dirks
+Linie: nie mehr als ~45 s inkl. In-flight-Überhang); Grace 2,5 s, ab 10×10 5 s. AUSNAHME
+**12×12 hard: soft 80 s / hard 90 s** (Dirks Wunsch — ein Versuch kostet dort Ø 3,1 s, nur
+~1,1 % bestehen alle Tore [4/360 gemessen]; 90 s drücken P(„kein Level") von ~50 % auf
+~15 % bei Pool 6). Der Pool hat eine ABSOLUTE Deadline (hardMs+Grace — einzelne Versuche
+liefen bis 69 s über), und der synchrone Inline-Fallback springt nur noch an, wenn ALLE
+Worker am Environment starben ('worker failed'), nie nach ehrlicher erfolgloser Suche.
+Ab 10×10 zeigt der Generator-Screen `generate.generatingLong` ({{seconds}}: 90 bei
+12×12 hard, sonst 45).
 
 ## Clue-API (`engine/clues/Clue.ts`)
 

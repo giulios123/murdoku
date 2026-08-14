@@ -319,6 +319,14 @@ export default function GeneratorScreen({ onPlay, onBack, autoStart }: Props) {
           <div className="mk-dialog">
             <span className="mk-spinner" />
             <p>{t('generate.generating')}</p>
+            {/* Big cases hunt candidates for most of their budget — say so, or the wait
+                reads as a hang. Small boards return in seconds and need no warning. The
+                figure mirrors workerBudget: 12×12 hard may run ~90s, everything else ≤45s. */}
+            {size >= 10 && (
+              <p className="mk-genhint">
+                {t('generate.generatingLong', { seconds: size >= 12 && difficulty === 'hard' ? 90 : 45 })}
+              </p>
+            )}
             <button type="button" className="mk-btn mk-btn--ghost" onClick={cancel}>
               {t('generate.cancel')}
             </button>

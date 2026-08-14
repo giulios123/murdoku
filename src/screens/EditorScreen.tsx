@@ -66,8 +66,8 @@ type CheckResult = {
 type EditDifficulty = Exclude<Difficulty, 'tutorial' | 'original'>
 const DIFFS: EditDifficulty[] = ['easy', 'medium', 'hard']
 const MIN = 4
-/** Hard cap: bigger boards are unplayable on phones. */
-const MAX = 11
+/** Hard cap — matches the generator and the biggest hand-made cases (12×12). */
+const MAX = 12
 /** All pickable sizes — the phone layout offers them as a dropdown (a slider is
  *  imprecise there and needs a full row of width). */
 const SIZES = Array.from({ length: MAX - MIN + 1 }, (_, i) => MIN + i)
