@@ -150,7 +150,12 @@ export default function App() {
         />
       )
     case 'tutorial':
-      return <TutorialScreen onExit={back} />
+      return (
+        <TutorialScreen
+          onExit={back}
+          onEdit={(meta) => setScreen({ name: 'editor', initial: meta })}
+        />
+      )
     case 'editor':
       return (
         <EditorScreen

@@ -166,7 +166,7 @@ function Toolbar({
         <span className="mk-tool__sub">{t(eraseTool ? 'tool.eraseActive' : 'tool.eraseHold')}</span>
       </HoldButton>
 
-      <button type="button" className="mk-tool" onClick={onUndo} disabled={locked || !canUndo}>
+      <button type="button" className="mk-tool mk-tool--undo" onClick={onUndo} disabled={locked || !canUndo}>
         <span className="mk-tool__icon">↶</span>
         <span>{t('tool.undo')}</span>
       </button>

@@ -4878,6 +4878,118 @@ button {
   margin-top: 0.4rem;
 }
 
+/* Illustrated coach steps (the rules): light "evidence slips" pinned to the dark card,
+   in the book's investigation-wall style — slightly tilted, a tape strip on top. The
+   card grows wider so the two slips sit side by side on desktop; on phones they stack. */
+.mk-coach__card[data-visual] {
+  width: min(36rem, calc(100vw - 1.4rem));
+  max-height: min(80vh, 34rem);
+}
+.mk-tutrules {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr));
+  gap: 0.9rem 0.9rem;
+  padding-top: 0.35rem; /* room for the tape overhang */
+}
+.mk-tutrules__chip {
+  position: relative;
+  margin: 0;
+  background: #fbf8ee;
+  border-radius: 3px;
+  padding: 0.55rem 0.6rem 0.5rem;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.35);
+  transform: rotate(-0.7deg);
+}
+.mk-tutrules__chip[data-tilt='r'] {
+  transform: rotate(0.6deg);
+}
+.mk-tutrules__chip::before {
+  content: '';
+  position: absolute;
+  top: -0.42rem;
+  left: 50%;
+  width: 4.6rem;
+  height: 0.95rem;
+  transform: translateX(-50%) rotate(-2.2deg);
+  background: rgba(240, 231, 205, 0.45);
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
+}
+.mk-tutrules__chip[data-tilt='r']::before {
+  transform: translateX(-50%) rotate(2deg);
+}
+.mk-tutrules__chip svg {
+  display: block;
+  width: 100%;
+  max-width: 15rem;
+  height: auto;
+  margin: 0 auto;
+}
+.mk-tutrules__cap {
+  margin: 0.4rem 0 0;
+  font-family: var(--font-type);
+  font-size: 0.78rem;
+  line-height: 1.45;
+  color: #2b2733;
+}
+/* The dark X's stamp in one after another; the murderer ring lands last. One short,
+   one-time sequence — and none of it under reduced motion. */
+.mk-tutrules__x {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: mk-tutrules-stamp 0.32s ease-out backwards;
+  animation-delay: calc(0.45s + var(--i) * 0.1s);
+}
+.mk-tutrules__ring {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: mk-tutrules-ring 0.7s ease-out 1s backwards;
+}
+@keyframes mk-tutrules-stamp {
+  0% {
+    opacity: 0;
+    transform: scale(1.7);
+  }
+  65% {
+    opacity: 1;
+    transform: scale(0.9);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+@keyframes mk-tutrules-ring {
+  0% {
+    opacity: 0;
+    transform: scale(0.55);
+  }
+  55% {
+    opacity: 1;
+    transform: scale(1.18);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .mk-tutrules__x,
+  .mk-tutrules__ring {
+    animation: none;
+  }
+}
+/* Stacked phone layout: slightly smaller sketches so both slips plus the button fit
+   the centered card without scrolling on common phone heights. */
+@media (orientation: portrait), (max-width: 860px) {
+  .mk-tutrules__chip svg {
+    max-width: 12.5rem;
+  }
+  .mk-tutrules__cap {
+    font-size: 0.75rem;
+  }
+}
+
 /* ============================================================= ANIMATIONS */
 
 /* Secret-toggle confirmation: a case-file evidence strip that rises, holds, then

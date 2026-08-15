@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { VICTIM_ID, type Cell, type PersonId, type Puzzle, type Solution } from '../engine/index.ts'
 import { CANDIDATE_BLUE, HINT_BLACK } from './palette.ts'
@@ -23,6 +23,11 @@ const DEMO_STEPS: Step[] = [
   { kind: 'info', id: 'board', target: '.mk-board' },
   { kind: 'info', id: 'suspects', target: '.mk-clues' },
   { kind: 'info', id: 'terms', target: '.mk-clues' },
+  // The face is the handle for the Akten-Notiz (works on touch AND desktop): tap it,
+  // the dossier note folds out — every key term of the clue, the person's traits, and
+  // any persons the clue names. Action-gated like the tool buttons.
+  { kind: 'tool', id: 'face', who: 'A', target: '[data-suspect="A"] .mk-facebtn' },
+  { kind: 'info', id: 'faceNote', target: '.mk-note' },
   { kind: 'select', id: 'selectA', who: 'A' },
   { kind: 'note', id: 'noteA', who: 'A' },
   { kind: 'select', id: 'selectB', who: 'B' },
@@ -34,7 +39,12 @@ const DEMO_STEPS: Step[] = [
   { kind: 'place', id: 'placeB', who: 'B' },
   { kind: 'select', id: 'selectA2', who: 'A' },
   { kind: 'place', id: 'placeA', who: 'A' },
-  { kind: 'info', id: 'tools', target: '.mk-tools' },
+  // One spotlight per tool. X and hint only get a teaser here — part 2 teaches them
+  // hands-on; "Lösen" needs no step of its own, the solve step at the end explains it.
+  { kind: 'info', id: 'toolX', target: '.mk-tool--x' },
+  { kind: 'info', id: 'toolErase', target: '.mk-tool--erase' },
+  { kind: 'info', id: 'toolUndo', target: '.mk-tool--undo' },
+  { kind: 'info', id: 'toolHint', target: '.mk-tool--hint' },
   { kind: 'select', id: 'selectV', who: VICTIM_ID },
   { kind: 'place', id: 'placeV', who: VICTIM_ID },
   { kind: 'info', id: 'solve', target: '.mk-tool--submit' },
@@ -65,15 +75,19 @@ const WOHNUNG_STEPS: Step[] = [
   // Caro is on a chair — the others are crossed or in rows 1+2, so only one is left.
   { kind: 'select', id: 'w_selectC', who: 'C' },
   { kind: 'place', id: 'w_placeC', who: 'C' },
-  // The hint tool — actually press it, then read the hint that appears.
+  // The hint tool — actually press it, then read the hint that appears. The rich hint
+  // renders as .mk-hintbox, only the plain fallback as .mk-hintbar — target both, or
+  // the spotlight misses the box entirely.
   { kind: 'tool', id: 'w_hintBtn', target: '.mk-tool--hint' },
-  { kind: 'info', id: 'w_hintShown', target: '.mk-hintbar' },
+  { kind: 'info', id: 'w_hintShown', target: '.mk-hintbox, .mk-hintbar' },
+  // Act on the hint right away: it says only one cell is left for Diana — place her
+  // first, THEN detour into the settings (and the PDF/editor block behind them).
+  { kind: 'select', id: 'w_selectD', who: 'D' },
+  { kind: 'place', id: 'w_placeD', who: 'D' },
   // The settings — open them and show what's tunable.
   { kind: 'tool', id: 'w_settingsBtn', target: '.mk-gear' },
   { kind: 'info', id: 'w_settingsOpen', target: '.mk-settings' },
   // Finish the case, guided.
-  { kind: 'select', id: 'w_selectD', who: 'D' },
-  { kind: 'place', id: 'w_placeD', who: 'D' },
   { kind: 'select', id: 'w_selectE2', who: 'E' },
   { kind: 'place', id: 'w_placeE', who: 'E' },
   { kind: 'select', id: 'w_selectB2', who: 'B' },
@@ -85,10 +99,47 @@ const WOHNUNG_STEPS: Step[] = [
   { kind: 'info', id: 'w_solve', target: '.mk-tool--submit' },
 ]
 
+/** Splice `inserts` right after the step with `id`. */
+const insertAfter = (list: Step[], id: string, inserts: Step[]): Step[] => {
+  const i = list.findIndex((s) => s.id === id)
+  return [...list.slice(0, i + 1), ...inserts, ...list.slice(i + 1)]
+}
+
+/** The script for a phase, matched to the CURRENT layout — the tutorial points only at
+ *  what this layout really shows. Desktop: the legend column beside the tools and the
+ *  PDF button in the header. Stacked phone layout: the ?-button opens the bottom sheet
+ *  that holds the legend, with the PDF row at its foot. */
+function stepsFor(phase: 1 | 2, narrow: boolean): Step[] {
+  if (phase === 1) {
+    return insertAfter(
+      DEMO_STEPS,
+      'board',
+      narrow
+        ? [
+            { kind: 'tool', id: 'legendBtn', target: '.mk-legendbtn' },
+            { kind: 'info', id: 'legendSheet', target: '.mk-sheet' },
+          ]
+        : [{ kind: 'info', id: 'legend', target: '.mk-legend' }],
+    )
+  }
+  return insertAfter(WOHNUNG_STEPS, 'w_settingsOpen', [
+    ...(narrow
+      ? ([
+          { kind: 'tool', id: 'pdfSheet', target: '.mk-legendbtn' },
+          { kind: 'tool', id: 'pdfRow', target: '.mk-sheet__pdf' },
+        ] as Step[])
+      : ([{ kind: 'tool', id: 'pdfBtn', target: '.mk-game__edit--pdf' }] as Step[])),
+    { kind: 'info', id: 'pdfDlg', target: '.mk-pdfdlg' },
+    { kind: 'info', id: 'editBtn', target: '.mk-game__edit' },
+  ])
+}
+
 export interface CoachView {
   title: string
   body: string
   stepLabel: string
+  /** Illustrated content rendered under the body (e.g. the rules' evidence slips). */
+  visual?: 'rules'
   target?: string
   /** Dim the screen + spotlight the target (info/select/tool/dialog). Bright board for
    *  note/place/cross steps (the highlighted cells live on the board). */
@@ -126,11 +177,22 @@ export interface TutorialFlow {
   onSetMark: (cell: Cell, id: PersonId, on: boolean) => void
   onHint: () => void
   onSettingsOpen: () => void
+  /** A face tap opened the Akten-Notiz for `id` (person id, or `bc-<n>` board notes). */
+  onNoteOpen: (id: string) => void
   /** True while the "press Hint" step is active (GameScreen actually fires the hint). */
   hintPhase: boolean
   /** Drives the settings dialog: 'button' = waiting for the gear tap, 'open' = keep it
    *  open and explain it, null = closed. */
   settingsPhase: 'button' | 'open' | null
+  /** Drives the ?-legend sheet the same way: 'button' = waiting for the ?-tap, 'open' =
+   *  keep the sheet open (explain step / waiting for the PDF row), null = closed. */
+  legendPhase: 'button' | 'open' | null
+  /** Drives the PDF dialog: 'open' = keep it open while the coach explains it. */
+  pdfPhase: 'open' | null
+  /** True while one of the PDF steps runs. Outside them the PDF buttons are locked with
+   *  a coach note during the tutorial ("we'll get to this later") — a modal opening over
+   *  an unrelated step would derail the guided flow. */
+  pdfStep: boolean
   /** End the tutorial (e.g. the player restarts the level on the final dialog). */
   end: () => void
 }
@@ -146,6 +208,11 @@ interface Params {
   phase: 1 | 2
   /** True once the level is solved (so the flow can advance to the verdict step). */
   won: boolean
+  /** Real UI state of the ?-legend sheet / PDF dialog — the sheet & PDF steps advance
+   *  by OBSERVING these (like `won`), not via button callbacks: however the sheet or
+   *  dialog got opened, the step reacts. */
+  legendOpen: boolean
+  pdfOpen: boolean
   /** Called from the phase-1 verdict step to load the second tutorial level. */
   onAdvancePhase: () => void
 }
@@ -158,15 +225,41 @@ export function useTutorialFlow({
   setSelected,
   phase,
   won,
+  legendOpen,
+  pdfOpen,
   onAdvancePhase,
 }: Params): TutorialFlow {
   const { t } = useTranslation()
   const narrow = useNarrowLayout()
-  const STEPS = phase === 1 ? DEMO_STEPS : WOHNUNG_STEPS
+  // The script follows the LIVE layout — CSS and steps share the same media query, so
+  // the steps always point at what is really on screen. (A frozen-at-mount list bit us:
+  // a viewport that settles after mount handed phones the desktop script — the legend/
+  // PDF steps then pointed at hidden elements and nothing was tappable.)
+  const STEPS = useMemo(() => stepsFor(phase, narrow), [phase, narrow])
   const [idx, setIdx] = useState(0)
   const [active, setActive] = useState(enabled)
   const [error, setError] = useState<string | null>(null)
   const step = STEPS[Math.min(idx, STEPS.length - 1)]
+
+  // On a layout flip, re-anchor the index by step id: same step if both layouts have
+  // it, else the next step the layouts share (skipping the other layout's exclusive
+  // legend/PDF block). External sync — the list identity is the event.
+  const prevStepsRef = useRef(STEPS)
+  useEffect(() => {
+    const old = prevStepsRef.current
+    if (old === STEPS) return
+    prevStepsRef.current = STEPS
+    setIdx((i) => {
+      const cur = old[Math.min(i, old.length - 1)]
+      const same = STEPS.findIndex((s) => s.id === cur.id)
+      if (same >= 0) return same
+      for (let k = Math.min(i, old.length - 1) + 1; k < old.length; k++) {
+        const j = STEPS.findIndex((s) => s.id === old[k].id)
+        if (j >= 0) return j
+      }
+      return STEPS.length - 1
+    })
+  }, [STEPS])
 
   // Keep the focus suspect selected during note/place steps (so the board accepts input).
   useEffect(() => {
@@ -352,6 +445,41 @@ export function useTutorialFlow({
       next()
     }
   }
+  // The face step waits for the RIGHT face — its Akten-Notiz is what the next step
+  // explains. A wrong face (or a board-note lens) just coaches back, it breaks nothing.
+  const onNoteOpen = (id: string) => {
+    if (step.id !== 'face') return
+    if (id === step.who) {
+      setError(null)
+      next()
+    } else {
+      setError(t('tutorial.err.wrongFace', { name: nameOf(step.who) }))
+    }
+  }
+  // The ?-sheet and the PDF dialog steps advance by OBSERVING the real UI state (the
+  // `won` pattern): opening satisfies a "press it" step, closing satisfies the explain
+  // step — a backdrop tap must not strand anyone, and a real export closes the dialog
+  // itself (it stays fully usable in the tutorial).
+  useEffect(() => {
+    if (!active) return
+    if (legendOpen ? step.id === 'legendBtn' || step.id === 'pdfSheet' : step.id === 'legendSheet') {
+      /* eslint-disable react-hooks/set-state-in-effect */
+      setError(null)
+      setIdx((i) => Math.min(i + 1, STEPS.length - 1))
+      /* eslint-enable react-hooks/set-state-in-effect */
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [legendOpen, active, step.id])
+  useEffect(() => {
+    if (!active) return
+    if (pdfOpen ? step.id === 'pdfBtn' || step.id === 'pdfRow' : step.id === 'pdfDlg') {
+      /* eslint-disable react-hooks/set-state-in-effect */
+      setError(null)
+      setIdx((i) => Math.min(i + 1, STEPS.length - 1))
+      /* eslint-enable react-hooks/set-state-in-effect */
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pdfOpen, active, step.id])
 
   // Crossing a field: only the intended cells are allowed; once they're all crossed the
   // step is done.
@@ -391,6 +519,7 @@ export function useTutorialFlow({
           ? t([`tutorial.${step.id}.body_touch`, `tutorial.${step.id}.body`])
           : t(`tutorial.${step.id}.body`),
         stepLabel: t('tutorial.step', { n: idx + 1, total: STEPS.length }),
+        visual: step.id === 'rules' ? 'rules' : undefined,
         target: step.kind === 'select' ? `[data-suspect="${step.who}"]` : step.target,
         // An info step that highlights board cells stays BRIGHT (like a note/place step)
         // so the card sits clear of the cells (via cardSide); other info/select/tool/
@@ -401,9 +530,14 @@ export function useTutorialFlow({
           step.kind === 'tool' ||
           step.kind === 'dialog',
         overDialog: step.kind === 'dialog',
-        // Steps that spotlight a centered dialog (the verdict, the open settings) get a
-        // wider, safely-placed card so it doesn't bury the dialog.
-        dialogStep: step.kind === 'dialog' || step.id === 'w_settingsOpen',
+        // Steps that spotlight a centered dialog or the bottom sheet (the verdict, the
+        // open settings, the ?-legend sheet, the PDF dialog) get a wider, safely-placed
+        // card so it doesn't bury the dialog.
+        dialogStep:
+          step.kind === 'dialog' ||
+          step.id === 'w_settingsOpen' ||
+          step.id === 'legendSheet' ||
+          step.id === 'pdfDlg',
         cardSide,
         error,
         // A plain info step gets a "next"; the verdict step's "next" loads level 2; the
@@ -434,6 +568,7 @@ export function useTutorialFlow({
     onSetMark,
     onHint,
     onSettingsOpen,
+    onNoteOpen,
     hintPhase: active && step.id === 'w_hintBtn',
     settingsPhase: !active
       ? null
@@ -442,6 +577,17 @@ export function useTutorialFlow({
         : step.id === 'w_settingsOpen'
           ? 'open'
           : null,
+    legendPhase: !active
+      ? null
+      : step.id === 'legendBtn' || step.id === 'pdfSheet'
+        ? 'button'
+        : step.id === 'legendSheet' || step.id === 'pdfRow'
+          ? 'open'
+          : null,
+    pdfPhase: active && step.id === 'pdfDlg' ? 'open' : null,
+    pdfStep:
+      active &&
+      (step.id === 'pdfSheet' || step.id === 'pdfRow' || step.id === 'pdfBtn' || step.id === 'pdfDlg'),
     end: () => setActive(false),
   }
 }

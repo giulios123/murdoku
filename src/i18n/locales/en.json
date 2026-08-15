@@ -176,6 +176,8 @@
     "step": "{{n}}/{{total}}",
     "lockRestart": "That would restart the case — handy in a real game. Here, press »Next« for the second part.",
     "lockBack": "That would go back to the level list — but then you'd miss the second part! Press »Next«.",
+    "lockEdit": "That would open this case in the editor — finish the tutorial first. Afterwards the ✎ button is there for every case.",
+    "lockPdf": "We'll come back to this later in the tutorial.",
     "err": {
       "wrongSelect": "Select {{name}} first.",
       "selectFirst": "Select {{name}} first.",
@@ -186,7 +188,8 @@
       "wrongCell": "No, not here — think again.",
       "armCross": "Activate »Block cell« (the X tool) first.",
       "crossWrong": "Not that tile — only block the highlighted ones.",
-      "markOnly": "Just small notes here — don't place yet."
+      "markOnly": "Just small notes here — don't place yet.",
+      "wrongFace": "Tap {{name}}'s face."
     },
     "welcome": {
       "title": "Welcome, detective!",
@@ -198,12 +201,26 @@
     },
     "rules": {
       "title": "The rules",
-      "body": "• Each person is in a different row AND column.\n• Only beds, chairs and carpets can be occupied.\n• Tables, TVs, plants, shelves and boxes are blocked.\n• The victim is on the last free tile."
+      "body": "Only two rules hold at every crime scene:",
+      "line": "Every person stands in their own row AND column — the victim counts too. Once someone is placed, their whole row and column are locked.",
+      "victim": "The victim was alone in a room with exactly ONE suspect — the murderer. On the board, the victim ends up on the last free tile."
     },
     "board": {
       "title": "The crime scene",
       "body": "This is the crime scene — a 4×4 grid with two rooms: Living Room (top) and Bedroom (bottom). Hover over an object to see its name.",
       "body_touch": "This is the crime scene — a 4×4 grid with two rooms: Living Room (top) and Bedroom (bottom). Tap an object to see its name."
+    },
+    "legend": {
+      "title": "The legend",
+      "body": "Next to the tools on the right sits the legend: every object in this case — and whether you can stand there (walkable) or not (blocked). Worth a glance at the start of every case."
+    },
+    "legendBtn": {
+      "title": "The legend",
+      "body": "What do the objects on the board mean? Tap the »?« at the top left of the board — that's where the legend lives."
+    },
+    "legendSheet": {
+      "title": "Objects & walkability",
+      "body": "The legend shows every object in this case — and whether you can stand there (walkable) or not (blocked). Have a quick look, then tap »Next«."
     },
     "suspects": {
       "title": "The suspects",
@@ -213,7 +230,16 @@
     "terms": {
       "title": "Bold = important",
       "body": "Objects and key words are bold. Hover over a word like »beside« or »alone« to see exactly what it means.",
-      "body_touch": "Objects and key words are bold. Tap a word like »beside« or »alone« to see exactly what it means."
+      "body_touch": "Objects and key words in the suspects' statements are highlighted in bold. What they mean exactly — and every detail about the person — is what we'll show you in the next step."
+    },
+    "face": {
+      "title": "The file behind the face",
+      "body": "There's an even quicker way: click Alex's face — his dossier note folds out.",
+      "body_touch": "There's an even quicker way: tap Alex's face — his dossier note folds out."
+    },
+    "faceNote": {
+      "title": "Everything at a glance",
+      "body": "The note explains every key term of his statement and shows his traits (gender, beard, glasses …). If a statement names other people — say »in a room with a white-haired person« — they appear here too. This works for every person. Then press »Next«."
     },
     "selectA": {
       "title": "Select Alex",
@@ -259,10 +285,21 @@
       "title": "Place Alex",
       "body": "Place Alex on the only remaining tile beside the table (press and hold for ~1 second)."
     },
-    "tools": {
-      "title": "Your tools",
-      "body": "Quick tour of the tools: X tool (block tiles), Reset (hold), Undo, Hint and Solve.",
-      "body_touch": "Quick tour of the tools in the bar at the bottom: X tool (block tiles), Reset (hold), Undo, Hint and Solve."
+    "toolX": {
+      "title": "The X tool",
+      "body": "With the »X« you lock tiles where no one can possibly stand. How powerful that is — we'll practise it thoroughly in the second case."
+    },
+    "toolErase": {
+      "title": "Erase — two reaches",
+      "body": "»Erase« does both: tap it, then touch a tile — that wipes just this one tile. Press and hold the button — that clears the whole board."
+    },
+    "toolUndo": {
+      "title": "Undo",
+      "body": "»Undo« takes back your last steps — handy when a mistake slips in."
+    },
+    "toolHint": {
+      "title": "The hint",
+      "body": "Ever stuck, »Hint« shows you the next logical step. We'll try it together in the second case."
     },
     "selectV": {
       "title": "Select the victim",
@@ -345,15 +382,35 @@
     },
     "w_settingsBtn": {
       "title": "Open settings",
-      "body": "The gear at the top right — tap it to open the settings."
+      "body": "Before we solve on: the gear at the top right — tap it to open the settings."
     },
     "w_settingsOpen": {
       "title": "Tune the help",
       "body": "Here you set how much help you get — from lots of hints to none at all. Try it out. A real master detective needs no help — but decide for yourself! Then tap »Next«."
     },
+    "pdfBtn": {
+      "title": "The print sheet",
+      "body": "You can take any case with you as a printable PDF and solve it on paper — like a puzzle book. Press the »PDF« button at the top left."
+    },
+    "pdfSheet": {
+      "title": "The print sheet",
+      "body": "You can take any case with you as a printable PDF and solve it on paper — like a puzzle book. It lives behind the »?« too — tap it once more."
+    },
+    "pdfRow": {
+      "title": "Save case as PDF",
+      "body": "At the very bottom of the sheet sits the row »Save case as PDF« — tap it."
+    },
+    "pdfDlg": {
+      "title": "With or without the solution",
+      "body": "Choose your sheet here: just the case — or with a second page that walks through the solution step by step. Feel free to try it, or tap »Next«."
+    },
+    "editBtn": {
+      "title": "Open in editor",
+      "body": "One more button for later: the »✎« beside the back arrow opens any case in the editor — a starting point for your own cases. It's locked here in the tutorial."
+    },
     "w_selectD": {
-      "title": "Finish up: Diana",
-      "body": "Let's place the rest together. Select Diana."
+      "title": "Follow the hint",
+      "body": "That's exactly what the hint says: only one cell is left for Diana. Select Diana."
     },
     "w_placeD": {
       "title": "Place Diana",
@@ -361,7 +418,7 @@
     },
     "w_selectE2": {
       "title": "Place Emil",
-      "body": "Select Emil again."
+      "body": "Back to the case — let's place the rest together. Select Emil again."
     },
     "w_placeE": {
       "title": "Emil is clear",

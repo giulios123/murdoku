@@ -321,6 +321,8 @@ interface Props {
   related?: Set<PersonId> | null
   onSelect: (id: PersonId) => void
   onHoverSuspect?: (id: PersonId | null) => void
+  /** A face tap opened the Akten-Notiz for this id (tutorial listens; else omitted). */
+  onNoteOpen?: (id: string) => void
   hint: string | null
   /** Optional step-by-step reasoning chain shown under the hint. */
   hintChain?: string[] | null
@@ -342,6 +344,7 @@ function CluePanel({
   related,
   onSelect,
   onHoverSuspect,
+  onNoteOpen,
   hint,
   hintChain,
   hintPlain,
@@ -383,13 +386,25 @@ function CluePanel({
       const el = e.target as Element | null
       // Taps on any face handle or inside a note are handled by their own logic.
       if (el?.closest('.mk-facebtn, .mk-note')) return
+      // A tap (or scroll-drag) on the card of the very person whose note is open must
+      // NOT close it — on phones you scroll back up and tap that card, and losing the
+      // open note there is jarring (user-reported). Anywhere else still closes.
+      if (el?.closest(`[data-suspect="${noteFor}"]`)) return
       setNoteFor(null)
     }
     document.addEventListener('pointerdown', onDown)
     return () => document.removeEventListener('pointerdown', onDown)
   }, [noteFor])
-  // Stable identity — it feeds the memoized SuspectCards.
-  const toggleNote = useCallback((id: string) => setNoteFor((prev) => (prev === id ? null : id)), [])
+  // Not a pure updater on purpose: opening reports to `onNoteOpen` (the tutorial's face
+  // step), and side effects inside setState updaters would fire twice in StrictMode.
+  const toggleNote = useCallback(
+    (id: string) => {
+      const next = noteFor === id ? null : id
+      setNoteFor(next)
+      if (next !== null) onNoteOpen?.(next)
+    },
+    [noteFor, onNoteOpen],
+  )
 
   // Board-wide notes shown above the suspects: which rooms are outdoors + any
   // board clues ("exactly one person on a mud puddle", …). Board clues carry their

@@ -176,6 +176,8 @@
     "step": "{{n}}/{{total}}",
     "lockRestart": "Das würde den Fall neu starten – im echten Spiel praktisch. Hier geht's mit »Weiter« zum zweiten Teil.",
     "lockBack": "Das würde zur Levelauswahl gehen – dann verpasst du aber den zweiten Teil! Drück »Weiter«.",
+    "lockEdit": "Das würde den Fall im Editor öffnen – mach erst das Tutorial fertig. Danach steht dir der ✎-Knopf in jedem Fall offen.",
+    "lockPdf": "Darauf kommen wir später im Tutorial zurück.",
     "err": {
       "wrongSelect": "Wähle zuerst {{name}}.",
       "selectFirst": "Wähle zuerst {{name}}.",
@@ -186,7 +188,8 @@
       "wrongCell": "Nein, hier nicht – überlege noch einmal.",
       "armCross": "Aktiviere erst »Feld sperren« (das X-Werkzeug).",
       "crossWrong": "Dieses Feld nicht – sperre nur die hervorgehobenen Felder.",
-      "markOnly": "Hier nur kleine Notizen machen – noch nicht setzen."
+      "markOnly": "Hier nur kleine Notizen machen – noch nicht setzen.",
+      "wrongFace": "Tippe auf das Gesicht von {{name}}."
     },
     "welcome": {
       "title": "Willkommen, Detektiv!",
@@ -198,12 +201,26 @@
     },
     "rules": {
       "title": "Die Regeln",
-      "body": "• Jede Person steht in einer anderen Zeile UND Spalte.\n• Besetzbar sind nur Bett, Stuhl und Teppich.\n• Tisch, Fernseher, Pflanze, Regal und Kiste sind blockiert.\n• Das Opfer steht auf dem letzten freien Feld."
+      "body": "Nur zwei Regeln gelten an jedem Tatort:",
+      "line": "Jede Person steht in einer eigenen Zeile UND Spalte – das Opfer zählt mit. Steht jemand fest, ist seine ganze Zeile und Spalte gesperrt.",
+      "victim": "Das Opfer war mit genau EINER verdächtigen Person allein in einem Raum – dem Mörder. Auf dem Brett steht es am Ende auf dem letzten freien Feld."
     },
     "board": {
       "title": "Der Tatort",
       "body": "Das ist der Tatort – ein 4×4-Raster mit zwei Räumen: Wohnzimmer (oben) und Schlafzimmer (unten). Fahre über ein Objekt, um seinen Namen zu sehen.",
       "body_touch": "Das ist der Tatort – ein 4×4-Raster mit zwei Räumen: Wohnzimmer (oben) und Schlafzimmer (unten). Tippe auf ein Objekt, um seinen Namen zu sehen."
+    },
+    "legend": {
+      "title": "Die Legende",
+      "body": "Rechts bei den Werkzeugen findest du die Legende: jedes Objekt dieses Falls – und ob man dort stehen kann (betretbar) oder nicht (blockiert). Ein Blick lohnt sich bei jedem neuen Fall."
+    },
+    "legendBtn": {
+      "title": "Die Legende",
+      "body": "Was bedeuten die Objekte auf dem Brett? Tippe auf das »?« oben links am Spielfeld – dahinter wohnt die Legende."
+    },
+    "legendSheet": {
+      "title": "Objekte & Betretbarkeit",
+      "body": "Die Legende zeigt jedes Objekt dieses Falls – und ob man dort stehen kann (betretbar) oder nicht (blockiert). Sieh dich kurz um und tippe dann auf »Weiter«."
     },
     "suspects": {
       "title": "Die Verdächtigen",
@@ -213,7 +230,16 @@
     "terms": {
       "title": "Fett = wichtig",
       "body": "Objekte und Schlüsselwörter sind fett. Fahre über ein Wort wie »neben« oder »allein«, um seine genaue Bedeutung zu sehen.",
-      "body_touch": "Objekte und Schlüsselwörter sind fett. Tippe auf ein Wort wie »neben« oder »allein«, um seine genaue Bedeutung zu sehen."
+      "body_touch": "Objekte und Schlüsselwörter in den Aussagen der Verdächtigen sind fett hervorgehoben. Was sie genau bedeuten – und alle Details zur Person – zeigen wir dir im nächsten Schritt."
+    },
+    "face": {
+      "title": "Die Akte hinter dem Gesicht",
+      "body": "Es geht noch bequemer: Klicke auf das Gesicht von Alex – dann klappt seine Akten-Notiz auf.",
+      "body_touch": "Es geht noch bequemer: Tippe auf das Gesicht von Alex – dann klappt seine Akten-Notiz auf."
+    },
+    "faceNote": {
+      "title": "Alles auf einen Blick",
+      "body": "Die Notiz erklärt alle wichtigen Begriffe seiner Aussage und zeigt seine Merkmale (Geschlecht, Bart, Brille …). Nennt eine Aussage andere Personen – etwa »im Raum mit einer weißhaarigen Person« –, stehen diese Personen ebenfalls hier. Das geht bei jeder Person. Danach »Weiter«."
     },
     "selectA": {
       "title": "Alex auswählen",
@@ -259,10 +285,21 @@
       "title": "Alex setzen",
       "body": "Setze Alex auf das einzige verbleibende Feld neben dem Tisch (~1 Sekunde gedrückt halten)."
     },
-    "tools": {
-      "title": "Deine Werkzeuge",
-      "body": "Kurz zu den Werkzeugen: X-Werkzeug (Felder sperren), Reset (gedrückt halten), Rückgängig, Tipp und Lösen.",
-      "body_touch": "Kurz zu den Werkzeugen unten in der Leiste: X-Werkzeug (Felder sperren), Reset (gedrückt halten), Rückgängig, Tipp und Lösen."
+    "toolX": {
+      "title": "Das X-Werkzeug",
+      "body": "Mit dem »X« sperrst du Felder, auf denen garantiert niemand steht. Wie mächtig das ist, üben wir im zweiten Fall ausführlich."
+    },
+    "toolErase": {
+      "title": "Löschen – zwei Reichweiten",
+      "body": "»Löschen« kann beides: Kurz antippen und dann ein Feld berühren – das radiert nur dieses eine Feld. Den Knopf lange gedrückt halten – das leert das ganze Brett."
+    },
+    "toolUndo": {
+      "title": "Zurück",
+      "body": "»Zurück« nimmt deine letzten Schritte zurück – praktisch, wenn dir ein Fehler unterlaufen ist."
+    },
+    "toolHint": {
+      "title": "Der Tipp",
+      "body": "Steckst du einmal fest, zeigt dir »Tipp« den nächsten logischen Schritt. Den probieren wir im zweiten Fall gemeinsam aus."
     },
     "selectV": {
       "title": "Das Opfer wählen",
@@ -345,15 +382,35 @@
     },
     "w_settingsBtn": {
       "title": "Einstellungen öffnen",
-      "body": "Oben rechts das Zahnrad – tippe es an, um die Einstellungen zu öffnen."
+      "body": "Bevor wir weiterlösen: Oben rechts das Zahnrad – tippe es an, um die Einstellungen zu öffnen."
     },
     "w_settingsOpen": {
       "title": "Hilfe einstellen",
       "body": "Hier stellst du ein, wie viel Hilfe du bekommst – von vielen Hinweisen bis gar keinen. Probier es ruhig aus. Ein echter Meisterdetektiv braucht keine Hilfe – aber entscheide selbst! Danach »Weiter«."
     },
+    "pdfBtn": {
+      "title": "Der Druckbogen",
+      "body": "Du kannst jeden Fall als PDF-Druckbogen mitnehmen und auf Papier lösen – wie im Rätselheft. Drücke oben links den »PDF«-Knopf."
+    },
+    "pdfSheet": {
+      "title": "Der Druckbogen",
+      "body": "Du kannst jeden Fall als PDF-Druckbogen mitnehmen und auf Papier lösen – wie im Rätselheft. Auch er wohnt hinter dem »?« – tippe es noch einmal an."
+    },
+    "pdfRow": {
+      "title": "Fall als PDF sichern",
+      "body": "Ganz unten im Blatt steht die Zeile »Fall als PDF sichern« – tippe sie an."
+    },
+    "pdfDlg": {
+      "title": "Ohne oder mit Auflösung",
+      "body": "Hier wählst du deinen Bogen: nur der Fall – oder mit einem zweiten Blatt, das den Lösungsweg Schritt für Schritt erklärt. Probier es ruhig aus, oder tippe auf »Weiter«."
+    },
+    "editBtn": {
+      "title": "Im Editor öffnen",
+      "body": "Noch ein Knopf für später: Das »✎« neben dem Zurück-Pfeil öffnet jeden Fall im Editor – als Vorlage für eigene Fälle. Hier im Tutorial ist er gesperrt."
+    },
     "w_selectD": {
-      "title": "Zu Ende lösen: Diana",
-      "body": "Den Rest setzen wir gemeinsam. Wähle Diana."
+      "title": "Dem Tipp folgen",
+      "body": "Genau das sagt der Tipp: Für Diana bleibt nur noch ein Feld. Wähle Diana."
     },
     "w_placeD": {
       "title": "Diana setzen",
@@ -361,7 +418,7 @@
     },
     "w_selectE2": {
       "title": "Emil setzen",
-      "body": "Wähle Emil noch einmal."
+      "body": "Zurück zum Fall – den Rest setzen wir gemeinsam. Wähle Emil noch einmal."
     },
     "w_placeE": {
       "title": "Emil ist eindeutig",

@@ -255,6 +255,12 @@ export default function GameScreen({
   // After a win the verdict can be tucked away to study the solved board; a tap on the
   // board brings it back (see the review layer below).
   const [dialogHidden, setDialogHidden] = useState(false)
+  // Mobile-only legend: the desktop legend column is hidden on phones, so a small
+  // button on the board corner opens it as a bottom sheet instead. Declared before the
+  // tutorial hook — its sheet/PDF steps OBSERVE these two states.
+  const [legendOpen, setLegendOpen] = useState(false)
+  // PDF-Export: kleiner Vorschalt-Dialog „ohne / mit Auflösung" (Blatt 2).
+  const [pdfOpen, setPdfOpen] = useState(false)
   const tut = useTutorialFlow({
     enabled: !!tutorial,
     puzzle,
@@ -264,6 +270,8 @@ export default function GameScreen({
     setSelected,
     phase: tutorialPhase ?? 1,
     won: !!result?.win,
+    legendOpen,
+    pdfOpen,
     onAdvancePhase: onTutorialAdvance ?? NOOP,
   })
   const [hint, setHint] = useState<HintResult | null>(null)
@@ -279,12 +287,6 @@ export default function GameScreen({
   const [saved, setSaved] = useState(() => isCustomSaved(meta.id))
   // The settings dialog is controlled so the tutorial can open it (and explain it).
   const [settingsOpen, setSettingsOpen] = useState(false)
-  // Mobile-only legend: the desktop legend column is hidden on phones, so a small
-  // button on the board corner opens it as a bottom sheet instead.
-  const [legendOpen, setLegendOpen] = useState(false)
-  useBackInterceptor(legendOpen, () => setLegendOpen(false))
-  // PDF-Export: kleiner Vorschalt-Dialog „ohne / mit Auflösung" (Blatt 2).
-  const [pdfOpen, setPdfOpen] = useState(false)
   // A short-lived note over the board. Two users: the phase-1 tutorial verdict, where
   // Restart / Back are LOCKED (they'd skip the second part) and a click just explains what
   // they'd do; and the eraser, which introduces its two reaches once.
@@ -303,6 +305,21 @@ export default function GameScreen({
       // eslint-disable-next-line react-hooks/set-state-in-effect
       setSettingsOpen(tut.settingsPhase === 'open')
   }, [tut.active, tut.settingsPhase])
+  // Same pattern for the ?-legend sheet and the PDF dialog (their tutorial steps hold
+  // them open while the coach explains; leaving the step closes them again).
+  useEffect(() => {
+    if (!tut.active) return
+    if (tut.legendPhase === 'open' || tut.legendPhase === null)
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setLegendOpen(tut.legendPhase === 'open')
+  }, [tut.active, tut.legendPhase])
+  useEffect(() => {
+    if (!tut.active) return
+    // Closing via state (not the dialog's onClose) — no advance loop.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setPdfOpen(tut.pdfPhase === 'open')
+  }, [tut.active, tut.pdfPhase])
+  useBackInterceptor(legendOpen, () => setLegendOpen(false))
 
   // Header title fit (mostly mobile): the title slot sits between the back/edit
   // buttons and the timer. If the title + the tag cluster (difficulty stamp + size)
@@ -735,11 +752,15 @@ export default function GameScreen({
           <button type="button" className="mk-back" onClick={onBack} aria-label="back">
             ←
           </button>
-          {onEdit && !tutorial && (
+          {onEdit && (
             <button
               type="button"
               className="mk-game__edit"
-              onClick={onEdit}
+              // Während des geführten Tutorials ist der Sprung in den Editor gesperrt
+              // (er würde den Fortschritt verwerfen) — der Knopf bleibt aber sichtbar,
+              // der Kopf sieht überall gleich aus. Nach „Tutorial überspringen" ist er
+              // voll funktional.
+              onClick={tut.active ? () => setNote(t('tutorial.lockEdit')) : onEdit}
               aria-label={t('game.openInEditor')}
             >
               <span aria-hidden="true">✎</span>
@@ -748,27 +769,34 @@ export default function GameScreen({
           )}
           {/* Druckbogen-Export direkt im Kopf (Dirks Vorgabe: nicht erst nach dem
               Lösen). Desktop-exklusiv — mobil ist der Kopf zu voll, dort wohnt der
-              Export als Zeile im ?-Sheet der Legende. */}
-          {!tutorial && (
-            <button
-              type="button"
-              className="mk-game__edit mk-game__edit--pdf"
-              onClick={() => setPdfOpen(true)}
-              aria-label={t('game.pdfExport')}
-              title={t('game.pdfExport')}
-            >
-              <svg className="mk-game__pdficon" viewBox="0 0 24 24" aria-hidden="true">
-                <path
-                  d="M6 8V3h12v5M6 17H3v-7h18v7h-3M7 14h10v7H7z"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinejoin="round"
-                />
-              </svg>
-              <span className="mk-game__edit-label">PDF</span>
-            </button>
-          )}
+              Export als Zeile im ?-Sheet der Legende. Auch im Tutorial da (und voll
+              funktional) — ein eigener Schritt in Teil 2 zeigt ihn. */}
+          <button
+            type="button"
+            className="mk-game__edit mk-game__edit--pdf"
+            // Während des Tutorials erst ab dem PDF-Schritt nutzbar — vorher würde der
+            // Dialog mitten in einen fremden Schritt platzen; die Notiz vertröstet.
+            onClick={() => {
+              if (tut.active && !tut.pdfStep) {
+                setNote(t('tutorial.lockPdf'))
+                return
+              }
+              setPdfOpen(true)
+            }}
+            aria-label={t('game.pdfExport')}
+            title={t('game.pdfExport')}
+          >
+            <svg className="mk-game__pdficon" viewBox="0 0 24 24" aria-hidden="true">
+              <path
+                d="M6 8V3h12v5M6 17H3v-7h18v7h-3M7 14h10v7H7z"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinejoin="round"
+              />
+            </svg>
+            <span className="mk-game__edit-label">PDF</span>
+          </button>
         </div>
         <div className="mk-game__heading" ref={headingRef}>
           <div className="mk-game__titlewrap" data-author={meta.author ? '' : undefined}>
@@ -820,6 +848,7 @@ export default function GameScreen({
         selectedSuspect={selected}
         related={relatedCards}
         onSelect={tut.active ? tut.onSelect : selectFromCard}
+        onNoteOpen={tut.active ? tut.onNoteOpen : undefined}
         onHoverSuspect={setHoveredSuspect}
         hint={hintText}
         hintChain={hintChain}
@@ -944,32 +973,37 @@ export default function GameScreen({
             )}
             {legendNode}
             {/* Mobil wohnt der Druckbogen-Export hier (der Kopf hat keinen Platz):
-                eine vertraute Share-Sheet-Zeile unter der Legende. */}
-            {!tutorial && (
-              <button
-                type="button"
-                className="mk-saverow mk-sheet__pdf"
-                onClick={() => {
-                  setLegendOpen(false)
-                  setPdfOpen(true)
-                }}
-              >
-                <span className="mk-saverow__ic" aria-hidden="true">
-                  <svg className="mk-game__pdficon" viewBox="0 0 24 24" aria-hidden="true">
-                    <path
-                      d="M6 8V3h12v5M6 17H3v-7h18v7h-3M7 14h10v7H7z"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      strokeLinejoin="round"
-                    />
-                  </svg>
-                </span>
-                <span className="mk-saverow__text">
-                  <span className="mk-saverow__title">{t('game.pdfExport')}</span>
-                </span>
-              </button>
-            )}
+                eine vertraute Share-Sheet-Zeile unter der Legende — auch im Tutorial
+                (Teil 2 zeigt sie in einem eigenen Schritt). */}
+            <button
+              type="button"
+              className="mk-saverow mk-sheet__pdf"
+              onClick={() => {
+                // Tutorial: erst ab dem PDF-Schritt (Teil 2) — im Legenden-Schritt von
+                // Teil 1 vertröstet die Notiz, das Sheet bleibt offen.
+                if (tut.active && !tut.pdfStep) {
+                  setNote(t('tutorial.lockPdf'))
+                  return
+                }
+                setLegendOpen(false)
+                setPdfOpen(true)
+              }}
+            >
+              <span className="mk-saverow__ic" aria-hidden="true">
+                <svg className="mk-game__pdficon" viewBox="0 0 24 24" aria-hidden="true">
+                  <path
+                    d="M6 8V3h12v5M6 17H3v-7h18v7h-3M7 14h10v7H7z"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinejoin="round"
+                  />
+                </svg>
+              </span>
+              <span className="mk-saverow__text">
+                <span className="mk-saverow__title">{t('game.pdfExport')}</span>
+              </span>
+            </button>
           </div>
         </div>
       )}

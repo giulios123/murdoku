@@ -1,5 +1,6 @@
 import { useLayoutEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import TutorialRules from './TutorialRules.tsx'
 import type { CoachView } from '../game/useTutorialFlow.ts'
 
 /**
@@ -14,7 +15,10 @@ export default function Coach({ view }: { view: CoachView }) {
   useLayoutEffect(() => {
     const measure = () => {
       const el = view.dim && view.target ? document.querySelector(view.target) : null
-      if (!el) {
+      // A target that exists but is display:none (the other layout's element after a
+      // mid-script resize) measures 0×0 — treat it like a missing target: full dim
+      // instead of a spotlight hole at 0,0.
+      if (!el || el.getBoundingClientRect().width === 0) {
         setRect(null)
         return
       }
@@ -67,6 +71,7 @@ export default function Coach({ view }: { view: CoachView }) {
         className="mk-coach__card"
         data-placement={placement}
         data-dialog={view.dialogStep ? 'true' : undefined}
+        data-visual={view.visual}
       >
         <div className="mk-coach__head">
           <span className="mk-coach__badge">🕵️</span>
@@ -77,6 +82,7 @@ export default function Coach({ view }: { view: CoachView }) {
         </div>
         <h3>{view.title}</h3>
         <p>{view.body}</p>
+        {view.visual === 'rules' && <TutorialRules />}
         {view.error && <p className="mk-coach__error">{view.error}</p>}
         {view.showNext && (
           <div className="mk-coach__nav">

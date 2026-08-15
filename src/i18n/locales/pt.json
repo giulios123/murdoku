@@ -176,6 +176,8 @@
     "step": "{{n}}/{{total}}",
     "lockRestart": "Isso reiniciaria o caso — útil num jogo a sério. Aqui, toca em «Seguinte» para a segunda parte.",
     "lockBack": "Isso voltaria à lista de níveis — mas assim perdias a segunda parte! Toca em «Seguinte».",
+    "lockEdit": "Isso abriria o caso no editor — termina primeiro o tutorial. Depois, o botão ✎ fica à tua espera em todos os casos.",
+    "lockPdf": "Voltamos a isto mais adiante no tutorial.",
     "err": {
       "wrongSelect": "Seleciona primeiro {{name}}.",
       "selectFirst": "Seleciona primeiro {{name}}.",
@@ -186,7 +188,8 @@
       "wrongCell": "Não, aqui não — pensa outra vez.",
       "armCross": "Ativa primeiro «Bloquear casa» (a ferramenta X).",
       "crossWrong": "Essa casa não — bloqueia apenas as realçadas.",
-      "markOnly": "Aqui só notas pequenas — ainda não coloques ninguém."
+      "markOnly": "Aqui só notas pequenas — ainda não coloques ninguém.",
+      "wrongFace": "Toca na cara de {{name}}."
     },
     "welcome": {
       "title": "Bem-vindo, detetive!",
@@ -198,12 +201,26 @@
     },
     "rules": {
       "title": "As regras",
-      "body": "• Cada pessoa está numa linha E numa coluna diferentes.\n• Só camas, cadeiras e tapetes podem ser ocupados.\n• Mesas, televisores, plantas, estantes e caixas estão bloqueados.\n• A vítima fica na última casa livre."
+      "body": "Só duas regras valem em cada cena do crime:",
+      "line": "Cada pessoa ocupa a sua própria linha E coluna — a vítima também conta. Assim que alguém fica definido, toda a sua linha e coluna ficam bloqueadas.",
+      "victim": "A vítima estava a sós numa divisão com exatamente UM suspeito — o assassino. No tabuleiro, a vítima acaba na última casa livre."
     },
     "board": {
       "title": "A cena do crime",
       "body": "Esta é a cena do crime — uma grelha 4×4 com duas divisões: Sala de estar (em cima) e Quarto (em baixo). Passa o cursor sobre um objeto para veres o nome dele.",
       "body_touch": "Esta é a cena do crime — uma grelha 4×4 com duas divisões: Sala de estar (em cima) e Quarto (em baixo). Toca num objeto para veres o nome dele."
+    },
+    "legend": {
+      "title": "A legenda",
+      "body": "Ao lado das ferramentas, à direita, está a legenda: cada objeto deste caso — e se podes lá estar (transitável) ou não (bloqueado). Vale a pena espreitar em cada caso novo."
+    },
+    "legendBtn": {
+      "title": "A legenda",
+      "body": "O que significam os objetos no tabuleiro? Toca no «?» no canto superior esquerdo do tabuleiro — é lá que mora a legenda."
+    },
+    "legendSheet": {
+      "title": "Objetos e transitabilidade",
+      "body": "A legenda mostra cada objeto deste caso — e se podes lá estar (transitável) ou não (bloqueado). Dá uma vista de olhos e depois toca em «Seguinte»."
     },
     "suspects": {
       "title": "Os suspeitos",
@@ -213,7 +230,16 @@
     "terms": {
       "title": "Negrito = importante",
       "body": "Os objetos e as palavras-chave estão a negrito. Passa o cursor sobre uma palavra como «ao lado» ou «a sós» para veres o que significa exatamente.",
-      "body_touch": "Os objetos e as palavras-chave estão a negrito. Toca numa palavra como «ao lado» ou «a sós» para veres o que significa exatamente."
+      "body_touch": "Os objetos e as palavras-chave nos depoimentos dos suspeitos estão realçados a negrito. O que significam exatamente — e todos os detalhes da pessoa — mostramos-te no passo seguinte."
+    },
+    "face": {
+      "title": "A ficha atrás do rosto",
+      "body": "Há um caminho ainda mais cómodo: clica na cara do Alex — a nota do dossier dele desdobra-se.",
+      "body_touch": "Há um caminho ainda mais cómodo: toca na cara do Alex — a nota do dossier dele desdobra-se."
+    },
+    "faceNote": {
+      "title": "Tudo num relance",
+      "body": "A nota explica cada termo importante do depoimento dele e mostra as suas características (género, barba, óculos …). Se um depoimento nomeia outras pessoas — por exemplo «numa divisão com uma pessoa de cabelo branco» —, elas também aparecem aqui. Funciona com cada pessoa. Depois toca em «Seguinte»."
     },
     "selectA": {
       "title": "Seleciona o Alex",
@@ -259,10 +285,21 @@
       "title": "Coloca o Alex",
       "body": "Coloca o Alex na única casa que resta ao lado da mesa (mantém premido ~1 segundo)."
     },
-    "tools": {
-      "title": "As tuas ferramentas",
-      "body": "Uma volta rápida pelas ferramentas: ferramenta X (bloquear casas), Reiniciar (manter premido), Desfazer, Dica e Resolver.",
-      "body_touch": "Uma volta rápida pelas ferramentas na barra de baixo: ferramenta X (bloquear casas), Reiniciar (manter premido), Desfazer, Dica e Resolver."
+    "toolX": {
+      "title": "A ferramenta X",
+      "body": "Com o «X» bloqueias casas onde de certeza não está ninguém. Praticamos isso a fundo no segundo caso."
+    },
+    "toolErase": {
+      "title": "Apagar — dois alcances",
+      "body": "«Apagar» sabe fazer as duas coisas: toca-lhe e depois toca numa casa — apaga só essa casa. Mantém o botão premido — esvazia o tabuleiro inteiro."
+    },
+    "toolUndo": {
+      "title": "Desfazer",
+      "body": "«Desfazer» anula os teus últimos passos — útil quando escapa um erro."
+    },
+    "toolHint": {
+      "title": "A dica",
+      "body": "Se ficares preso, «Dica» mostra-te o próximo passo lógico. Experimentamos juntos no segundo caso."
     },
     "selectV": {
       "title": "Seleciona a vítima",
@@ -345,15 +382,35 @@
     },
     "w_settingsBtn": {
       "title": "Abre as definições",
-      "body": "A roda dentada em cima à direita — toca-lhe para abrires as definições."
+      "body": "Antes de continuarmos a resolver: a roda dentada em cima à direita — toca-lhe para abrires as definições."
     },
     "w_settingsOpen": {
       "title": "Ajusta a ajuda",
       "body": "Aqui defines quanta ajuda recebes — de muitas indicações a nenhuma. Experimenta à vontade. Um verdadeiro grande detetive não precisa de ajuda — mas decide tu! Depois toca em «Seguinte»."
     },
+    "pdfBtn": {
+      "title": "A folha para imprimir",
+      "body": "Podes levar qualquer caso como PDF imprimível e resolvê-lo em papel — como num caderno de enigmas. Carrega no botão «PDF» no canto superior esquerdo."
+    },
+    "pdfSheet": {
+      "title": "A folha para imprimir",
+      "body": "Podes levar qualquer caso como PDF imprimível e resolvê-lo em papel — como num caderno de enigmas. Também mora atrás do «?» — toca-lhe outra vez."
+    },
+    "pdfRow": {
+      "title": "Guardar o caso como PDF",
+      "body": "Mesmo no fundo da folha está a linha «Guardar o caso como PDF» — toca nela."
+    },
+    "pdfDlg": {
+      "title": "Com ou sem resolução",
+      "body": "Aqui escolhes a tua folha: só o caso — ou com uma segunda página que explica a solução passo a passo. Experimenta à vontade, ou toca em «Seguinte»."
+    },
+    "editBtn": {
+      "title": "Abrir no editor",
+      "body": "Mais um botão para depois: o «✎» ao lado da seta de voltar abre qualquer caso no editor — como modelo para os teus próprios casos. Aqui no tutorial está bloqueado."
+    },
     "w_selectD": {
-      "title": "Para terminar: a Diana",
-      "body": "Vamos colocar o resto juntos. Seleciona a Diana."
+      "title": "Segue a dica",
+      "body": "É exatamente o que diz a dica: só resta uma casa para a Diana. Seleciona a Diana."
     },
     "w_placeD": {
       "title": "Coloca a Diana",
@@ -361,7 +418,7 @@
     },
     "w_selectE2": {
       "title": "Coloca o Emil",
-      "body": "Seleciona o Emil outra vez."
+      "body": "De volta ao caso — vamos colocar o resto juntos. Seleciona o Emil outra vez."
     },
     "w_placeE": {
       "title": "O Emil é evidente",

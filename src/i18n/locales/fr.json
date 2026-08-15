@@ -176,6 +176,8 @@
     "step": "{{n}}/{{total}}",
     "lockRestart": "Cela relancerait l'affaire — pratique dans une vraie partie. Ici, touchez « Suivant » pour la deuxième partie.",
     "lockBack": "Cela ramènerait à la liste des niveaux — mais vous manqueriez la deuxième partie ! Touchez « Suivant ».",
+    "lockEdit": "Cela ouvrirait l'affaire dans l'éditeur — terminez d'abord le tutoriel. Ensuite, le bouton ✎ vous attend dans chaque affaire.",
+    "lockPdf": "Nous y reviendrons plus tard dans le tutoriel.",
     "err": {
       "wrongSelect": "Sélectionnez d'abord {{name}}.",
       "selectFirst": "Sélectionnez d'abord {{name}}.",
@@ -186,7 +188,8 @@
       "wrongCell": "Non, pas ici — réfléchissez encore.",
       "armCross": "Activez d'abord « Bloquer la case » (l'outil X).",
       "crossWrong": "Pas cette case — ne bloquez que les cases en surbrillance.",
-      "markOnly": "Ici, seulement de petites notes — ne placez encore personne."
+      "markOnly": "Ici, seulement de petites notes — ne placez encore personne.",
+      "wrongFace": "Touchez le visage de {{name}}."
     },
     "welcome": {
       "title": "Bienvenue, détective !",
@@ -198,12 +201,26 @@
     },
     "rules": {
       "title": "Les règles",
-      "body": "• Chaque personne occupe une ligne ET une colonne différentes.\n• Seuls les lits, les chaises et les tapis peuvent être occupés.\n• Les tables, téléviseurs, plantes, étagères et cartons sont bloqués.\n• La victime occupe la dernière case libre."
+      "body": "Deux règles seulement s'appliquent sur chaque scène de crime :",
+      "line": "Chaque personne occupe sa propre ligne ET sa propre colonne — la victime comprise. Dès que quelqu'un est placé, toute sa ligne et sa colonne sont condamnées.",
+      "victim": "La victime avait pour seule compagnie exactement UN suspect — le meurtrier. Sur le plateau, la victime finit sur la dernière case libre."
     },
     "board": {
       "title": "La scène de crime",
       "body": "Voici la scène de crime — une grille 4×4 avec deux pièces : le Salon (en haut) et la Chambre (en bas). Survolez un objet pour voir son nom.",
       "body_touch": "Voici la scène de crime — une grille 4×4 avec deux pièces : le Salon (en haut) et la Chambre (en bas). Touchez un objet pour voir son nom."
+    },
+    "legend": {
+      "title": "La légende",
+      "body": "À droite, près des outils, se trouve la légende : chaque objet de cette affaire — et si l'on peut s'y tenir (praticable) ou non (bloqué). Un coup d'œil s'impose à chaque nouvelle affaire."
+    },
+    "legendBtn": {
+      "title": "La légende",
+      "body": "Que signifient les objets du plateau ? Touchez le « ? » en haut à gauche du plateau — c'est là que loge la légende."
+    },
+    "legendSheet": {
+      "title": "Objets et praticabilité",
+      "body": "La légende montre chaque objet de cette affaire — et si l'on peut s'y tenir (praticable) ou non (bloqué). Jetez-y un coup d'œil, puis touchez « Suivant »."
     },
     "suspects": {
       "title": "Les suspects",
@@ -213,7 +230,16 @@
     "terms": {
       "title": "Gras = important",
       "body": "Les objets et les mots-clés sont en gras. Survolez un mot comme « à côté » ou « seule personne » pour voir sa signification exacte.",
-      "body_touch": "Les objets et les mots-clés sont en gras. Touchez un mot comme « à côté » ou « seule personne » pour voir sa signification exacte."
+      "body_touch": "Les objets et les mots-clés dans les déclarations des suspects sont mis en gras. Leur signification exacte — et tous les détails sur la personne — c'est ce que nous vous montrons à l'étape suivante."
+    },
+    "face": {
+      "title": "Le dossier derrière le visage",
+      "body": "Encore plus pratique : cliquez sur le visage d'Alex — sa note de dossier se déplie.",
+      "body_touch": "Encore plus pratique : touchez le visage d'Alex — sa note de dossier se déplie."
+    },
+    "faceNote": {
+      "title": "Tout d'un coup d'œil",
+      "body": "La note explique chaque terme clé de sa déclaration et montre ses traits (genre, barbe, lunettes …). Si une déclaration nomme d'autres personnes — par exemple « dans une pièce avec une personne aux cheveux blancs » —, elles apparaissent ici aussi. Cela marche pour chaque personne. Ensuite, touchez « Suivant »."
     },
     "selectA": {
       "title": "Sélectionnez Alex",
@@ -259,10 +285,21 @@
       "title": "Placez Alex",
       "body": "Placez Alex sur la seule case restante à côté de la table (maintenez appuyé ~1 seconde)."
     },
-    "tools": {
-      "title": "Vos outils",
-      "body": "Petit tour des outils : l'outil X (bloquer des cases), Réinitialiser (maintenir appuyé), Annuler, Indice et Résoudre.",
-      "body_touch": "Petit tour des outils dans la barre du bas : l'outil X (bloquer des cases), Réinitialiser (maintenir appuyé), Annuler, Indice et Résoudre."
+    "toolX": {
+      "title": "L'outil X",
+      "body": "Avec le « X », vous condamnez des cases où personne ne peut se trouver. Nous nous y exercerons en détail dans la deuxième affaire."
+    },
+    "toolErase": {
+      "title": "Effacer — deux portées",
+      "body": "« Effacer » sait faire les deux : touchez-le puis touchez une case — cela n'efface que cette case. Maintenez le bouton appuyé — cela vide tout le plateau."
+    },
+    "toolUndo": {
+      "title": "Annuler",
+      "body": "« Annuler » revient sur vos derniers pas — pratique quand une erreur se glisse."
+    },
+    "toolHint": {
+      "title": "L'indice",
+      "body": "En cas de blocage, « Indice » vous montre la prochaine étape logique. Nous l'essaierons ensemble dans la deuxième affaire."
     },
     "selectV": {
       "title": "Sélectionnez la victime",
@@ -345,15 +382,35 @@
     },
     "w_settingsBtn": {
       "title": "Ouvrez les réglages",
-      "body": "L'engrenage en haut à droite — touchez-le pour ouvrir les réglages."
+      "body": "Avant de poursuivre l'enquête : l'engrenage en haut à droite — touchez-le pour ouvrir les réglages."
     },
     "w_settingsOpen": {
       "title": "Réglez l'aide",
       "body": "Ici, vous choisissez combien d'aide vous recevez — de beaucoup d'indications à aucune. Essayez sans crainte. Un vrai fin limier n'a besoin d'aucune aide — mais c'est vous qui décidez ! Ensuite, touchez « Suivant »."
     },
+    "pdfBtn": {
+      "title": "La feuille à imprimer",
+      "body": "Vous pouvez emporter chaque affaire en PDF imprimable et la résoudre sur papier — comme dans un recueil d'énigmes. Cliquez sur le bouton « PDF » en haut à gauche."
+    },
+    "pdfSheet": {
+      "title": "La feuille à imprimer",
+      "body": "Vous pouvez emporter chaque affaire en PDF imprimable et la résoudre sur papier — comme dans un recueil d'énigmes. Elle loge aussi derrière le « ? » — touchez-le encore une fois."
+    },
+    "pdfRow": {
+      "title": "Enregistrer l'affaire en PDF",
+      "body": "Tout en bas de la feuille se trouve la ligne « Enregistrer l'affaire en PDF » — touchez-la."
+    },
+    "pdfDlg": {
+      "title": "Avec ou sans résolution",
+      "body": "Choisissez ici votre feuille : l'affaire seule — ou avec une seconde page qui explique la solution pas à pas. Essayez sans crainte, ou touchez « Suivant »."
+    },
+    "editBtn": {
+      "title": "Ouvrir dans l'éditeur",
+      "body": "Encore un bouton pour plus tard : le « ✎ » à côté de la flèche retour ouvre chaque affaire dans l'éditeur — un modèle pour vos propres affaires. Ici, dans le tutoriel, il est verrouillé."
+    },
     "w_selectD": {
-      "title": "Pour finir : Diana",
-      "body": "Plaçons le reste ensemble. Sélectionnez Diana."
+      "title": "Suivez l'indice",
+      "body": "C'est exactement ce que dit l'indice : il ne reste qu'une case pour Diana. Sélectionnez Diana."
     },
     "w_placeD": {
       "title": "Placez Diana",
@@ -361,7 +418,7 @@
     },
     "w_selectE2": {
       "title": "Placez Emil",
-      "body": "Sélectionnez Emil à nouveau."
+      "body": "Revenons à l'affaire — plaçons le reste ensemble. Sélectionnez Emil à nouveau."
     },
     "w_placeE": {
       "title": "Emil est évident",
