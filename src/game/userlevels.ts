@@ -85,10 +85,15 @@ export function userLevelId(dbId: number): string {
   return `ul-${dbId}`
 }
 
-/** Signatur des Deduktions-Wissens: ändert sich, wenn Techniken dazukommen —
- *  dann werden als "nologic"/"unspielbar" markierte Level neu bewertet. */
+/** Zählt hoch, wenn eine BESTEHENDE Technik stärker wird (die Techniken-Anzahl das
+ *  Schlauerwerden also nicht verrät) — z. B. 08/2026: AndClue reicht forbiddenForOthers
+ *  durch, uniqueNearObject & Co. wirken jetzt auch in UND-Hinweisen. */
+const ENGINE_REVISION = 1
+
+/** Signatur des Deduktions-Wissens: ändert sich, wenn Techniken dazukommen oder
+ *  stärker werden — dann werden als "nologic"/"unspielbar" markierte Level neu bewertet. */
 function engineSignature(): number {
-  return Object.keys(TECHNIQUE_RANK).length
+  return ENGINE_REVISION * 1000 + Object.keys(TECHNIQUE_RANK).length
 }
 
 /** logic/playable eines Levels frisch bestimmen (Forward-Deduktion, kein Suchlauf —

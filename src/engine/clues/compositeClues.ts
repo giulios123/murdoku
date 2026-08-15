@@ -78,6 +78,18 @@ export class AndClue extends Clue {
     return this.clues.some((c) => c.violatedBy(subjectId, placement, puzzle))
   }
 
+  override forbiddenForOthers(board: Board): Set<Cell> | null {
+    // Every child holds, so every child's forbidden zone applies — union them.
+    let out: Set<Cell> | null = null
+    for (const clue of this.clues) {
+      const forbidden = clue.forbiddenForOthers(board)
+      if (!forbidden) continue
+      if (!out) out = new Set(forbidden)
+      else for (const cell of forbidden) out.add(cell)
+    }
+    return out
+  }
+
   describe(): Explanation {
     return { key: 'clue.and', children: this.clues.map((c) => c.describe()) }
   }
