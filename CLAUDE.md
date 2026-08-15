@@ -356,6 +356,13 @@ für Personen), `fullLinesIn(room, axis)`, `guaranteedRoomOf(id)`, `roomsOf(id)`
     un/une), „qu'{{objectNom}}"; pt nutzt `{{neg}}` = „não " wie es.
 11. `game/helpMarks.ts` — Kommissar-Modus: nur gestrichelt umranden, nie Flächen füllen
 12. Beim UMBENENNEN/ENTFERNEN eines Typs: Migration in `editorModel.normalizeBoardClue` (s.o.)
+13. **`game/faqEntries.ts` (Handakte)** — Eintrag mit Demo-Variante(n) + `faq.e.*`-Texte in
+    allen 6 Locales **+ `LEAF_ENTRY`-Mapping** für den In-Game-Sprung (der
+    faqEntries-Test erzwingt es — fing das vergessene DirectionFromObjectClue sofort).
+    Demo-Bretter (`faqBoards.ts`) bleiben in `src/`, NIE in `levels/`.
+    Blau = `CANDIDATE_BLUE`, Rot = `REF_RED` (keine neuen Farben). Auto-Highlight nur, wo
+    `violatedBy` wirklich prunt — sonst manuelle `marks`-Funktion (Test sichert Blau ≠ ∅,
+    Blau ∩ Rot = ∅, Referenzfiguren regelkonform).
 
 **Pflicht-Prüfungen** (alle grün, bevor etwas als fertig gilt):
 
@@ -477,6 +484,44 @@ JSON-Export (Filesystem base64 OHNE `encoding` + Share-Sheet); komplett offline-
   Editor-Speichern jeweils oben LINKS (rechts wohnen Solo-Medaille bzw. PDF). Sichtbare
   „Als JSON"-Zeilen gibt es NICHT mehr (seit den Userleveln braucht sie niemand);
   GameScreen-`onExport` behält bei leerem Namen den Originaltitel.
+
+## Handakte (FAQ-Nachschlagewerk, 08/2026)
+
+Erklärt JEDE Hinweisart mit Live-Demo-Brett: `game/faqEntries.ts` (8 Kategorien,
+40 Einträge, Varianten-Chips rechnen das Highlight live um) + `game/faqBoards.ts`
+(3 Demo-LevelJson — **NIE nach `levels/`**, check-all verlangte sonst Eindeutigkeit) +
+`screens/FaqScreen.tsx` + `components/FaqBoard.tsx` (volles `drawBoard` nach
+EditorBoard-Muster). Einstieg: ?-Knopf oben links im StartScreen, Deep-Link `#faq`.
+
+- **Farben = Spielfarben** (Dirks Regel, keine neuen): Blau `CANDIDATE_BLUE` = laut
+  Hinweis möglich, Rot `REF_RED` = sieht möglich aus, zählt nicht; Referenzen in der
+  helpMarks-Umriss-Sprache (Raum-Umrisse, Objekt-Ringe, Fenster/Tür-Glow).
+- **Highlights aus der Engine:** `possibleCells()` = occupiable ∩ `candidateCells` ∩
+  ¬`violatedBy` — kann nie lügen. ⚠ Wo `violatedBy` bewusst schwach ist (roomExists,
+  roomAttribute some/all, roomCompanion, notAlone; besideSameObject: candidateCells
+  ist Instanz-OBERMENGE) haben Einträge MANUELLE `marks`-Funktionen.
+  `faqEntries.test.ts` sichert: jeder Satz rendert in 6 Sprachen, Blau ∩ Rot = ∅,
+  Auto-Blau nie leer, Referenzfiguren verletzen nie Zeilen/Spalten- oder Mordregel
+  (eine Illustration darf nicht lügen — auch platzierte Opfer brauchen genau einen
+  Verdächtigen im Raum, emptyRooms-Platzierungen sind darum handverlesen).
+- **Navigation: zwei Dropdowns** (Kategorie + Hinweisart, FilterDropdown-Muster der
+  Levelauswahl: Noir-Dropdown desktop, natives Select ≤640px) auf Desktop UND mobil —
+  8 Kategorie-Tabs passen in keiner Sprache in eine Zeile (gemessen: es ≈1205 px bei
+  ~1030 verfügbar). Kopf + Dropdowns sticky (`.mk-faq__head`, Rezept wie
+  `.mk-select__head`). Initial geöffnet: Objekte → „Neben einem Objekt".
+- **Sprung aus dem Spiel NUR über die Akten-Notiz** (Face-Tap, desktop+mobil): je
+  berührter Hinweisart eine Nachschlage-Zeile (`faqLookupsForClues` — instanceof-
+  Tabelle `LEAF_ENTRY`, NOT rekursiert, UND/ODER listen Teile + 'andOr' — und
+  `faqLookupForBoardClue`; die Draußen-/Wasser-Legendenzeilen verlinken
+  termOutside/termWater). Öffnet die VOLLE Handakte als **Layer über dem Spiel**
+  (`<FaqScreen layer initialEntry>`, `.mk-faq-layer` fixed z-120 < Coach 150,
+  `useBackInterceptor`): Das Level bleibt gemountet, und Klicks im Layer sind in
+  CluePanel von der „Notiz schließen"-Regel ausgenommen — der Rücksprung sieht
+  EXAKT aus wie der Absprung (Dirks Anforderung). Im geführten Tutorial gesperrt
+  (`onFaqLookup=undefined`), wie der ✎-Knopf.
+- Das rooms-Demo-Brett ist Dirks „komplett südlich"-Beispiel 1:1; der
+  neighborRoomCount-Eintrag („Angrenzender Raum, komplett in einer Richtung")
+  startet mit seinem Originalsatz (östlich, genau 2).
 
 ## UI-Regeln (Dirk, gelten immer)
 

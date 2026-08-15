@@ -1576,6 +1576,248 @@
     "glasses": "lunettes",
     "bald": "chauve"
   },
+  "faq": {
+    "title": "Carnet d'enquête",
+    "subtitle": "Comment lire les indices",
+    "filterCat": "Catégorie",
+    "filterEntry": "Type d'indice",
+    "trapLabel": "Attention",
+    "legendBlue": "possible selon l'indice",
+    "legendRed": "semble possible, mais ne compte pas",
+    "legendCross": "bloqué par la règle de base",
+    "legendRoom": "référence de l'indice",
+    "legendRoomRed": "ne remplit pas la condition",
+    "cat": {
+      "basics": "Les bases",
+      "objects": "Objets",
+      "rooms": "Pièces",
+      "position": "Position sur le plateau",
+      "direction": "Direction et distance",
+      "social": "Compagnie",
+      "special": "Formes spéciales",
+      "board": "Indices globaux"
+    },
+    "v": {
+      "bed": "Lit",
+      "chair": "Chaise",
+      "carpet": "Tapis",
+      "not": "NE … PAS",
+      "table": "Table",
+      "oneOf": "l'un de plusieurs",
+      "window": "Fenêtre",
+      "door": "Porte",
+      "fridge": "Frigo",
+      "plusAlone": "+ personne d'autre",
+      "plusNotAlone": "+ avec quelqu'un",
+      "plain": "forme simple",
+      "column": "Colonne",
+      "row": "Ligne",
+      "otherRoom": "autre pièce",
+      "north": "au nord",
+      "east": "à l'est",
+      "northeast": "au nord-est",
+      "south": "au sud",
+      "southeast": "au sud-est",
+      "northwest": "au nord-ouest",
+      "noDir": "sans direction",
+      "inside": "à l'intérieur",
+      "outside": "dehors",
+      "uniqueOutside": "seule personne dehors",
+      "twoWest": "2 colonnes à l'ouest",
+      "oneSouth": "1 ligne au sud",
+      "some": "d'au moins un",
+      "all": "de tous",
+      "mateInside": "l'autre à l'intérieur",
+      "mateOutside": "l'autre dehors",
+      "none": "personne",
+      "someone": "quelqu'un",
+      "allOthers": "tous les autres",
+      "person": "personne précise",
+      "trait": "quelqu'un avec un signe",
+      "notNearTable": "pas à côté d'une table",
+      "notInRoom": "pas dans la cuisine",
+      "onChair": "sur une chaise",
+      "nearTable": "à côté d'une table",
+      "and": "ET",
+      "or": "OU",
+      "oneEmpty": "1 pièce vide",
+      "noneEmpty": "aucune pièce vide",
+      "atMost": "au plus 2",
+      "atLeast": "au moins 1",
+      "notExactly": "pas exactement 2"
+    },
+    "e": {
+      "rulePermutation": {
+        "title": "Chaque ligne, chaque colonne – une seule fois",
+        "body": "Chaque personne – les suspects et la victime – occupe sa propre ligne et sa propre colonne. Dès qu'une figure est posée, toute sa ligne et sa colonne sont bloquées pour les autres. Sur le plateau, Bruno et Clara sont placés : les cases bloquées sont barrées, seules les bleues restent pour les autres personnes.",
+        "trap": "La victime compte aussi – sa ligne et sa colonne lui appartiennent à elle seule."
+      },
+      "ruleMurder": {
+        "title": "La pièce de la victime",
+        "body": "La pièce de la victime contient exactement UN suspect : le meurtrier. Ni aucun, ni deux : exactement un. Cette pièce finit donc toujours avec exactement deux personnes. Sur le plateau, la victime est déjà placée – et comme elle compte comme toute personne, sa ligne et sa colonne sont déjà barrées. Le meurtrier se tient sur l'une des cases bleues ; tous les autres suspects sont hors de la pièce."
+      },
+      "termSuspects": {
+        "title": "Suspects ou personnes ?",
+        "body": "« Suspects » désigne uniquement les suspects – la victime ne compte pas. « Personnes » désigne tout le monde : suspects et victime ensemble. Les indices choisissent ces mots à dessein – lisez bien de qui il s'agit.\nDans le jeu, les mots en gras portent leur explication : au survol sur ordinateur, dans la note du dossier derrière le visage de la carte sur téléphone."
+      },
+      "termVictim": {
+        "title": "La victime",
+        "body": "La victime se déduit comme toute autre personne : elle occupe une ligne, une colonne et une pièce. De son apparence, seul le genre est connu – barbe, lunettes ou coiffure restent cachées et n'apparaissent donc jamais dans un indice. Dans les indices de signes, la victime ne compte que lorsqu'il s'agit du genre."
+      },
+      "termOutside": {
+        "title": "Dedans et dehors",
+        "body": "Qu'une zone compte comme « dehors », ce n'est pas le dessin qui le dit, mais la légende au-dessus des indices (« Dehors : … »). Seules les zones qui y sont nommées comptent comme dehors – tout le reste est dedans.",
+        "trap": "Un sol vert ne veut rien dire : seule la légende décide."
+      },
+      "termWater": {
+        "title": "L'eau est praticable",
+        "body": "Un lac est une pièce tout à fait normale : quelqu'un peut se tenir sur une case d'eau libre, comme sur n'importe quel sol. Le jeu l'annonce comme règle de base dès qu'un plateau contient de l'eau."
+      },
+      "onObject": {
+        "title": "Sur un objet",
+        "body": "La personne se tient sur une case portant ce type d'objet – n'importe laquelle sur tout le plateau. Pour une tente, un parasol ou un paravent on dit « dans », « sous » ou « derrière », mais c'est toujours la case qui compte. En bleu, toutes les cases possibles ; la forme NE … PAS retourne l'ensemble."
+      },
+      "nearObject": {
+        "title": "À côté d'un objet",
+        "body": "« À côté » signifie : directement au-dessus, en dessous, à gauche ou à droite – ET dans la même pièce que l'objet. Les cases rouges touchent bien une table mais ne comptent pas : elles sont derrière le mur, dans la pièce voisine, ou seulement en diagonale.",
+        "trap": "La diagonale n'est jamais « à côté ». Et un mur sépare : la case de l'autre côté n'en fait pas partie."
+      },
+      "nearPortal": {
+        "title": "À la fenêtre, à la porte",
+        "body": "La personne se tient sur une case directement contre une fenêtre ou une porte. Les portes sont dans le mur entre deux pièces et comptent des DEUX côtés – une fenêtre n'appartient qu'à la pièce dont le mur la porte."
+      },
+      "sameRoomAsObject": {
+        "title": "Dans une pièce avec un objet",
+        "body": "La personne est dans une pièce qui contient cet objet – n'importe où dans la pièce. La forme « seule compagnie » durcit : personne d'autre dans cette pièce, pas même la victime."
+      },
+      "sameLineAsObject": {
+        "title": "Même ligne/colonne qu'un objet",
+        "body": "La personne partage une ligne ou une colonne avec un objet de ce type. Un ajout peut restreindre la pièce : « dans une autre pièce » signifie que la case est sur la ligne, mais pas dans la pièce de l'objet."
+      },
+      "directionFromObject": {
+        "title": "Direction depuis un objet",
+        "body": "« Au nord d'une plante » désigne le demi-plan : chaque case strictement plus haut – la colonne est indifférente. Les directions diagonales (« au nord-est ») exigent les deux à la fois : plus haut ET plus à droite. Avec plusieurs objets du type, un seul suffit ; les formes « de chaque arbre » ou avec coordonnée (« l'arbre en G7 ») le disent expressément.",
+        "trap": "À la même hauteur, ce n'est PAS au nord – les cases rouges sont exclues."
+      },
+      "besideSameObject": {
+        "title": "À côté du même objet",
+        "body": "Ici, c'est l'exemplaire qui compte, pas le type : les deux se tiennent à côté de LA MÊME table. Des cases de table contiguës forment une seule table – la table de l'autre pièce est un autre objet (rouge). Deux chaises côte à côte, en revanche, restent toujours deux chaises."
+      },
+      "inRoom": {
+        "title": "Dans une pièce précise",
+        "body": "La personne est quelque part dans la pièce nommée. Les ajouts durcissent : « sans personne d'autre » = personne d'autre là (pas même la victime), « avec quelqu'un » = au moins une autre personne."
+      },
+      "inRoomAdjacentTo": {
+        "title": "Dans une pièce attenante à …",
+        "body": "La personne se tient dans une pièce qui partage une arête de mur avec la pièce nommée. La pièce nommée elle-même n'en fait PAS partie – une pièce n'est pas sa propre voisine (rouge)."
+      },
+      "adjacentRooms": {
+        "title": "Dans des pièces attenantes",
+        "body": "Les deux se tiennent dans DEUX pièces DIFFÉRENTES qui partagent une arête de mur. Se tenir dans la même pièce qu'Emil (rouge) ne satisfait pas l'indice. L'indice vaut dans les deux sens."
+      },
+      "neighborRoomEmpty": {
+        "title": "Une pièce attenante était vide",
+        "body": "Au moins une des pièces qui bordent celle de Frida (encadrées) est complètement vide – aucune personne, pas même la victime. À la forme négative : CHAQUE pièce attenante était occupée."
+      },
+      "neighborRoomCount": {
+        "title": "Pièce attenante entièrement dans une direction",
+        "body": "Une pièce qui borde celle d'Emil contient exactement le nombre indiqué de suspects – par exemple : « Dans une pièce attenante, entièrement à l'est de lui, se trouvaient exactement 2 suspects. » Avec une direction, CHAQUE case de cette pièce doit être strictement de ce côté – l'autre axe est complètement indifférent. Exemple avec le sud : les pièces 3 ET 4 conviennent, bien que la 3 soit aussi loin à l'est ; la 2 non (rouge).",
+        "trap": "« Entièrement au sud » ne veut pas dire « juste en dessous de lui » : une pièce loin à l'est compte aussi, tant qu'elle est toute entière sous la ligne d'Emil."
+      },
+      "inLine": {
+        "title": "Sur la ligne N / colonne N",
+        "body": "La personne se tient quelque part sur la ligne ou la colonne indiquée – les coordonnées au bord aident à lire. Rappelez-vous la règle de base : à la fin, chaque ligne et chaque colonne contient exactement une personne."
+      },
+      "corner": {
+        "title": "Dans un coin",
+        "body": "Coin signifie coin de PIÈCE : une case où deux murs perpendiculaires de sa pièce se rejoignent. Les murs intérieurs comptent aussi – il y a donc bien plus de coins que les quatre coins du plateau."
+      },
+      "atWall": {
+        "title": "Contre un mur",
+        "body": "Au moins un côté de la case est un mur – le bord du plateau ou la frontière avec une autre pièce. Dans les petites pièces, c'est vrai presque partout ; seul le centre des grandes pièces est exclu."
+      },
+      "inout": {
+        "title": "Dedans / Dehors",
+        "body": "« Dehors », ce sont exactement les zones de la légende (« Dehors : … ») ; tout le reste est dedans. La forme « seule personne » existe ici aussi : « la seule personne dehors » signifie dehors ET personne d'autre là – la victime compte."
+      },
+      "direction": {
+        "title": "Au nord/sud/… de la personne X",
+        "body": "Un point cardinal (« au sud de Bruno ») est un demi-plan : chaque case strictement sous sa ligne – la colonne est indifférente. La diagonale (« au sud-est ») exige les deux à la fois : au sud ET à l'est, un quart du plateau.",
+        "trap": "La ligne ou la colonne de Bruno ne compte jamais – « au sud » est strict (rouge)."
+      },
+      "offset": {
+        "title": "Exactement N cases dans une direction",
+        "body": "« Exactement 2 colonnes à l'ouest de Bruno » ne fixe QUE l'écart de colonnes : exactement deux colonnes plus à gauche – la ligne reste entièrement libre, c'est pourquoi toute la colonne est bleue. Tout autre écart dans cette direction est exclu (rouge)."
+      },
+      "directionFromAttr": {
+        "title": "Direction depuis des porteurs d'un signe",
+        "body": "« Au sud d'une personne à barbe » : au sud d'AU MOINS une – les demi-plans des porteurs s'unissent. « Au sud de toutes les personnes à barbe » : au sud de CHAQUE porteur – il ne reste que l'intersection."
+      },
+      "insideXor": {
+        "title": "L'un dedans, l'autre dehors",
+        "body": "Des deux, exactement une personne est dedans et une dehors – jamais les deux du même côté. Si Jonas est dedans, Klara doit être dehors (bleu) – et inversement."
+      },
+      "alone": {
+        "title": "Sans personne dans la pièce",
+        "body": "Personne d'autre n'est dans la pièce – aucun suspect, et pas non plus la victime. Toutes les pièces avec une figure posée sont exclues ; seules les cases des pièces encore vides restent bleues.",
+        "trap": "Qui était sans compagnie n'est jamais le meurtrier – le meurtrier avait la victime auprès de lui."
+      },
+      "notAlone": {
+        "title": "Pas sans compagnie",
+        "body": "Au moins une autre personne partage la pièce – un suspect ou la victime. Ici, tous les autres sont déjà placés : Clara doit aller dans une des pièces occupées (bleu)."
+      },
+      "sameRoom": {
+        "title": "Dans la même pièce que la personne X",
+        "body": "Les deux se tiennent dans la même pièce. La forme « seule compagnie » durcit : SEULEMENT eux deux, personne d'autre – pas même la victime."
+      },
+      "aloneWith": {
+        "title": "Seule compagnie : X et N autres",
+        "body": "La pièce contient exactement : la personne elle-même, les personnes nommées et le nombre indiqué d'autres portant le signe – personne d'autre, pas même la victime. Un ajout comme « l'une d'elles à l'est d'elle » restreint en plus la position."
+      },
+      "roomAttribute": {
+        "title": "Qui d'autre était dans la pièce (signe)",
+        "body": "Une affirmation sur les AUTRES de la pièce : « personne à barbe », « quelqu'un à barbe », « tous les autres avaient une barbe ». Le plateau montre quelles pièces restent possibles avec les figures posées.\nPour le genre, la victime compte ; pour tout autre signe, il ne s'agit que de suspects – la victime ne montre que son genre."
+      },
+      "roomCompanion": {
+        "title": "Seule compagnie : N porteurs du signe",
+        "body": "Dans la pièce se tiennent exactement N autres suspects – et TOUS portent le signe. Ici : exactement deux suspects à barbe, seule leur pièce convient donc (bleu). La victime n'est pas comptée ici."
+      },
+      "roomExists": {
+        "title": "Quelqu'un dans la pièce sur/à côté d'un objet",
+        "body": "La pièce de la personne contient en plus quelqu'un de précis – une personne nommée ou quelqu'un avec un signe – sur ou à côté de l'objet indiqué (un coin, un mur, une fenêtre ou une porte sont aussi possibles). Sur le plateau, Bruno est sur la chaise, donc Alma doit être dans la pièce de Bruno (bleu)."
+      },
+      "not": {
+        "title": "NE … PAS",
+        "body": "Presque chaque affirmation existe aussi à la forme négative : ce qui était possible devient interdit (rouge) – le reste devient possible (bleu). À côté de la négation existe une seconde forme : « la seule personne qui … » – voir son entrée."
+      },
+      "unique": {
+        "title": "La seule personne qui …",
+        "body": "Deux affirmations en une : la personne remplit la condition – ET personne d'autre sur tout le plateau. « Le seul sur une chaise » signifie : David est assis sur une chaise, et tous les autres sur aucune. La forme existe pour beaucoup d'indices : sur/à côté d'un objet, à la fenêtre, à la porte, dedans/dehors.",
+        "trap": "La victime compte : si elle était assise sur la deuxième chaise, David ne serait pas le seul."
+      },
+      "andOr": {
+        "title": "ET / OU",
+        "body": "Avec ET, toutes les parties doivent valoir en même temps – il reste l'intersection (ici : une seule case). Avec OU, une partie suffit – les ensembles s'unissent, et les deux peuvent valoir."
+      },
+      "emptyRooms": {
+        "title": "Exactement N pièces étaient vides",
+        "body": "Un indice sur tout le plateau : exactement ce nombre de pièces finit sans personne – suspects et victime comptent. « Aucune pièce n'était vide » signifie : quelqu'un se tient dans chaque pièce. Le plateau montre une répartition terminée en exemple."
+      },
+      "countOnObject": {
+        "title": "Exactement N personnes sur l'objet X",
+        "body": "Sur toutes les cases de ce type d'objet réunies se tiennent exactement N personnes – ici : exactement une personne sur une chaise, les deux autres chaises restent libres.",
+        "trap": "La victime compte : « exactement 1 sur une chaise » peut aussi vouloir dire que c'est la victime qui y est assise – et aucun suspect."
+      },
+      "roomOccupancy": {
+        "title": "Chaque pièce : au moins/au plus N",
+        "body": "Une borne que CHAQUE pièce doit respecter : au moins, au plus, exactement ou pas exactement N – sur les personnes ou seulement les suspects. « Chaque pièce au plus 2 personnes » interdit donc tout trio."
+      },
+      "countWithAttr": {
+        "title": "Exactement N avec un signe dedans/dehors",
+        "body": "Compte les porteurs d'un signe dans une zone : « Exactement 2 femmes étaient dehors. » Dehors, c'est ce que nomme la légende. L'indice précise s'il s'agit de personnes (victime comprise) ou seulement de suspects."
+      }
+    }
+  },
   "cond": {
     "suspectsUnit": "suspects",
     "adjTargetRoom": "une pièce",

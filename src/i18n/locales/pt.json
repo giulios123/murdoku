@@ -1515,6 +1515,248 @@
     "glasses": "óculos",
     "bald": "careca"
   },
+  "faq": {
+    "title": "Manual do detetive",
+    "subtitle": "Como ler as pistas",
+    "filterCat": "Categoria",
+    "filterEntry": "Tipo de pista",
+    "trapLabel": "Atenção",
+    "legendBlue": "possível segundo a pista",
+    "legendRed": "parece possível, mas não conta",
+    "legendCross": "bloqueado pela regra básica",
+    "legendRoom": "referência da pista",
+    "legendRoomRed": "não cumpre a condição",
+    "cat": {
+      "basics": "Fundamentos",
+      "objects": "Objetos",
+      "rooms": "Divisões",
+      "position": "Posição no tabuleiro",
+      "direction": "Direção e distância",
+      "social": "Companhia",
+      "special": "Formas especiais",
+      "board": "Pistas globais"
+    },
+    "v": {
+      "bed": "Cama",
+      "chair": "Cadeira",
+      "carpet": "Tapete",
+      "not": "NÃO …",
+      "table": "Mesa",
+      "oneOf": "um de vários",
+      "window": "Janela",
+      "door": "Porta",
+      "fridge": "Frigorífico",
+      "plusAlone": "+ a sós",
+      "plusNotAlone": "+ com alguém",
+      "plain": "forma base",
+      "column": "Coluna",
+      "row": "Linha",
+      "otherRoom": "outra divisão",
+      "north": "a norte",
+      "east": "a este",
+      "northeast": "a nordeste",
+      "south": "a sul",
+      "southeast": "a sudeste",
+      "northwest": "a noroeste",
+      "noDir": "sem direção",
+      "inside": "dentro",
+      "outside": "fora",
+      "uniqueOutside": "única pessoa lá fora",
+      "twoWest": "2 colunas a oeste",
+      "oneSouth": "1 linha a sul",
+      "some": "de pelo menos um",
+      "all": "de todos",
+      "mateInside": "o outro dentro",
+      "mateOutside": "o outro fora",
+      "none": "ninguém",
+      "someone": "alguém",
+      "allOthers": "todos os outros",
+      "person": "pessoa concreta",
+      "trait": "alguém com um traço",
+      "notNearTable": "não ao lado de uma mesa",
+      "notInRoom": "não na cozinha",
+      "onChair": "numa cadeira",
+      "nearTable": "ao lado de uma mesa",
+      "and": "E",
+      "or": "OU",
+      "oneEmpty": "1 divisão vazia",
+      "noneEmpty": "nenhuma vazia",
+      "atMost": "no máximo 2",
+      "atLeast": "pelo menos 1",
+      "notExactly": "não exatamente 2"
+    },
+    "e": {
+      "rulePermutation": {
+        "title": "Cada linha e cada coluna, exatamente uma vez",
+        "body": "Cada pessoa – os suspeitos e a vítima – ocupa a sua própria linha e a sua própria coluna. Assim que uma figura é colocada, toda a sua linha e coluna ficam bloqueadas para os outros. No tabuleiro estão Bruno e Clara: as casas bloqueadas aparecem riscadas e só as azuis restam para os demais.",
+        "trap": "A vítima também conta: a sua linha e a sua coluna pertencem só a ela."
+      },
+      "ruleMurder": {
+        "title": "A divisão da vítima",
+        "body": "Na divisão da vítima está exatamente UM suspeito: o assassino. Nem nenhum, nem dois: exatamente um. Essa divisão acaba, portanto, sempre com exatamente duas pessoas. No tabuleiro a vítima já está colocada – e como conta como qualquer pessoa, a sua linha e a sua coluna já aparecem riscadas. O assassino está numa das casas azuis; os restantes suspeitos ficam fora da divisão."
+      },
+      "termSuspects": {
+        "title": "Suspeitos ou pessoas?",
+        "body": "«Suspeitos» significa apenas os suspeitos – a vítima não conta. «Pessoas» significa todos: suspeitos e vítima juntos. As pistas escolhem estas palavras de propósito – repara bem em quem é referido.\nNo jogo, as palavras a negrito trazem a sua explicação: no computador surge ao passar o rato, no telemóvel na nota do dossiê, atrás do rosto do cartão."
+      },
+      "termVictim": {
+        "title": "A vítima",
+        "body": "A vítima deduz-se como qualquer outra pessoa: ocupa uma linha, uma coluna e uma divisão. Do seu aspeto só se conhece o género; barba, óculos ou penteado ficam ocultos e por isso nunca aparecem numa pista. Nas pistas de traços, a vítima só conta quando se trata do género."
+      },
+      "termOutside": {
+        "title": "Dentro e fora",
+        "body": "Se uma zona conta como «lá fora» não é o desenho que o diz, mas a legenda por cima das pistas («Lá fora: …»). Só as zonas aí indicadas contam como fora – tudo o resto é dentro.",
+        "trap": "Um chão verde não quer dizer nada: só a legenda decide."
+      },
+      "termWater": {
+        "title": "A água é transitável",
+        "body": "Um lago é uma divisão perfeitamente normal: numa casa de água livre pode estar alguém, como em qualquer chão. O jogo anuncia-o como regra básica sempre que um tabuleiro tem água."
+      },
+      "onObject": {
+        "title": "Em cima de um objeto",
+        "body": "A pessoa está numa casa com esse tipo de objeto – qualquer uma delas em todo o tabuleiro. Com tenda, guarda-sol ou biombo diz-se «na», «debaixo» ou «atrás», mas é sempre a casa que conta. A azul vês todas as casas possíveis; a forma NÃO inverte o conjunto."
+      },
+      "nearObject": {
+        "title": "Ao lado de um objeto",
+        "body": "«Ao lado» significa: diretamente acima, abaixo, à esquerda ou à direita – E na mesma divisão que o objeto. As casas vermelhas até tocam numa mesa, mas não contam: ficam atrás da parede, na divisão vizinha, ou apenas na diagonal.",
+        "trap": "A diagonal nunca é «ao lado». E uma parede separa: a casa do outro lado não conta."
+      },
+      "nearPortal": {
+        "title": "À janela, à porta",
+        "body": "A pessoa está numa casa mesmo junto a uma janela ou a uma porta. As portas ficam na parede entre duas divisões e contam dos DOIS lados – uma janela pertence apenas à divisão em cuja parede está."
+      },
+      "sameRoomAsObject": {
+        "title": "Numa divisão com um objeto",
+        "body": "A pessoa está numa divisão que contém esse objeto – em qualquer ponto dela. A forma «a sós com» aperta: mais ninguém nessa divisão, nem sequer a vítima."
+      },
+      "sameLineAsObject": {
+        "title": "Mesma linha/coluna que um objeto",
+        "body": "A pessoa partilha uma linha ou coluna com um objeto desse tipo. Um extra pode limitar a divisão: «noutra divisão» significa que a casa está na linha, mas não na divisão do objeto."
+      },
+      "directionFromObject": {
+        "title": "Direção a partir de um objeto",
+        "body": "«A norte de uma planta» é o semiplano: cada casa estritamente mais acima – a coluna é indiferente. As direções diagonais («a nordeste») exigem as duas ao mesmo tempo: mais acima E mais à direita. Com vários objetos do tipo basta um; formas como «de cada árvore» ou com coordenada («a árvore em G7») dizem-no expressamente.",
+        "trap": "À mesma altura NÃO é a norte – as casas vermelhas ficam de fora."
+      },
+      "besideSameObject": {
+        "title": "Ao lado do mesmo objeto",
+        "body": "Aqui conta a instância, não o tipo: ambos estão ao lado exatamente DA MESMA mesa. Casas de mesa contíguas são uma única mesa – a mesa da outra divisão é outro objeto (vermelho). Duas cadeiras lado a lado, pelo contrário, são sempre duas cadeiras."
+      },
+      "inRoom": {
+        "title": "Numa divisão concreta",
+        "body": "A pessoa está algures na divisão indicada. Os extras apertam: «a sós» = mais ninguém lá (nem a vítima), «com alguém» = pelo menos mais uma pessoa."
+      },
+      "inRoomAdjacentTo": {
+        "title": "Numa divisão contígua a …",
+        "body": "A pessoa está nalguma divisão que partilha uma parede com a divisão indicada. A própria divisão indicada NÃO conta – uma divisão não é vizinha de si mesma (vermelho)."
+      },
+      "adjacentRooms": {
+        "title": "Em divisões contíguas",
+        "body": "Os dois estão em DUAS divisões DIFERENTES que partilham uma parede. Estar na mesma divisão que o Emil (vermelho) não cumpre a pista. A pista vale nos dois sentidos."
+      },
+      "neighborRoomEmpty": {
+        "title": "Uma divisão contígua estava vazia",
+        "body": "Pelo menos uma das divisões que confinam com a da Frida (contornadas) está completamente vazia – nenhuma pessoa, nem sequer a vítima. Negada, diz: TODAS as divisões contíguas estavam ocupadas."
+      },
+      "neighborRoomCount": {
+        "title": "Divisão contígua completamente numa direção",
+        "body": "Uma divisão que confina com a do Emil contém exatamente o número indicado de suspeitos; por exemplo: «Numa divisão contígua, completamente a este dele, estavam exatamente 2 suspeitos.» Com direção, CADA casa dessa divisão tem de estar estritamente desse lado – o outro eixo é totalmente indiferente. Exemplo com o sul: cumprem a divisão 3 E a 4, embora a 3 fique também bem a este; a 2 não (vermelho).",
+        "trap": "«Completamente a sul» não significa «mesmo por baixo dele»: também conta uma divisão bem a este, desde que fique toda abaixo da linha do Emil."
+      },
+      "inLine": {
+        "title": "Na linha N / coluna N",
+        "body": "A pessoa está algures na linha ou coluna indicada – as coordenadas na margem ajudam a ler. Lembra-te da regra básica: no fim, cada linha e cada coluna tem exatamente uma pessoa."
+      },
+      "corner": {
+        "title": "Num canto",
+        "body": "Canto significa canto de DIVISÃO: uma casa onde se encontram duas paredes perpendiculares da sua divisão. As paredes interiores também contam – há, portanto, muito mais cantos do que os quatro do tabuleiro."
+      },
+      "atWall": {
+        "title": "Junto a uma parede",
+        "body": "Pelo menos um lado da casa é uma parede – a margem do tabuleiro ou a fronteira com outra divisão. Em divisões pequenas isso é verdade quase sempre; só o centro das grandes fica de fora."
+      },
+      "inout": {
+        "title": "Dentro / Fora",
+        "body": "«Lá fora» são exatamente as zonas da legenda («Lá fora: …»); tudo o resto é dentro. Também aqui existe a forma «única»: «a única pessoa lá fora» significa fora E mais ninguém lá – a vítima conta."
+      },
+      "direction": {
+        "title": "A norte/sul/… da pessoa X",
+        "body": "Um ponto cardeal («a sul do Bruno») é um semiplano: cada casa estritamente abaixo da linha dele – a coluna é indiferente. A diagonal («a sudeste») exige as duas ao mesmo tempo: a sul E a este, um quarto do tabuleiro.",
+        "trap": "A própria linha ou coluna do Bruno nunca conta – «a sul» é estrito (vermelho)."
+      },
+      "offset": {
+        "title": "Exatamente N casas numa direção",
+        "body": "«Exatamente 2 colunas a oeste do Bruno» fixa APENAS a distância de colunas: exatamente duas colunas mais à esquerda – a linha fica completamente livre, por isso toda a coluna está azul. Qualquer outra distância nessa direção fica de fora (vermelho)."
+      },
+      "directionFromAttr": {
+        "title": "Direção a partir de portadores de um traço",
+        "body": "«A sul de uma pessoa com barba»: a sul de PELO MENOS uma – os semiplanos juntam-se. «A sul de todas as pessoas com barba»: a sul de CADA uma – resta apenas a interseção."
+      },
+      "insideXor": {
+        "title": "Um dentro, outro fora",
+        "body": "Dos dois, exatamente uma pessoa está dentro e outra fora – nunca os dois do mesmo lado. Se o Jonas está dentro, a Klara tem de estar fora (azul) – e vice-versa."
+      },
+      "alone": {
+        "title": "A sós na divisão",
+        "body": "Não há mais ninguém na divisão – nenhum suspeito e também não a vítima. Todas as divisões com uma figura colocada ficam de fora; só as casas das divisões ainda vazias continuam azuis.",
+        "trap": "Quem estava a sós nunca é o assassino – o assassino tinha a vítima consigo."
+      },
+      "notAlone": {
+        "title": "Não a sós",
+        "body": "Pelo menos mais uma pessoa partilha a divisão – um suspeito ou a vítima. Aqui os outros já estão todos colocados: a Clara tem de ir para uma das divisões ocupadas (azul)."
+      },
+      "sameRoom": {
+        "title": "Na mesma divisão que a pessoa X",
+        "body": "Ambos estão na mesma divisão. A forma «a sós com» aperta: SÓ os dois, mais ninguém – nem sequer a vítima."
+      },
+      "aloneWith": {
+        "title": "A sós com X e mais N",
+        "body": "A divisão contém exatamente: a própria pessoa, as pessoas indicadas e o número indicado de outras com o traço – mais ninguém, nem sequer a vítima. Um extra como «uma delas a este dela» limita ainda a posição."
+      },
+      "roomAttribute": {
+        "title": "Quem mais estava na divisão (traço)",
+        "body": "Uma afirmação sobre os OUTROS na divisão: «ninguém com barba», «alguém com barba», «todos os outros tinham barba». O tabuleiro mostra que divisões continuam possíveis com as figuras colocadas.\nNas afirmações de género a vítima conta; nos restantes traços fala-se só de suspeitos – a vítima só mostra o género."
+      },
+      "roomCompanion": {
+        "title": "A sós com N portadores do traço",
+        "body": "Na divisão estão exatamente N outros suspeitos – e TODOS têm o traço. Aqui: exatamente dois suspeitos com barba, portanto só a divisão deles é possível (azul). A vítima não é contada aqui."
+      },
+      "roomExists": {
+        "title": "Alguém na divisão em cima/ao lado de um objeto",
+        "body": "Na divisão da pessoa está ainda alguém específico – uma pessoa com nome ou alguém com um traço – em cima ou ao lado do objeto indicado (canto, parede, janela ou porta também são possíveis). No tabuleiro o Bruno está na cadeira, portanto a Alma tem de estar na divisão do Bruno (azul)."
+      },
+      "not": {
+        "title": "NÃO …",
+        "body": "Quase toda a afirmação existe também negada: o que antes era possível fica agora proibido (vermelho) – o resto passa a ser possível (azul). Além de NÃO há uma segunda forma extra: «a única pessoa que …» – vê a entrada própria."
+      },
+      "unique": {
+        "title": "A única pessoa que …",
+        "body": "Duas afirmações numa só: a pessoa cumpre a condição – E mais ninguém em todo o tabuleiro a cumpre. «O único numa cadeira» significa: o David está numa cadeira e todos os outros em nenhuma. A forma existe para muitas pistas: em cima/ao lado de um objeto, à janela, à porta, dentro/fora.",
+        "trap": "A vítima conta: se estivesse na segunda cadeira, o David não seria o único."
+      },
+      "andOr": {
+        "title": "E / OU",
+        "body": "Com E todas as partes têm de valer ao mesmo tempo – resta a interseção (aqui: uma única casa). Com OU basta uma parte – os conjuntos juntam-se, e ambas podem valer."
+      },
+      "emptyRooms": {
+        "title": "Exatamente N divisões vazias",
+        "body": "Uma pista sobre o tabuleiro inteiro: exatamente esse número de divisões acaba sem ninguém – contam suspeitos e vítima. «Nenhuma divisão ficou vazia» significa: em cada divisão está alguém. O tabuleiro mostra uma distribuição terminada como exemplo."
+      },
+      "countOnObject": {
+        "title": "Exatamente N pessoas no objeto X",
+        "body": "Em todas as casas desse tipo de objeto juntas estão exatamente N pessoas – aqui: exatamente uma pessoa numa cadeira, as outras duas cadeiras ficam livres.",
+        "trap": "A vítima conta: «exatamente 1 numa cadeira» pode significar que é a vítima que lá está – e nenhum suspeito."
+      },
+      "roomOccupancy": {
+        "title": "Cada divisão: pelo menos/no máximo N",
+        "body": "Um limite que TODAS as divisões têm de respeitar: pelo menos, no máximo, exatamente ou não exatamente N – sobre pessoas ou só suspeitos. «Cada divisão no máximo 2 pessoas» proíbe qualquer trio."
+      },
+      "countWithAttr": {
+        "title": "Exatamente N com um traço dentro/fora",
+        "body": "Conta os portadores de um traço numa zona: «Exatamente 2 mulheres estavam lá fora.» Lá fora é o que a legenda indica. A pista diz se se refere a pessoas (com a vítima) ou só a suspeitos."
+      }
+    }
+  },
   "cond": {
     "suspectsUnit": "suspeitos",
     "adjTargetRoom": "uma divisão",

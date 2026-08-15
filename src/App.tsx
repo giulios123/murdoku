@@ -9,6 +9,7 @@ import UserLevelScreen from './screens/UserLevelScreen.tsx'
 import GameScreen from './screens/GameScreen.tsx'
 import GeneratorScreen from './screens/GeneratorScreen.tsx'
 import TutorialScreen from './screens/TutorialScreen.tsx'
+import FaqScreen from './screens/FaqScreen.tsx'
 import EditorScreen from './screens/EditorScreen.tsx'
 import { LEVELS, levelMetaFromJson, type LevelMeta } from './game/levels.ts'
 import { loadCustomLevels } from './game/storage.ts'
@@ -18,6 +19,7 @@ type Screen =
   | { name: 'start' }
   | { name: 'select' }
   | { name: 'userlevels' }
+  | { name: 'faq' }
   // `open`: select this day AND open it immediately (the win dialog's "next
   // daily" — the player already chose to play on, no extra tap in between).
   | { name: 'daily'; open?: string }
@@ -54,6 +56,7 @@ function initialScreen(): Screen {
     if (level) return { name: 'game', level }
   }
   if (window.location.hash.includes('tutorial')) return { name: 'tutorial' }
+  if (window.location.hash.includes('faq')) return { name: 'faq' }
   if (window.location.hash.includes('userlevels')) return { name: 'userlevels' }
   if (window.location.hash.includes('daily')) return { name: 'daily' }
   if (window.location.hash.includes('generate')) return { name: 'generate' }
@@ -131,9 +134,12 @@ export default function App() {
           onTutorial={() => setScreen({ name: 'tutorial' })}
           onUserLevels={() => setScreen({ name: 'userlevels' })}
           onEditor={() => setScreen({ name: 'editor' })}
+          onFaq={() => setScreen({ name: 'faq' })}
           onQuit={onQuit}
         />
       )
+    case 'faq':
+      return <FaqScreen onBack={back} />
     case 'userlevels':
       return (
         <UserLevelScreen

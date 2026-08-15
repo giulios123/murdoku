@@ -28,6 +28,7 @@
 - **A community archive.** Browse the **user levels** other detectives publish, filter by stars, size and status, and rate solved cases with stars and properties.
 - **Take the case to paper.** Every mystery prints as a one-page **PDF case sheet** — the crime scene in full colour, the suspects' testimony, and a black-and-white deduction grid to crack it in pencil. An optional **solution sheet** rides along, sealed until you need it.
 - **Learn by doing.** An interactive, guided tutorial cracks a real mini-case *with* you, one step at a time.
+- **A casebook for every clue.** Not sure what *"entirely east of him"* really covers? The built-in **Casebook** explains every clue form on live mini-boards — blue for what a clue allows, red for the tempting tiles that *don't* count — and any clue in a running case links straight to its page and back.
 - **A crime scene with character.** Hand-drawn suspects and **70+ themed props**, dressed in a moody "case-file" look down to the film grain.
 - **Anywhere, in your language.** Plays beautifully on desktop and phone, in English, German, Spanish, Portuguese, French or Russian, with your progress saved automatically. On touch, tap a suspect's face and their dossier note unfolds — every term explained, every named person with their traits.
 
@@ -67,6 +68,20 @@ A whole vocabulary of evidence — **40 clue forms plus 5 case-wide clue types**
 …all combinable with **AND / OR** and individually negatable with **NOT**.
 
 Suspects come with **traits that matter** — gender, beard, glasses, baldness and hair color. They aren't decoration; the logic leans on them, and each one has a hand-drawn avatar to match.
+
+---
+
+## The Casebook — every clue, explained on a board
+
+Reading testimony is a skill, so Murdoku ships its own reference manual. The **?** in the main menu's corner opens the **Casebook**: eight chapters covering the ground rules, every clue form, the case-wide clues, and the little words that decide cases — *suspects* vs. *people*, what truly counts as *outside*, why a lake is perfectly walkable.
+
+Every entry is a small investigation of its own:
+
+- the clue as a **real, in-game sentence**, spoken by a demo suspect on a real mini crime scene;
+- the board lit in the game's own colours — **blue** for every tile the clue allows, **red** for the tempting tiles that *don't* count: the neighbouring tile behind a wall, the diagonal that was never "beside", the room that isn't *entirely* south;
+- **variant chips to poke at** — flip the direction, negate the statement, switch the quantifier, and watch the tiles recompute live. The pictures can't lie: they're calculated by the very engine that solves the cases.
+
+And the Casebook is never far from the action: mid-case, open a suspect's dossier note and it offers a **"look it up"** line for each clue form in their testimony. One tap opens the matching page right over the running investigation — and stepping back drops you *exactly* where you left off, notes still open, nothing disturbed.
 
 ---
 
@@ -191,7 +206,7 @@ src/
   engine/        Pure-TS game logic: model · clues · solver · io · generator
   game/          Engine <-> UI bridge: board rendering, furniture art, sessions, settings, storage
   components/    React building blocks (board, file, toolbar, settings, editor …)
-  screens/       Start · Case select · User levels · Daily case · Game · Generator · Tutorial · Editor
+  screens/       Start · Case select · User levels · Daily case · Game · Generator · Tutorial · Editor · Casebook
   i18n/          English, German, Spanish, Portuguese, French & Russian + the clue renderer
 levels/          Case files (JSON)
 php/             The community-level API (upload · sync · ratings · moderation · stats page)

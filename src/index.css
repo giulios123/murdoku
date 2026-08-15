@@ -6111,3 +6111,277 @@ button {
     font-size: 0.64rem;
   }
 }
+
+/* ============================================================================
+   Handakte (FAQ) — das Nachschlagewerk der Hinweisarten. Akten-Reiter (Tabs)
+   über einer Dossier-Karte; das Demo-Brett nutzt die SPIELFARBEN (blau =
+   möglich, rot = zählt nicht), hier nur Rahmen drumherum.
+   ========================================================================== */
+
+/* Der ?-Knopf oben links im Hauptmenü — dieselbe runde Form wie der Legenden-
+   Trigger im Spiel (Messing-? auf Tinte). Absolut, damit der zentrierte
+   Startbildschirm nicht verrutscht; safe-area für die Geräte-Notch. */
+.mk-start__faq {
+  position: absolute;
+  top: calc(0.8rem + env(safe-area-inset-top, 0px));
+  left: calc(0.8rem + env(safe-area-inset-left, 0px));
+  z-index: 6;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  border: 1px solid var(--line-strong);
+  background: var(--ink-700);
+  color: var(--brass);
+  font-family: var(--font-type);
+  font-size: 1.15rem;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+}
+.mk-start__faq:hover {
+  border-color: var(--brass-dim);
+}
+
+.mk-faq {
+  --faq-pad: clamp(1.2rem, 4vw, 2.2rem);
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: var(--faq-pad);
+}
+
+/* Kopf + die zwei Auswahl-Dropdowns (Kategorie/Hinweisart) bleiben beim Scrollen
+   stehen — dasselbe Rezept wie .mk-select__head: opaker Body-Backdrop, negative
+   Ränder über das --faq-pad, damit die Karte nicht seitlich hervorlugt. Acht
+   Kategorie-Tabs passen in keiner Sprache in eine Zeile (es: ~1200px gemessen),
+   deshalb Dropdowns auf Desktop UND mobil (Dirks Wahl). */
+.mk-faq__head {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  margin: calc(-1 * var(--faq-pad)) calc(-1 * var(--faq-pad)) 0;
+  padding: var(--faq-pad) var(--faq-pad) 0;
+  background-color: var(--ink-900);
+  background-image:
+    radial-gradient(120% 80% at 50% -10%, rgba(226, 183, 94, 0.08), transparent 60%),
+    radial-gradient(90% 70% at 85% 110%, rgba(207, 70, 60, 0.07), transparent 55%),
+    radial-gradient(140% 140% at 50% 50%, transparent 55%, rgba(0, 0, 0, 0.55) 100%);
+  background-attachment: fixed;
+}
+
+/* Die Dossier-Karte des gewählten Eintrags. */
+.mk-faq__card {
+  border: 1px solid rgba(226, 183, 94, 0.3);
+  border-radius: var(--r-lg);
+  background: linear-gradient(180deg, var(--ink-800), var(--ink-850));
+  box-shadow: var(--shadow-card);
+  padding: clamp(0.9rem, 3vw, 1.5rem);
+}
+.mk-faq__cardtitle {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: clamp(1.2rem, 3vw, 1.55rem);
+  margin: 0 0 0.7rem;
+}
+
+/* Varianten-Chips: Beweis-Etiketten in Schreibmaschinenschrift. */
+.mk-faq__variants {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  margin-bottom: 0.8rem;
+}
+.mk-faq__variant {
+  font-family: var(--font-type);
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--bone-dim);
+  background: transparent;
+  border: 1px dashed var(--line-strong);
+  border-radius: var(--r-sm);
+  padding: 0.3rem 0.6rem;
+  cursor: pointer;
+}
+.mk-faq__variant:hover {
+  color: var(--bone);
+  border-color: var(--brass-dim);
+}
+.mk-faq__variant[data-active] {
+  color: var(--brass);
+  border: 1px solid var(--brass-dim);
+  background: var(--ink-700);
+}
+
+/* Der Beispielsatz als echte Zeugenaussage (Papier wie die Hinweis-Karten im
+   Spiel — die inneren Klassen mk-clue__name/__text sind exakt dieselben). */
+.mk-faq__quote {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 0.6rem 0.7rem;
+  align-items: start;
+  background: linear-gradient(180deg, var(--paper), #ddd1b6);
+  color: var(--paper-ink);
+  border: 1px solid var(--paper-edge);
+  border-radius: var(--r-md);
+  padding: 0.7rem 0.8rem;
+  margin-bottom: 1rem;
+  box-shadow: 0 2px 0 rgba(0, 0, 0, 0.25);
+}
+.mk-faq__quote--board {
+  align-items: center;
+}
+.mk-faq__quotemain {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+/* Brett links, Erklärung rechts — auf Handys untereinander. */
+.mk-faq__detail {
+  display: grid;
+  grid-template-columns: minmax(260px, 400px) 1fr;
+  gap: 1.3rem;
+  align-items: start;
+}
+.mk-faq__boardcol {
+  min-width: 0;
+}
+.mk-faq__boardwrap {
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  display: grid;
+  place-items: center;
+  min-width: 0;
+  min-height: 0;
+}
+.mk-faq__legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem 1rem;
+  margin-top: 0.55rem;
+}
+.mk-faq__key {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-family: var(--font-type);
+  font-size: 0.74rem;
+  color: var(--bone-dim);
+}
+.mk-faq__key::before {
+  content: '';
+  width: 0.8rem;
+  height: 0.8rem;
+  border-radius: 3px;
+  flex: none;
+}
+.mk-faq__key[data-k='blue']::before {
+  background: rgba(58, 99, 217, 0.35);
+  border: 2px solid #3a63d9;
+}
+.mk-faq__key[data-k='red']::before {
+  background: rgba(207, 70, 60, 0.3);
+  border: 2px solid var(--crimson);
+}
+.mk-faq__key[data-k='cross']::before {
+  content: '✕';
+  color: var(--bone);
+  font-size: 0.8rem;
+  line-height: 0.8rem;
+  text-align: center;
+  border: none;
+}
+.mk-faq__key[data-k='room']::before {
+  background: transparent;
+  border: 2px dashed #3a63d9;
+}
+.mk-faq__key[data-k='roomred']::before {
+  background: transparent;
+  border: 2px dashed var(--crimson);
+}
+.mk-faq__note {
+  font-family: var(--font-type);
+  font-size: 0.74rem;
+  color: var(--bone-dim);
+  flex-basis: 100%;
+}
+
+.mk-faq__text {
+  min-width: 0;
+  font-size: 0.95rem;
+}
+.mk-faq__text p {
+  margin: 0 0 0.7rem;
+}
+.mk-faq__trap {
+  border-left: 3px solid var(--crimson);
+  background: rgba(207, 70, 60, 0.08);
+  border-radius: 0 var(--r-sm) var(--r-sm) 0;
+  padding: 0.55rem 0.7rem;
+}
+.mk-faq__trap strong {
+  display: block;
+  font-family: var(--font-type);
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  color: var(--crimson);
+  margin-bottom: 0.15rem;
+}
+
+@media (max-width: 780px) {
+  .mk-faq__detail {
+    grid-template-columns: 1fr;
+  }
+  .mk-faq__boardwrap {
+    max-width: 420px;
+    margin: 0 auto;
+  }
+}
+@media (max-width: 640px) {
+  /* Die Hinweisart trägt lange Titel (bis 53 Zeichen gemessen) — ihr Dropdown
+     bekommt mehr Breite als die kurze Kategorie daneben. */
+  .mk-faq .mk-filtergroup:last-child {
+    flex-grow: 1.7;
+  }
+}
+
+/* Handakte als Schicht ÜBER dem laufenden Spiel (Sprung aus der Akten-Notiz):
+   fixed statt absolute (der Spiel-Wurzelknoten ist kein verlässlicher Anker) und
+   mit dem opaken Body-Backdrop, damit das Level nicht durchscheint. z-Index über
+   Sheets/Dialogen (100), unter dem Tutorial-Coach (150). */
+.mk-faq-layer {
+  position: fixed;
+  inset: 0;
+  z-index: 120;
+  background-color: var(--ink-900);
+  background-image:
+    radial-gradient(120% 80% at 50% -10%, rgba(226, 183, 94, 0.08), transparent 60%),
+    radial-gradient(90% 70% at 85% 110%, rgba(207, 70, 60, 0.07), transparent 55%),
+    radial-gradient(140% 140% at 50% 50%, transparent 55%, rgba(0, 0, 0, 0.55) 100%);
+  background-attachment: fixed;
+}
+
+/* „In der Handakte nachschlagen"-Zeilen in der Akten-Notiz: volle Breite, Messing
+   wie die Abschnitts-Labels, Pfeil rechts. span mit Button-Semantik (die Notiz
+   wohnt im Karten-<button> — echte Buttons wären dort ungültig). */
+.mk-note__faq {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0.28rem 0;
+  border-top: 1px solid var(--line);
+  color: var(--brass);
+  cursor: pointer;
+}
+.mk-note__faq:first-of-type {
+  border-top: 0;
+}
+.mk-note__faq:hover {
+  color: var(--bone);
+}
+.mk-note__faqgo {
+  flex: none;
+}

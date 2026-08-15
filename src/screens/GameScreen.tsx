@@ -56,6 +56,7 @@ import {
   type LevelMeta,
 } from '../game/levels.ts'
 import PdfDialog from '../components/PdfDialog.tsx'
+import FaqScreen from './FaqScreen.tsx'
 import BloodText from '../components/BloodText.tsx'
 import BoardCanvas from '../components/BoardCanvas.tsx'
 import CluePanel from '../components/CluePanel.tsx'
@@ -261,6 +262,10 @@ export default function GameScreen({
   const [legendOpen, setLegendOpen] = useState(false)
   // PDF-Export: kleiner Vorschalt-Dialog „ohne / mit Auflösung" (Blatt 2).
   const [pdfOpen, setPdfOpen] = useState(false)
+  // Handakte als Vollbild-Schicht ÜBER dem laufenden Level (Sprung aus der
+  // Akten-Notiz eines Hinweises): das Spiel bleibt gemountet — Auswahl, Scroll
+  // und Uhr sind beim Schließen exakt wie verlassen.
+  const [faqEntry, setFaqEntry] = useState<string | null>(null)
   const tut = useTutorialFlow({
     enabled: !!tutorial,
     puzzle,
@@ -320,6 +325,10 @@ export default function GameScreen({
     setPdfOpen(tut.pdfPhase === 'open')
   }, [tut.active, tut.pdfPhase])
   useBackInterceptor(legendOpen, () => setLegendOpen(false))
+  useBackInterceptor(faqEntry !== null, () => setFaqEntry(null))
+  // Stabile Identität: SuspectCard ist memoisiert — eine neue Funktion pro Render
+  // würde jede Karte bei jedem Tap neu rendern.
+  const openFaq = useCallback((entryId: string) => setFaqEntry(entryId), [])
 
   // Header title fit (mostly mobile): the title slot sits between the back/edit
   // buttons and the timer. If the title + the tag cluster (difficulty stamp + size)
@@ -849,6 +858,9 @@ export default function GameScreen({
         related={relatedCards}
         onSelect={tut.active ? tut.onSelect : selectFromCard}
         onNoteOpen={tut.active ? tut.onNoteOpen : undefined}
+        // Im geführten Tutorial gesperrt (ein Ausflug in die Handakte würde mitten
+        // aus einem Skript-Schritt führen) — nach „Überspringen" voll da.
+        onFaqLookup={tut.active ? undefined : openFaq}
         onHoverSuspect={setHoveredSuspect}
         hint={hintText}
         hintChain={hintChain}
@@ -1009,6 +1021,13 @@ export default function GameScreen({
       )}
 
       {pdfOpen && <PdfDialog json={meta.json} title={title} onClose={() => setPdfOpen(false)} />}
+
+      {/* Die Handakte als Schicht über dem Spiel: ← / Android-Back / Escape schließen
+          zurück ins unveränderte Level. Volle Handakte (Dirks Wahl) — man landet beim
+          passenden Eintrag, darf aber weiterblättern. */}
+      {faqEntry !== null && (
+        <FaqScreen layer initialEntry={faqEntry} onBack={() => setFaqEntry(null)} />
+      )}
 
       {result && !dialogHidden && (
         <ResultDialog

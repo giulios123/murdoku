@@ -8,6 +8,7 @@ import Avatar from './Avatar.tsx'
 import AppearanceInfo from './AppearanceInfo.tsx'
 import ClueText, { BoardClueText } from './ClueText.tsx'
 import { collectClueTerms, type ClueTerm } from './clueRich.tsx'
+import { faqLookupForBoardClue, faqLookupsForClues } from '../game/faqEntries.ts'
 import InfoTip from './InfoTip.tsx'
 import { familyOf, FAMILY_META, FAMILY_ORDER, type HintFamily } from './hintFamily.tsx'
 import {
@@ -32,9 +33,14 @@ const IS_COARSE = typeof window !== 'undefined' && !!window.matchMedia?.('(point
 function AktenNotiz({
   terms,
   persons,
+  lookups,
+  onLookup,
 }: {
   terms: ClueTerm[]
   persons: { id: PersonId; name: string; attrs: Puzzle['suspects'][number]['attributes']; color: string }[]
+  /** Handakte entries this clue touches — one "look it up" row per entry. */
+  lookups?: string[]
+  onLookup?: (entryId: string) => void
 }) {
   const { t } = useTranslation()
   return (
@@ -66,6 +72,34 @@ function AktenNotiz({
                   <AppearanceInfo attrs={p.attrs} letter={p.id} />
                 </span>
               </div>
+            ))}
+          </>
+        )}
+        {/* Sprung in die Handakte, je berührter Hinweisart eine Zeile. Als span mit
+            Button-Semantik (die Notiz wohnt IM Karten-<button>, echte Buttons wären
+            dort ungültiges HTML — dasselbe Muster wie der FaceHandle). */}
+        {onLookup && lookups && lookups.length > 0 && (
+          <>
+            <p className="mk-note__label">{t('faq.title')}</p>
+            {lookups.map((id) => (
+              <span
+                key={id}
+                role="button"
+                tabIndex={0}
+                className="mk-note__faq"
+                onClick={() => onLookup(id)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault()
+                    onLookup(id)
+                  }
+                }}
+              >
+                {t(`faq.e.${id}.title`)}
+                <span className="mk-note__faqgo" aria-hidden="true">
+                  →
+                </span>
+              </span>
             ))}
           </>
         )}
@@ -130,6 +164,7 @@ const SuspectCard = memo(function SuspectCard({
   onSelect,
   onHoverSuspect,
   onToggleNote,
+  onFaqLookup,
 }: {
   suspect: Puzzle['suspects'][number]
   idx: number
@@ -145,6 +180,8 @@ const SuspectCard = memo(function SuspectCard({
   onSelect: (id: PersonId) => void
   onHoverSuspect?: (id: PersonId | null) => void
   onToggleNote: (id: string) => void
+  /** In-game jump into the Handakte (absent e.g. during the guided tutorial). */
+  onFaqLookup?: (entryId: string) => void
 }) {
   const { t } = useTranslation()
   // The dossier note's content (concept terms + the persons the clues name) is collected
@@ -166,6 +203,7 @@ const SuspectCard = memo(function SuspectCard({
           }
         }),
       ],
+      lookups: faqLookupsForClues(s.clues),
     }
   }, [noteOpen, renderer, t, s, idx, puzzle, suspectIndex])
   return (
@@ -217,7 +255,14 @@ const SuspectCard = memo(function SuspectCard({
           <ClueText renderer={renderer} clues={s.clues} subjectId={s.id} />
         </span>
       </span>
-      {noteData && <AktenNotiz terms={noteData.terms} persons={noteData.persons} />}
+      {noteData && (
+        <AktenNotiz
+          terms={noteData.terms}
+          persons={noteData.persons}
+          lookups={noteData.lookups}
+          onLookup={onFaqLookup}
+        />
+      )}
     </button>
   )
 })
@@ -323,6 +368,9 @@ interface Props {
   onHoverSuspect?: (id: PersonId | null) => void
   /** A face tap opened the Akten-Notiz for this id (tutorial listens; else omitted). */
   onNoteOpen?: (id: string) => void
+  /** Opens the in-game Handakte at an entry — the dossier notes offer one "look it
+   *  up" row per touched clue kind. Omitted (e.g. guided tutorial) = no rows. */
+  onFaqLookup?: (entryId: string) => void
   hint: string | null
   /** Optional step-by-step reasoning chain shown under the hint. */
   hintChain?: string[] | null
@@ -345,6 +393,7 @@ function CluePanel({
   onSelect,
   onHoverSuspect,
   onNoteOpen,
+  onFaqLookup,
   hint,
   hintChain,
   hintPlain,
@@ -386,6 +435,10 @@ function CluePanel({
       const el = e.target as Element | null
       // Taps on any face handle or inside a note are handled by their own logic.
       if (el?.closest('.mk-facebtn, .mk-note')) return
+      // Taps inside the Handakte layer (opened FROM this very note) must not count
+      // as "elsewhere": coming back has to look exactly as before the jump — the
+      // note the player left from stays open (user-requested).
+      if (el?.closest('.mk-faq-layer')) return
       // A tap (or scroll-drag) on the card of the very person whose note is open must
       // NOT close it — on phones you scroll back up and tap that card, and losing the
       // open note there is jarring (user-reported). Anywhere else still closes.
@@ -410,17 +463,17 @@ function CluePanel({
   // board clues ("exactly one person on a mud puddle", …). Board clues carry their
   // collected concept terms along for the Akten-Notiz.
   const boardNotes = useMemo(() => {
-    const notes: { node: ReactNode; terms?: ClueTerm[] }[] = []
+    const notes: { node: ReactNode; terms?: ClueTerm[]; lookup?: string }[] = []
     // Only show the indoor/outdoor legend when a clue actually relies on it — the shared
     // check covers suspect clues, global clues AND board clues ("2 women were outside").
     const outside = [...puzzle.board.rooms.values()].filter((r) => r.outside).map((r) => t(r.nameKey))
     if (usesInsideOutside(puzzle) && outside.length > 0) {
-      notes.push({ node: `${t('game.outsideLabel')}: ${outside.join(', ')}` })
+      notes.push({ node: `${t('game.outsideLabel')}: ${outside.join(', ')}`, lookup: 'termOutside' })
     }
     // A water room is drawn as a lake but is a NORMAL, walkable room — say so as a
     // global rule so players know someone can stand in the water too.
     if ([...puzzle.board.rooms.values()].some((r) => isWaterRoom(r.nameKey))) {
-      notes.push({ node: t('game.waterWalkable') })
+      notes.push({ node: t('game.waterWalkable'), lookup: 'termWater' })
     }
     // Board clues render RICH (bold words + concept tooltips), not through renderer.render —
     // that strips the [[word:tipKey]] markers, which silently ate e.g. the "Personen" tooltip.
@@ -429,7 +482,11 @@ function CluePanel({
     for (const clue of puzzle.boardClues) {
       const describe = clue.describe()
       const terms = collectClueTerms(renderer, t, [describe])
-      notes.push({ node: <BoardClueText renderer={renderer} describe={describe} />, terms })
+      notes.push({
+        node: <BoardClueText renderer={renderer} describe={describe} />,
+        terms,
+        lookup: faqLookupForBoardClue(clue) ?? undefined,
+      })
     }
     return notes
   }, [puzzle, renderer, t])
@@ -526,9 +583,13 @@ function CluePanel({
           {boardNotes.map((note, i) => {
             const noteId = `bc-${i}`
             const lens = <span className="mk-boardclue__icon">🔍</span>
+            // The lens is tappable when the note would show ANYTHING: concept terms,
+            // or a Handakte jump (the outside/water legend rows carry one too).
+            const hasNote =
+              (note.terms?.length ?? 0) > 0 || (note.lookup !== undefined && !!onFaqLookup)
             return (
               <div key={i} className="mk-boardclue">
-                {note.terms && note.terms.length > 0 ? (
+                {hasNote ? (
                   <FaceHandle open={noteFor === noteId} onToggle={() => toggleNote(noteId)}>
                     {lens}
                   </FaceHandle>
@@ -539,8 +600,13 @@ function CluePanel({
                     the container's gap would otherwise wedge 0.5rem between every piece —
                     including one right before the final period (user-reported). */}
                 <span>{note.node}</span>
-                {noteFor === noteId && note.terms && note.terms.length > 0 && (
-                  <AktenNotiz terms={note.terms} persons={[]} />
+                {noteFor === noteId && hasNote && (
+                  <AktenNotiz
+                    terms={note.terms ?? []}
+                    persons={[]}
+                    lookups={note.lookup ? [note.lookup] : []}
+                    onLookup={onFaqLookup}
+                  />
                 )}
               </div>
             )
@@ -672,6 +738,7 @@ function CluePanel({
           onSelect={onSelect}
           onHoverSuspect={onHoverSuspect}
           onToggleNote={toggleNote}
+          onFaqLookup={onFaqLookup}
         />
       ))}
 

@@ -75,6 +75,7 @@ export default function StartScreen({
   onTutorial,
   onUserLevels,
   onEditor,
+  onFaq,
   onQuit,
 }: {
   onPlay: () => void
@@ -83,6 +84,8 @@ export default function StartScreen({
   onTutorial: () => void
   onUserLevels: () => void
   onEditor: () => void
+  /** Opens the Handakte (the clue reference / FAQ). */
+  onFaq: () => void
   /** Native app only: quit Murdoku (no system back bar in immersive mode). */
   onQuit?: () => void
 }) {
@@ -115,6 +118,11 @@ export default function StartScreen({
 
   return (
     <div className="mk-screen">
+      {/* Handakte: the clue reference, tucked into the top-left corner like the
+          in-game legend trigger (round, brass "?"). */}
+      <button type="button" className="mk-start__faq" onClick={onFaq} title={t('faq.title')}>
+        ?
+      </button>
       <svg className="mk-start__thread" preserveAspectRatio="none" viewBox="0 0 100 100">
         <line x1="8" y1="14" x2="92" y2="78" stroke="#cf463c" strokeWidth="0.18" opacity="0.5" />
         <line x1="90" y1="10" x2="14" y2="86" stroke="#cf463c" strokeWidth="0.18" opacity="0.5" />

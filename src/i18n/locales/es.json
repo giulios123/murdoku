@@ -1518,6 +1518,248 @@
     "glasses": "gafas",
     "bald": "calvo"
   },
+  "faq": {
+    "title": "Manual del detective",
+    "subtitle": "Cómo leer las pistas",
+    "filterCat": "Categoría",
+    "filterEntry": "Tipo de pista",
+    "trapLabel": "Cuidado",
+    "legendBlue": "posible según la pista",
+    "legendRed": "parece posible, pero no cuenta",
+    "legendCross": "bloqueado por la regla básica",
+    "legendRoom": "referencia de la pista",
+    "legendRoomRed": "no cumple la condición",
+    "cat": {
+      "basics": "Fundamentos",
+      "objects": "Objetos",
+      "rooms": "Habitaciones",
+      "position": "Posición en el tablero",
+      "direction": "Dirección y distancia",
+      "social": "Compañía",
+      "special": "Formas especiales",
+      "board": "Pistas globales"
+    },
+    "v": {
+      "bed": "Cama",
+      "chair": "Silla",
+      "carpet": "Alfombra",
+      "not": "NO …",
+      "table": "Mesa",
+      "oneOf": "uno de varios",
+      "window": "Ventana",
+      "door": "Puerta",
+      "fridge": "Nevera",
+      "plusAlone": "+ a solas",
+      "plusNotAlone": "+ con alguien",
+      "plain": "forma básica",
+      "column": "Columna",
+      "row": "Fila",
+      "otherRoom": "otra habitación",
+      "north": "al norte",
+      "east": "al este",
+      "northeast": "al noreste",
+      "south": "al sur",
+      "southeast": "al sureste",
+      "northwest": "al noroeste",
+      "noDir": "sin dirección",
+      "inside": "dentro",
+      "outside": "fuera",
+      "uniqueOutside": "única persona fuera",
+      "twoWest": "2 columnas al oeste",
+      "oneSouth": "1 fila al sur",
+      "some": "de al menos uno",
+      "all": "de todos",
+      "mateInside": "el otro dentro",
+      "mateOutside": "el otro fuera",
+      "none": "nadie",
+      "someone": "alguien",
+      "allOthers": "todos los demás",
+      "person": "persona concreta",
+      "trait": "alguien con un rasgo",
+      "notNearTable": "no junto a una mesa",
+      "notInRoom": "no en la cocina",
+      "onChair": "en una silla",
+      "nearTable": "junto a una mesa",
+      "and": "Y",
+      "or": "O",
+      "oneEmpty": "1 habitación vacía",
+      "noneEmpty": "ninguna vacía",
+      "atMost": "como mucho 2",
+      "atLeast": "al menos 1",
+      "notExactly": "no exactamente 2"
+    },
+    "e": {
+      "rulePermutation": {
+        "title": "Cada fila y cada columna, exactamente una vez",
+        "body": "Cada persona –los sospechosos y la víctima– ocupa su propia fila y su propia columna. En cuanto una figura está colocada, toda su fila y su columna quedan bloqueadas para los demás. En el tablero están Bruno y Clara: las casillas bloqueadas aparecen tachadas y solo las azules quedan libres para el resto.",
+        "trap": "La víctima también cuenta: su fila y su columna le pertenecen solo a ella."
+      },
+      "ruleMurder": {
+        "title": "La habitación de la víctima",
+        "body": "En la habitación de la víctima hay exactamente UN sospechoso: el asesino. Ni ninguno ni dos: exactamente uno. Así que esa habitación siempre acaba con exactamente dos personas. En el tablero la víctima ya está colocada; como cuenta igual que cualquier persona, su fila y su columna ya aparecen tachadas. El asesino está en una de las casillas azules; el resto de sospechosos queda fuera de la habitación."
+      },
+      "termSuspects": {
+        "title": "¿Sospechosos o personas?",
+        "body": "«Sospechosos» significa solo los sospechosos: la víctima no cuenta. «Personas» significa todos: sospechosos y víctima juntos. Las pistas eligen estas palabras a propósito; lee con atención a quién se refieren.\nEn el juego, las palabras en negrita llevan su explicación: en el ordenador aparece al pasar el ratón y en el móvil en la nota del expediente, tras la cara de la tarjeta."
+      },
+      "termVictim": {
+        "title": "La víctima",
+        "body": "La víctima se deduce como cualquier otra persona: ocupa una fila, una columna y una habitación. De su aspecto solo se conoce el género; barba, gafas o peinado quedan ocultos y por eso nunca aparecen en una pista. En las pistas de rasgos, la víctima solo cuenta cuando se trata del género."
+      },
+      "termOutside": {
+        "title": "Dentro y fuera",
+        "body": "Si una zona cuenta como «fuera» no lo dice el dibujo, sino la leyenda sobre las pistas («Fuera: …»). Solo las zonas allí nombradas están fuera; todo lo demás está dentro.",
+        "trap": "Un suelo verde no significa nada: solo decide la leyenda."
+      },
+      "termWater": {
+        "title": "El agua es transitable",
+        "body": "Un lago es una habitación completamente normal: en una casilla de agua libre puede haber alguien, igual que en cualquier suelo. El juego lo anuncia como regla básica en cuanto un tablero tiene agua."
+      },
+      "onObject": {
+        "title": "Sobre un objeto",
+        "body": "La persona está en una casilla con ese tipo de objeto, cualquiera de ellas en todo el tablero. Con tienda, sombrilla o biombo se dice «en», «bajo» o «detrás», pero siempre se refiere a la casilla. En azul ves todas las casillas posibles; la forma NO invierte el conjunto."
+      },
+      "nearObject": {
+        "title": "Junto a un objeto",
+        "body": "«Junto a» significa: directamente encima, debajo, a la izquierda o a la derecha, Y en la misma habitación que el objeto. Las casillas rojas tocan una mesa pero no cuentan: quedan tras la pared, en la habitación vecina, o solo en diagonal.",
+        "trap": "La diagonal nunca es «junto a». Y una pared separa: la casilla del otro lado no cuenta."
+      },
+      "nearPortal": {
+        "title": "Junto a la ventana, junto a la puerta",
+        "body": "La persona está en una casilla pegada a una ventana o a una puerta. Las puertas están en la pared entre dos habitaciones y cuentan en AMBOS lados; una ventana pertenece solo a la habitación en cuya pared está."
+      },
+      "sameRoomAsObject": {
+        "title": "En una habitación con un objeto",
+        "body": "La persona está en una habitación que contiene ese objeto, en cualquier punto de ella. La forma «a solas con» lo endurece: nadie más en esa habitación, ni siquiera la víctima."
+      },
+      "sameLineAsObject": {
+        "title": "Misma fila/columna que un objeto",
+        "body": "La persona comparte fila o columna con un objeto de ese tipo. Un añadido puede limitar la habitación: «en otra habitación» significa que la casilla está en la línea pero no en la habitación del objeto."
+      },
+      "directionFromObject": {
+        "title": "Dirección desde un objeto",
+        "body": "«Al norte de una planta» es el semiplano: cada casilla estrictamente más arriba; la columna da igual. Las direcciones diagonales («al noreste») exigen ambas a la vez: más arriba Y más a la derecha. Con varios objetos del tipo basta uno; formas como «de cada árbol» o con coordenada («el árbol en G7») lo dicen expresamente.",
+        "trap": "A la misma altura NO es al norte: las casillas rojas quedan fuera."
+      },
+      "besideSameObject": {
+        "title": "Junto al mismo objeto",
+        "body": "Aquí cuenta la instancia, no el tipo: ambos están junto a LA MISMA mesa. Las casillas de mesa contiguas son una sola mesa; la mesa de la otra habitación es otro objeto (rojo). Dos sillas juntas, en cambio, siempre son dos sillas."
+      },
+      "inRoom": {
+        "title": "En una habitación concreta",
+        "body": "La persona está en algún punto de la habitación nombrada. Los añadidos endurecen: «a solas» = nadie más allí (ni la víctima), «con alguien» = al menos otra persona."
+      },
+      "inRoomAdjacentTo": {
+        "title": "En una habitación contigua a …",
+        "body": "La persona está en alguna habitación que comparte una pared con la nombrada. La habitación nombrada NO cuenta: una habitación no es su propia vecina (rojo)."
+      },
+      "adjacentRooms": {
+        "title": "En habitaciones contiguas",
+        "body": "Los dos están en DOS habitaciones DISTINTAS que comparten una pared. Estar en la misma habitación que Emil (rojo) no cumple la pista. La pista vale en ambos sentidos."
+      },
+      "neighborRoomEmpty": {
+        "title": "Una habitación contigua estaba vacía",
+        "body": "Al menos una de las habitaciones que lindan con la de Frida (con contorno) está completamente vacía: ninguna persona, ni siquiera la víctima. Negada dice: TODAS las contiguas estaban ocupadas."
+      },
+      "neighborRoomCount": {
+        "title": "Habitación contigua completamente en una dirección",
+        "body": "Una habitación que linda con la de Emil contiene exactamente ese número de sospechosos; por ejemplo: «En una habitación contigua, completamente al este de él, había exactamente 2 sospechosos.» Con dirección, CADA casilla de esa habitación debe estar estrictamente en ese lado; el otro eje da completamente igual. Ejemplo con el sur: cumplen la habitación 3 Y la 4, aunque la 3 quede además muy al este; la 2 no (rojo).",
+        "trap": "«Completamente al sur» no significa «justo debajo de él»: también cuenta una habitación muy al este, mientras quede entera por debajo de la fila de Emil."
+      },
+      "inLine": {
+        "title": "En la fila N / columna N",
+        "body": "La persona está en algún punto de la fila o columna indicada; las coordenadas del borde ayudan a leerlo. Recuerda la regla básica: al final, cada fila y cada columna tiene exactamente una persona."
+      },
+      "corner": {
+        "title": "En una esquina",
+        "body": "Esquina significa esquina de HABITACIÓN: una casilla donde se juntan dos paredes perpendiculares de su habitación. Las paredes interiores también cuentan, así que hay muchas más esquinas que las cuatro del tablero."
+      },
+      "atWall": {
+        "title": "Junto a una pared",
+        "body": "Al menos un lado de la casilla es una pared: el borde del tablero o el límite con otra habitación. En habitaciones pequeñas eso se cumple casi siempre; solo queda fuera el centro de las grandes."
+      },
+      "inout": {
+        "title": "Dentro / Fuera",
+        "body": "«Fuera» son exactamente las zonas de la leyenda («Fuera: …»); todo lo demás es dentro. También existe la forma «única»: «la única persona fuera» significa fuera Y nadie más allí; la víctima cuenta."
+      },
+      "direction": {
+        "title": "Al norte/sur/… de la persona X",
+        "body": "Un punto cardinal («al sur de Bruno») es un semiplano: cada casilla estrictamente por debajo de su fila; la columna da igual. La diagonal («al sureste») exige ambas a la vez: al sur Y al este, un cuarto del tablero.",
+        "trap": "La propia fila o columna de Bruno nunca cuenta: «al sur» es estricto (rojo)."
+      },
+      "offset": {
+        "title": "Exactamente N casillas en una dirección",
+        "body": "«Exactamente 2 columnas al oeste de Bruno» fija SOLO la distancia de columnas: dos columnas más a la izquierda; la fila queda libre, por eso toda la columna está en azul. Cualquier otra distancia en esa dirección queda fuera (rojo)."
+      },
+      "directionFromAttr": {
+        "title": "Dirección desde portadores de un rasgo",
+        "body": "«Al sur de una persona con barba»: al sur de AL MENOS una; los semiplanos se unen. «Al sur de todas las personas con barba»: al sur de CADA una; solo queda la intersección."
+      },
+      "insideXor": {
+        "title": "Uno dentro, otro fuera",
+        "body": "De los dos, exactamente una persona está dentro y otra fuera; nunca ambos en el mismo lado. Si Jonas está dentro, Klara debe estar fuera (azul), y al revés."
+      },
+      "alone": {
+        "title": "A solas en la habitación",
+        "body": "No hay nadie más en la habitación: ningún sospechoso y tampoco la víctima. Todas las habitaciones con una figura colocada quedan descartadas; solo siguen azules las casillas de las habitaciones aún vacías.",
+        "trap": "Quien estaba a solas nunca es el asesino: el asesino tenía a la víctima consigo."
+      },
+      "notAlone": {
+        "title": "No a solas",
+        "body": "Al menos otra persona comparte la habitación: un sospechoso o la víctima. Aquí los demás ya están colocados: Clara debe ir a una de las habitaciones ocupadas (azul)."
+      },
+      "sameRoom": {
+        "title": "En la misma habitación que X",
+        "body": "Ambos están en la misma habitación. La forma «a solas con» lo endurece: SOLO ellos dos, nadie más, ni siquiera la víctima."
+      },
+      "aloneWith": {
+        "title": "A solas con X y N más",
+        "body": "La habitación contiene exactamente: la persona, las personas nombradas y el número indicado de otras con el rasgo; nadie más, ni siquiera la víctima. Un añadido como «una de ellas al este de ella» limita además la posición."
+      },
+      "roomAttribute": {
+        "title": "Quién más estaba en la habitación (rasgo)",
+        "body": "Una afirmación sobre los DEMÁS de la habitación: «nadie con barba», «alguien con barba», «todos los demás tenían barba». El tablero muestra qué habitaciones siguen siendo posibles con las figuras colocadas.\nEn las afirmaciones de género la víctima cuenta; en el resto de rasgos solo se habla de sospechosos: la víctima solo muestra su género."
+      },
+      "roomCompanion": {
+        "title": "A solas con N portadores del rasgo",
+        "body": "En la habitación hay exactamente N sospechosos más, y TODOS llevan el rasgo. Aquí: exactamente dos sospechosos con barba, así que solo su habitación es posible (azul). La víctima no se cuenta aquí."
+      },
+      "roomExists": {
+        "title": "Alguien en la habitación sobre/junto a un objeto",
+        "body": "En la habitación de la persona hay además alguien concreto –una persona nombrada o alguien con un rasgo– sobre o junto al objeto indicado (también valen esquina, pared, ventana o puerta). En el tablero Bruno está sobre la silla, así que Alma debe estar en la habitación de Bruno (azul)."
+      },
+      "not": {
+        "title": "NO …",
+        "body": "Casi toda afirmación existe también negada: lo que antes era posible ahora está prohibido (rojo) y el resto pasa a ser posible (azul). Además de NO hay una segunda forma añadida: «la única persona que …»; mira su propia entrada."
+      },
+      "unique": {
+        "title": "La única persona que …",
+        "body": "Dos afirmaciones en una: la persona cumple la condición Y nadie más en todo el tablero la cumple. «El único en una silla» significa: David está en una silla y todos los demás en ninguna. La forma existe para muchas pistas: sobre/junto a un objeto, junto a una ventana, junto a una puerta, dentro/fuera.",
+        "trap": "La víctima cuenta: si estuviera en la segunda silla, David no sería el único."
+      },
+      "andOr": {
+        "title": "Y / O",
+        "body": "Con Y deben cumplirse todas las partes a la vez: queda la intersección (aquí, una sola casilla). Con O basta una parte: los conjuntos se unen, y también pueden cumplirse ambas."
+      },
+      "emptyRooms": {
+        "title": "Exactamente N habitaciones vacías",
+        "body": "Una pista sobre todo el tablero: exactamente ese número de habitaciones acaba sin nadie; cuentan sospechosos y víctima. «Ninguna habitación quedó vacía» significa: en cada habitación hay alguien. El tablero muestra un reparto terminado como ejemplo."
+      },
+      "countOnObject": {
+        "title": "Exactamente N personas sobre el objeto X",
+        "body": "En todas las casillas de ese tipo de objeto juntas hay exactamente N personas; aquí: exactamente una persona en una silla, las otras dos sillas quedan libres.",
+        "trap": "La víctima cuenta: «exactamente 1 en una silla» puede significar que allí está la víctima, y ningún sospechoso."
+      },
+      "roomOccupancy": {
+        "title": "Cada habitación: al menos/como mucho N",
+        "body": "Un límite que TODAS las habitaciones deben respetar: al menos, como mucho, exactamente o no exactamente N; sobre personas o solo sospechosos. «Cada habitación como mucho 2 personas» prohíbe cualquier trío."
+      },
+      "countWithAttr": {
+        "title": "Exactamente N con un rasgo dentro/fuera",
+        "body": "Cuenta a los portadores de un rasgo en una zona: «Exactamente 2 mujeres estaban fuera.» Fuera es lo que dice la leyenda. La pista aclara si se refiere a personas (con la víctima) o solo a sospechosos."
+      }
+    }
+  },
   "cond": {
     "suspectsUnit": "sospechosos",
     "adjTargetRoom": "una habitación",

@@ -1417,6 +1417,248 @@
     "glasses": "glasses",
     "bald": "bald"
   },
+  "faq": {
+    "title": "Casebook",
+    "subtitle": "How to read the clues",
+    "filterCat": "Category",
+    "filterEntry": "Clue type",
+    "trapLabel": "Watch out",
+    "legendBlue": "possible by this clue",
+    "legendRed": "looks possible – doesn't count",
+    "legendCross": "blocked by the base rule",
+    "legendRoom": "what the clue refers to",
+    "legendRoomRed": "does not qualify",
+    "cat": {
+      "basics": "Basics",
+      "objects": "Objects",
+      "rooms": "Rooms",
+      "position": "Position on the board",
+      "direction": "Direction & distance",
+      "social": "Company",
+      "special": "Special forms",
+      "board": "Global clues"
+    },
+    "v": {
+      "bed": "Bed",
+      "chair": "Chair",
+      "carpet": "Carpet",
+      "not": "NOT …",
+      "table": "Table",
+      "oneOf": "one of several",
+      "window": "Window",
+      "door": "Door",
+      "fridge": "Fridge",
+      "plusAlone": "+ alone",
+      "plusNotAlone": "+ not alone",
+      "plain": "basic form",
+      "column": "Column",
+      "row": "Row",
+      "otherRoom": "other room",
+      "north": "north of",
+      "east": "east of",
+      "northeast": "northeast of",
+      "south": "south of",
+      "southeast": "southeast of",
+      "northwest": "northwest of",
+      "noDir": "no direction",
+      "inside": "inside",
+      "outside": "outside",
+      "uniqueOutside": "only person outside",
+      "twoWest": "2 columns west",
+      "oneSouth": "1 row south",
+      "some": "of at least one",
+      "all": "of all of them",
+      "mateInside": "the other inside",
+      "mateOutside": "the other outside",
+      "none": "nobody",
+      "someone": "someone",
+      "allOthers": "all the others",
+      "person": "a named person",
+      "trait": "someone with a trait",
+      "notNearTable": "not beside a table",
+      "notInRoom": "not in the kitchen",
+      "onChair": "on a chair",
+      "nearTable": "beside a table",
+      "and": "AND",
+      "or": "OR",
+      "oneEmpty": "1 room empty",
+      "noneEmpty": "no room empty",
+      "atMost": "at most 2",
+      "atLeast": "at least 1",
+      "notExactly": "not exactly 2"
+    },
+    "e": {
+      "rulePermutation": {
+        "title": "Every row, every column – exactly once",
+        "body": "Every person – the suspects and the victim – occupies a row and a column of their own. Once a figure is placed, its whole row and column are blocked for everyone else. On the board Bruno and Clara are placed: every blocked cell is crossed out, only the blue ones remain for the others.",
+        "trap": "The victim counts too – its row and column belong to it alone."
+      },
+      "ruleMurder": {
+        "title": "The victim's room",
+        "body": "The victim's room holds exactly ONE suspect – the murderer. Not none, not two: exactly one. So the victim's room always ends up with exactly two people. On the board the victim is already placed – and since it counts like any person, its row and column are already crossed out. The murderer stands on one of the blue cells; every other suspect stands outside the room."
+      },
+      "termSuspects": {
+        "title": "Suspects or people?",
+        "body": "\"Suspects\" means only the suspects – the victim does not count. \"People\" means everyone: suspects and victim together. Clues pick these words deliberately – read carefully who is meant.\nIn the game the bold words carry their explanation: a hover tooltip on desktop, the dossier note behind the card face on phones."
+      },
+      "termVictim": {
+        "title": "The victim",
+        "body": "The victim is deduced like any other person: it occupies a row, a column and a room. Of its appearance only the gender is known – beard, glasses or hairstyle stay hidden and therefore never appear in a clue. In trait clues the victim only counts when the trait is gender."
+      },
+      "termOutside": {
+        "title": "Inside and outside",
+        "body": "Whether an area counts as \"outside\" is told by the legend above the clues (\"Outside: …\"), never by the graphics. Only the areas named there are outside – everything else is inside.",
+        "trap": "A green floor means nothing: only the legend decides."
+      },
+      "termWater": {
+        "title": "Water is walkable",
+        "body": "A lake is a perfectly normal room: someone can stand on a free water cell just like on any floor. The game states this as a base rule whenever a board has water."
+      },
+      "onObject": {
+        "title": "On an object",
+        "body": "The person stands on a cell carrying this object type – any of them on the whole board. For a tent, parasol or folding screen the wording is \"in\", \"under\" or \"behind\", but the cell is always what is meant. Blue shows every cell that qualifies; the NOT form flips the set."
+      },
+      "nearObject": {
+        "title": "Beside an object",
+        "body": "\"Beside\" means directly above, below, left or right – AND in the same room as the object. The red cells do touch a table but do not count: they lie behind the wall in the next room, or only diagonally.",
+        "trap": "Diagonal is never \"beside\". And a wall separates: the cell on the far side does not belong."
+      },
+      "nearPortal": {
+        "title": "By a window, by a door",
+        "body": "The person stands on a cell directly at a window or a door. Doors sit in the wall between two rooms and count on BOTH sides – a window belongs only to the room whose wall holds it."
+      },
+      "sameRoomAsObject": {
+        "title": "In a room with an object",
+        "body": "The person is in a room that contains this object – anywhere in that room. The \"alone with\" form tightens it: nobody else in that room, not even the victim."
+      },
+      "sameLineAsObject": {
+        "title": "Same row/column as an object",
+        "body": "The person shares a row or column with an object of this type. An add-on can constrain the room: \"in another room\" means the cell lies on the line but not in the object's room."
+      },
+      "directionFromObject": {
+        "title": "Direction from an object",
+        "body": "\"North of a plant\" means the half-plane: every cell strictly further up – the column does not matter. Diagonal directions (\"northeast\") demand both at once: further up AND further right. With several objects of the type, one is enough; forms like \"north of every tree\" or with a coordinate (\"the tree at G7\") say so explicitly.",
+        "trap": "Level with it is NOT north – the red cells are out."
+      },
+      "besideSameObject": {
+        "title": "Beside the same object",
+        "body": "Here the instance counts, not the type: both stand beside exactly THE SAME table. Connected table cells are one single table – the table in the other room is a different object (red). Two chairs side by side, however, are always two chairs."
+      },
+      "inRoom": {
+        "title": "In a specific room",
+        "body": "The person is somewhere in the named room. Add-ons tighten it: \"alone\" = nobody else there (not even the victim), \"not alone\" = at least one other person."
+      },
+      "inRoomAdjacentTo": {
+        "title": "In a room adjoining …",
+        "body": "The person stands in some room that shares a wall edge with the named room. The named room itself does NOT belong – a room is not its own neighbour (red)."
+      },
+      "adjacentRooms": {
+        "title": "In adjoining rooms",
+        "body": "The two stand in TWO DIFFERENT rooms that share a wall edge. Standing in the same room as Emil (red) does not satisfy the clue. The clue works both ways."
+      },
+      "neighborRoomEmpty": {
+        "title": "An adjoining room was empty",
+        "body": "At least one of the rooms bordering Frida's room (outlined) is completely empty – no person, not even the victim. Negated it reads: EVERY adjoining room was occupied."
+      },
+      "neighborRoomCount": {
+        "title": "Adjoining room entirely in one direction",
+        "body": "A room bordering Emil's room holds exactly the stated number of suspects – for example: \"An adjoining room lying entirely east of him held exactly 2 suspects.\" With a direction EVERY cell of that room must lie strictly that way – the other axis does not matter at all. Take south: rooms 3 AND 4 qualify even though room 3 also lies far east; room 2 does not (red).",
+        "trap": "\"Entirely south\" does not mean \"right below him\": a room far to the east counts too, as long as all of it lies below Emil's row."
+      },
+      "inLine": {
+        "title": "In row N / column N",
+        "body": "The person stands somewhere in the named row or column – the coordinates on the edge help you read it off. Remember the base rule: in the end each row and column holds exactly one person."
+      },
+      "corner": {
+        "title": "In a corner",
+        "body": "Corner means a ROOM corner: a cell where two perpendicular walls of its room meet. Interior walls count too – so there are far more corners than the four board corners."
+      },
+      "atWall": {
+        "title": "By a wall",
+        "body": "At least one side of the cell is a wall – the board edge or the border to another room. In small rooms that is true almost everywhere; only the middle of large rooms is out."
+      },
+      "inout": {
+        "title": "Inside / Outside",
+        "body": "\"Outside\" is exactly the set of areas from the legend (\"Outside: …\"), everything else is inside. The \"only one\" form exists here too: \"the only person outside\" means outside AND nobody else there – the victim counts."
+      },
+      "direction": {
+        "title": "North/south/… of person X",
+        "body": "A cardinal (\"south of Bruno\") is a half-plane: every cell strictly below his row – the column does not matter. A diagonal (\"southeast\") demands both at once: south AND east, a quarter of the board.",
+        "trap": "Bruno's own row or column never counts – \"south\" is strict (red)."
+      },
+      "offset": {
+        "title": "Exactly N cells in a direction",
+        "body": "\"Exactly 2 columns west of Bruno\" fixes ONLY the column distance: exactly two columns further left – the row stays completely free, which is why the whole column is blue. Any other distance in that direction is out (red)."
+      },
+      "directionFromAttr": {
+        "title": "Direction from trait carriers",
+        "body": "\"South of a person with a beard\" means: south of AT LEAST one – the carriers' half-planes are united. \"South of everyone with a beard\" means: south of EVERY carrier – only the intersection remains."
+      },
+      "insideXor": {
+        "title": "One inside, one outside",
+        "body": "Of the two, exactly one person is inside and one outside – never both on the same side. If Jonas is inside, Klara must be outside (blue) – and vice versa."
+      },
+      "alone": {
+        "title": "Alone in the room",
+        "body": "Nobody else is in the room – no suspect and not the victim either. Every room with a placed figure is out; only the cells of still-empty rooms stay blue.",
+        "trap": "Whoever was alone is never the murderer – the murderer had the victim for company."
+      },
+      "notAlone": {
+        "title": "Not alone",
+        "body": "At least one other person shares the room – a suspect or the victim. Here everyone else is already placed: Clara must go into one of the occupied rooms (blue)."
+      },
+      "sameRoom": {
+        "title": "In the same room as person X",
+        "body": "Both stand in the same room. The \"alone with\" form tightens it: ONLY the two of them, nobody else – not even the victim."
+      },
+      "aloneWith": {
+        "title": "Alone with X and N others",
+        "body": "The room contains exactly: the person, the named people and the stated number of others carrying the trait – nobody else, not even the victim. An add-on like \"one of them east of her\" additionally constrains the position."
+      },
+      "roomAttribute": {
+        "title": "Who else was in the room (trait)",
+        "body": "A statement about the OTHERS in the room: \"nobody with a beard\", \"someone with a beard\", \"all the others had a beard\". The board shows which rooms are still possible given the placed figures.\nGender statements count the victim; every other trait concerns only suspects – the victim shows nothing but its gender."
+      },
+      "roomCompanion": {
+        "title": "Alone with N trait carriers",
+        "body": "Exactly N other suspects share the room – and ALL of them carry the trait. Here: exactly two bearded suspects, so only their room qualifies (blue). The victim is not counted here."
+      },
+      "roomExists": {
+        "title": "Someone in the room on/beside an object",
+        "body": "The person's room also holds someone specific – a named person or someone with a trait – standing on or beside the named object (a corner, wall, window or door are possible too). On the board Bruno stands on the chair, so Alma must be in Bruno's room (blue)."
+      },
+      "not": {
+        "title": "NOT …",
+        "body": "Almost every statement also exists negated: what was possible before is now forbidden (red) – the rest becomes possible (blue). Besides NOT there is a second add-on form: \"the ONLY one …\" – see its own entry."
+      },
+      "unique": {
+        "title": "The only one …",
+        "body": "Two statements in one: the person meets the condition – AND nobody else on the whole board does. \"The only one on a chair\" means: David sits on a chair, and everyone else sits on none. The form exists for many clues: on/beside an object, by a window, by a door, inside/outside.",
+        "trap": "The victim counts: if it sat on the second chair, David would not be the only one."
+      },
+      "andOr": {
+        "title": "AND / OR",
+        "body": "With AND every part must hold at once – the intersection remains (here: a single cell). With OR at least one part is enough – the sets are united, and both may hold."
+      },
+      "emptyRooms": {
+        "title": "Exactly N rooms were empty",
+        "body": "A clue about the whole board: exactly that many rooms end up holding nobody – suspects and victim count. \"No room was empty\" means: someone stands in every room. The board shows one finished arrangement as an example."
+      },
+      "countOnObject": {
+        "title": "Exactly N people on object X",
+        "body": "Across all cells of this object type exactly N people stand – here: exactly one person on a chair, the other two chairs stay free.",
+        "trap": "The victim counts: \"exactly 1 on a chair\" can also mean the victim sits there – and no suspect at all."
+      },
+      "roomOccupancy": {
+        "title": "Every room: at least/at most N",
+        "body": "A bound EVERY room must respect: at least, at most, exactly or not exactly N – over people or only suspects. \"Every room at most 2 people\" forbids any group of three."
+      },
+      "countWithAttr": {
+        "title": "Exactly N with a trait inside/outside",
+        "body": "Counts carriers of a trait in an area: \"Exactly 2 women were outside.\" Outside is what the legend names. The clue states whether people (victim included) or only suspects are meant."
+      }
+    }
+  },
   "cond": {
     "suspectsUnit": "suspects",
     "adjTargetRoom": "a room",

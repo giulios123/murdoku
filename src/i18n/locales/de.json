@@ -1582,6 +1582,248 @@
     "glasses": "Brille",
     "bald": "Glatze"
   },
+  "faq": {
+    "title": "Handakte",
+    "subtitle": "So liest du die Hinweise",
+    "filterCat": "Kategorie",
+    "filterEntry": "Hinweisart",
+    "trapLabel": "Achtung",
+    "legendBlue": "laut Hinweis möglich",
+    "legendRed": "sieht möglich aus – zählt nicht",
+    "legendCross": "durch die Grundregel gesperrt",
+    "legendRoom": "Bezugspunkt des Hinweises",
+    "legendRoomRed": "erfüllt die Bedingung nicht",
+    "cat": {
+      "basics": "Grundlagen",
+      "objects": "Objekte",
+      "rooms": "Räume",
+      "position": "Lage am Brett",
+      "direction": "Richtung & Abstand",
+      "social": "Gesellschaft",
+      "special": "Sonderformen",
+      "board": "Globale Hinweise"
+    },
+    "v": {
+      "bed": "Bett",
+      "chair": "Stuhl",
+      "carpet": "Teppich",
+      "not": "NICHT …",
+      "table": "Tisch",
+      "oneOf": "eines von mehreren",
+      "window": "Fenster",
+      "door": "Tür",
+      "fridge": "Kühlschrank",
+      "plusAlone": "+ allein",
+      "plusNotAlone": "+ nicht allein",
+      "plain": "Grundform",
+      "column": "Spalte",
+      "row": "Zeile",
+      "otherRoom": "anderer Raum",
+      "north": "nördlich",
+      "east": "östlich",
+      "northeast": "nordöstlich",
+      "south": "südlich",
+      "southeast": "südöstlich",
+      "northwest": "nordwestlich",
+      "noDir": "ohne Richtung",
+      "inside": "drinnen",
+      "outside": "draußen",
+      "uniqueOutside": "einzige Person draußen",
+      "twoWest": "2 Spalten westlich",
+      "oneSouth": "1 Zeile südlich",
+      "some": "von mindestens einem",
+      "all": "von allen",
+      "mateInside": "der andere drinnen",
+      "mateOutside": "der andere draußen",
+      "none": "niemand",
+      "someone": "jemand",
+      "allOthers": "alle anderen",
+      "person": "bestimmte Person",
+      "trait": "Person mit Merkmal",
+      "notNearTable": "nicht neben einem Tisch",
+      "notInRoom": "nicht in der Küche",
+      "onChair": "auf einem Stuhl",
+      "nearTable": "neben einem Tisch",
+      "and": "UND",
+      "or": "ODER",
+      "oneEmpty": "1 Raum leer",
+      "noneEmpty": "kein Raum leer",
+      "atMost": "höchstens 2",
+      "atLeast": "mindestens 1",
+      "notExactly": "nicht genau 2"
+    },
+    "e": {
+      "rulePermutation": {
+        "title": "Jede Zeile, jede Spalte – genau einmal",
+        "body": "Jede Person – die Verdächtigen und das Opfer – steht in einer eigenen Zeile und einer eigenen Spalte. Sobald eine Figur steht, ist ihre ganze Zeile und Spalte für alle anderen gesperrt. Auf dem Brett sind Bruno und Clara gesetzt: Alle gesperrten Felder sind ausgekreuzt, nur die blauen bleiben für die übrigen Personen.",
+        "trap": "Das Opfer zählt mit – auch seine Zeile und Spalte gehören ihm allein."
+      },
+      "ruleMurder": {
+        "title": "Der Raum des Opfers",
+        "body": "Im Raum des Opfers steht genau EIN Verdächtiger – der Mörder. Nicht keiner, nicht zwei: genau einer. Der Opferraum enthält am Ende also immer genau zwei Personen. Auf dem Brett liegt das Opfer bereits – und weil es wie jede Person zählt, sind seine Zeile und Spalte schon ausgekreuzt. Der Mörder steht auf einem der blauen Felder; alle anderen Verdächtigen stehen außerhalb des Raums."
+      },
+      "termSuspects": {
+        "title": "Verdächtige oder Personen?",
+        "body": "„Verdächtige\" meint nur die Verdächtigen – das Opfer zählt nicht mit. „Personen\" meint alle: Verdächtige und Opfer zusammen. Hinweise wählen diese Wörter mit Absicht – lies genau, wer gemeint ist.\nIm Spiel tragen die fett markierten Wörter ihre Erklärung: Auf dem Rechner zeigt sie ein Mauszeiger-Tooltip, auf dem Handy die Akten-Notiz hinter dem Gesicht der Karte."
+      },
+      "termVictim": {
+        "title": "Das Opfer",
+        "body": "Das Opfer wird mitgerätselt wie jede andere Person: Es belegt eine Zeile, eine Spalte und einen Raum. Von seinem Aussehen ist nur das Geschlecht bekannt – Bart, Brille oder Frisur bleiben verborgen und tauchen darum in keinem Hinweis auf. Bei Merkmals-Hinweisen zählt das Opfer deshalb nur mit, wenn es ums Geschlecht geht."
+      },
+      "termOutside": {
+        "title": "Drinnen und draußen",
+        "body": "Ob ein Bereich als „draußen\" gilt, verrät nicht die Grafik, sondern die Legende über den Hinweisen: „Draußen: …\". Nur die dort genannten Bereiche zählen als draußen – alles andere ist drinnen.",
+        "trap": "Ein grüner Boden heißt nichts: Es zählt allein die Legende."
+      },
+      "termWater": {
+        "title": "Wasser ist begehbar",
+        "body": "Ein See ist ein ganz normaler Raum: Auf freien Wasserfeldern kann jemand stehen wie auf jedem Boden. Das Spiel sagt es als Grundregel an, sobald ein Brett Wasser hat."
+      },
+      "onObject": {
+        "title": "Auf einem Objekt",
+        "body": "Die Person steht auf einem Feld mit diesem Objekttyp – irgendeinem davon auf dem ganzen Brett. Bei Zelt, Sonnenschirm oder Paravent heißt es sprachlich „im\", „unter\" oder „hinter\", gemeint ist immer das Feld. Blau sind alle Felder, die in Frage kommen; als NICHT-Form dreht sich die Menge um."
+      },
+      "nearObject": {
+        "title": "Neben einem Objekt",
+        "body": "„Neben\" heißt: direkt darüber, darunter, links oder rechts – UND im selben Raum wie das Objekt. Die roten Felder berühren zwar einen Tisch, zählen aber nicht: Sie liegen hinter der Wand im Nachbarraum oder nur diagonal.",
+        "trap": "Diagonal ist nie „neben\". Und eine Wand trennt: Das Feld auf der anderen Seite gehört nicht dazu."
+      },
+      "nearPortal": {
+        "title": "Am Fenster, an der Tür",
+        "body": "Die Person steht auf einem Feld direkt an einem Fenster bzw. an einer Tür. Türen sitzen in der Wand zwischen zwei Räumen und zählen auf BEIDEN Seiten – ein Fenster gehört nur zu dem Raum, in dessen Wand es sitzt."
+      },
+      "sameRoomAsObject": {
+        "title": "Im Raum mit einem Objekt",
+        "body": "Die Person ist in einem Raum, in dem dieses Objekt steht – egal wo im Raum. Die „allein mit\"-Form verschärft: sonst niemand in diesem Raum, auch nicht das Opfer."
+      },
+      "sameLineAsObject": {
+        "title": "Gleiche Zeile/Spalte wie ein Objekt",
+        "body": "Die Person teilt eine Zeile oder Spalte mit einem Objekt dieses Typs. Ein Zusatz kann den Raum einschränken: „in einem anderen Raum\" heißt, das Feld liegt zwar in der Linie, aber nicht im Raum des Objekts."
+      },
+      "directionFromObject": {
+        "title": "Richtung von einem Objekt",
+        "body": "„Nördlich einer Pflanze\" meint die Halbebene: jedes Feld strikt weiter oben – die Spalte ist egal. Diagonale Richtungen („nordöstlich\") verlangen beides zugleich: weiter oben UND weiter rechts. Gibt es mehrere Objekte des Typs, genügt eines; Formen wie „von jedem Baum\" oder mit Koordinate („der Baum bei G7\") sagen es ausdrücklich.",
+        "trap": "Auf gleicher Höhe ist NICHT nördlich – die roten Felder scheiden aus."
+      },
+      "besideSameObject": {
+        "title": "Neben demselben Objekt",
+        "body": "Hier zählt die Instanz, nicht der Typ: Beide stehen neben genau DEMSELBEN Tisch. Zusammenhängende Tischfelder sind ein einziger Tisch – der Tisch im anderen Raum ist ein anderes Objekt (rot). Zwei Stühle nebeneinander bleiben dagegen immer zwei Stühle."
+      },
+      "inRoom": {
+        "title": "In einem bestimmten Raum",
+        "body": "Die Person ist irgendwo in dem genannten Raum. Zusätze verschärfen: „allein\" = sonst niemand dort (auch nicht das Opfer), „nicht allein\" = mindestens eine weitere Person."
+      },
+      "inRoomAdjacentTo": {
+        "title": "In einem Nachbarraum von …",
+        "body": "Die Person steht in irgendeinem Raum, der eine Wandkante mit dem genannten Raum teilt. Der genannte Raum selbst gehört NICHT dazu – ein Raum ist nicht sein eigener Nachbar (rot)."
+      },
+      "adjacentRooms": {
+        "title": "In angrenzenden Räumen",
+        "body": "Die beiden stehen in ZWEI VERSCHIEDENEN Räumen, die eine Wandkante teilen. Im selben Raum wie Emil zu stehen (rot) erfüllt den Hinweis nicht. Der Hinweis gilt in beide Richtungen."
+      },
+      "neighborRoomEmpty": {
+        "title": "Ein Nachbarraum war leer",
+        "body": "Mindestens einer der Räume, die an Fridas Raum grenzen (umrandet), ist völlig leer – keine Person, auch nicht das Opfer. Verneint heißt es: JEDER Nachbarraum war belegt."
+      },
+      "neighborRoomCount": {
+        "title": "Angrenzender Raum, komplett in einer Richtung",
+        "body": "Ein Raum, der an Emils Raum grenzt, enthält genau die genannte Zahl Verdächtiger – zum Beispiel: „In einem angrenzenden Raum, der komplett östlich von ihm lag, waren genau 2 Verdächtige.\" Mit Richtung muss JEDES Feld dieses Raums strikt in dieser Richtung liegen – die andere Achse ist völlig egal. Beispiel Süden: Raum 3 UND Raum 4 erfüllen es, obwohl Raum 3 zugleich weit im Osten liegt; Raum 2 nicht (rot).",
+        "trap": "„Komplett südlich\" heißt nicht „genau unter ihm\": Auch ein Raum weit im Osten zählt, solange er ganz unterhalb von Emils Zeile liegt."
+      },
+      "inLine": {
+        "title": "In Zeile N / Spalte N",
+        "body": "Die Person steht irgendwo in der genannten Zeile bzw. Spalte – die Koordinaten am Rand helfen beim Ablesen. Denk an die Grundregel: Am Ende steht in jeder Zeile und Spalte genau eine Person."
+      },
+      "corner": {
+        "title": "In einer Ecke",
+        "body": "Ecke heißt RAUM-Ecke: ein Feld, an dem zwei senkrecht aufeinanderstehende Wände seines Raums zusammentreffen. Auch Innenwände zählen – es gibt also weit mehr Ecken als die vier Brett-Ecken."
+      },
+      "atWall": {
+        "title": "An einer Wand",
+        "body": "Mindestens eine Seite des Felds ist eine Wand – der Brettrand oder die Grenze zu einem anderen Raum. In kleinen Räumen ist das fast überall wahr; nur die Mitte großer Räume scheidet aus."
+      },
+      "inout": {
+        "title": "Drinnen / Draußen",
+        "body": "„Draußen\" sind genau die Bereiche aus der Legende („Draußen: …\"), alles andere ist drinnen. Auch hier gibt es die „einzige\"-Form: „die einzige Person draußen\" heißt draußen UND sonst niemand dort – das Opfer zählt mit."
+      },
+      "direction": {
+        "title": "Nördlich/südlich/… von Person X",
+        "body": "Eine Himmelsrichtung („südlich von Bruno\") ist eine Halbebene: jedes Feld strikt unterhalb seiner Zeile – die Spalte ist egal. Diagonal („südöstlich\") verlangt beides zugleich: südlich UND östlich, also ein Viertel des Bretts.",
+        "trap": "Gleiche Zeile bzw. Spalte wie Bruno zählt nie – „südlich\" ist strikt (rot)."
+      },
+      "offset": {
+        "title": "Genau N Felder in eine Richtung",
+        "body": "„Genau 2 Spalten westlich von Bruno\" legt NUR den Spaltenabstand fest: exakt zwei Spalten weiter links – die Zeile bleibt völlig frei, darum ist die ganze Spalte blau. Jeder andere Abstand in dieser Richtung scheidet aus (rot)."
+      },
+      "directionFromAttr": {
+        "title": "Richtung von Merkmalsträgern",
+        "body": "„Südlich einer Person mit Bart\" heißt: südlich von MINDESTENS einer – die Halbebenen der Träger werden vereinigt. „Südlich von allen Personen mit Bart\" heißt: südlich von JEDEM Träger – es bleibt nur der Schnitt."
+      },
+      "insideXor": {
+        "title": "Einer drinnen, einer draußen",
+        "body": "Von den beiden ist genau eine Person drinnen und eine draußen – nie beide auf derselben Seite. Steht Jonas drinnen, muss Klara nach draußen (blau) – und umgekehrt."
+      },
+      "alone": {
+        "title": "Allein im Raum",
+        "body": "Niemand sonst ist im Raum – kein Verdächtiger und auch nicht das Opfer. Alle Räume mit einer gesetzten Figur scheiden aus; blau bleiben nur die Felder der noch leeren Räume.",
+        "trap": "Wer allein war, ist nie der Mörder – der Mörder hatte das Opfer bei sich."
+      },
+      "notAlone": {
+        "title": "Nicht allein",
+        "body": "Mindestens eine weitere Person teilt den Raum – ein Verdächtiger oder das Opfer. Hier sind alle anderen schon gesetzt: Clara muss in einen der belegten Räume (blau)."
+      },
+      "sameRoom": {
+        "title": "Im selben Raum wie Person X",
+        "body": "Beide stehen im selben Raum. Die „allein mit\"-Form verschärft: NUR die beiden, sonst niemand – auch nicht das Opfer."
+      },
+      "aloneWith": {
+        "title": "Allein mit X und N weiteren",
+        "body": "Der Raum enthält genau: die Person selbst, die genannten Personen und die genannte Zahl weiterer Personen mit dem Merkmal – niemanden sonst, auch nicht das Opfer. Ein Zusatz wie „einer davon östlich von ihr\" schränkt zusätzlich die Lage ein."
+      },
+      "roomAttribute": {
+        "title": "Wer sonst im Raum war (Merkmal)",
+        "body": "Eine Aussage über die ANDEREN im Raum: „niemand mit Bart\", „jemand mit Bart\", „alle anderen hatten einen Bart\". Auf dem Brett siehst du, welche Räume nach den gesetzten Figuren noch in Frage kommen.\nBei Geschlechts-Aussagen zählt das Opfer mit; bei allen anderen Merkmalen geht es nur um Verdächtige – das Opfer zeigt ja nur sein Geschlecht."
+      },
+      "roomCompanion": {
+        "title": "Allein mit N Merkmalsträgern",
+        "body": "Im Raum stehen genau N andere Verdächtige – und ALLE davon tragen das Merkmal. Hier: genau zwei Verdächtige mit Bart, also kommt nur deren Raum in Frage (blau). Das Opfer wird bei dieser Zählung nicht mitgezählt."
+      },
+      "roomExists": {
+        "title": "Jemand im Raum auf/neben einem Objekt",
+        "body": "Im Raum der Person steht außerdem jemand Bestimmtes – eine benannte Person oder jemand mit einem Merkmal – und zwar auf bzw. neben dem genannten Objekt (auch Ecke, Wand, Fenster oder Tür sind möglich). Auf dem Brett steht Bruno auf dem Stuhl, also muss Alma in Brunos Raum (blau)."
+      },
+      "not": {
+        "title": "NICHT …",
+        "body": "Fast jede Aussage gibt es auch verneint: Was vorher möglich war, ist jetzt verboten (rot) – der Rest wird möglich (blau). Neben NICHT gibt es noch eine zweite Zusatz-Form: „der/die EINZIGE …\" – siehe den eigenen Eintrag."
+      },
+      "unique": {
+        "title": "Der/die Einzige …",
+        "body": "Zwei Aussagen in einer: Die Person erfüllt die Bedingung – UND sonst niemand auf dem ganzen Brett. „Der Einzige auf einem Stuhl\" heißt: David sitzt auf einem Stuhl, und alle anderen sitzen auf keinem. Die Form gibt es zu vielen Hinweisen: auf/neben einem Objekt, am Fenster, an einer Tür, drinnen/draußen.",
+        "trap": "Das Opfer zählt mit: Säße es auf dem zweiten Stuhl, wäre David nicht der Einzige."
+      },
+      "andOr": {
+        "title": "UND / ODER",
+        "body": "Bei UND müssen alle Teile gleichzeitig gelten – es bleibt der Schnitt der Mengen (hier: ein einziges Feld). Bei ODER genügt mindestens ein Teil – die Mengen werden vereinigt, und es dürfen auch beide zutreffen."
+      },
+      "emptyRooms": {
+        "title": "Genau N Räume waren leer",
+        "body": "Ein Hinweis über das ganze Brett: Genau so viele Räume enthalten am Ende niemanden – Verdächtige und Opfer zählen. „Kein Raum war leer\" heißt: In jedem Raum steht jemand. Das Brett zeigt eine fertige Verteilung als Beispiel."
+      },
+      "countOnObject": {
+        "title": "Genau N Personen auf Objekt X",
+        "body": "Auf allen Feldern dieses Objekttyps zusammen stehen genau N Personen – hier: genau eine Person auf einem Stuhl, die beiden anderen Stühle bleiben frei.",
+        "trap": "Das Opfer zählt mit: „Genau 1 auf einem Stuhl\" kann auch heißen, dass DORT das Opfer sitzt – und kein Verdächtiger."
+      },
+      "roomOccupancy": {
+        "title": "Jeder Raum: mindestens/höchstens N",
+        "body": "Eine Schranke, die JEDER Raum einhalten muss: mindestens, höchstens, genau oder nicht genau N – wahlweise über Personen oder nur Verdächtige. „Jeder Raum höchstens 2 Personen\" verbietet also jede Dreiergruppe."
+      },
+      "countWithAttr": {
+        "title": "Genau N mit Merkmal drinnen/draußen",
+        "body": "Zählt Träger eines Merkmals in einem Bereich: „Genau 2 Frauen waren draußen.\" Draußen ist, was die Legende nennt. Der Hinweis sagt dazu, ob Personen (mit Opfer) oder nur Verdächtige gemeint sind."
+      }
+    }
+  },
   "cond": {
     "suspectsUnit": "Verdächtige",
     "adjTargetRoom": "einen Raum",
