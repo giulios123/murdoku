@@ -16,6 +16,7 @@ import { GENERATOR_OBJECT_TYPES, type GenDifficulty } from '../engine/generator/
 import { Rng } from '../engine/generator/random.ts'
 import { generateDailyLevelAsync, type GenHandle } from './generatorClient.ts'
 import { loadDailyLevels, saveDailyLevel } from './storage.ts'
+import { SPOTLIGHT_FAMILIES } from './variety.ts'
 import i18n, { SUPPORTED_LANGS } from '../i18n/index.ts'
 
 /** First month with dailies: July 2026 (the calendar never navigates earlier). */
@@ -264,6 +265,37 @@ export interface DailyHandle {
 }
 
 /**
+ * Deterministic "Tages-Rezept" (Dirk, 16.08.2026): dailies get the variety treatment
+ * WITHOUT any device-local memory — everything derives from the case number, so every
+ * player computes the identical recipe. Today FEATURES one clue family; the features of
+ * the two PREVIOUS days are banned (their recipes are pure functions of the date too —
+ * a storage-free cooldown); and the exact-distance family ("genau N Felder") is rationed
+ * to roughly every THIRD day (then still max 1 per level, else 0). Inside the daily's
+ * search the strict flag never flips (its soft budget lies beyond any real runtime), so
+ * bans are hard there — the safety net is the seed-round ladder: the LAST round runs
+ * recipe-free, so a stubborn day still gets its daily, identically on every device.
+ */
+export function dailyRecipe(
+  caseNo: number,
+  round: number,
+): { bannedFamilies?: string[]; spotlightFamily?: string; familyCaps?: Record<string, number> } {
+  if (round >= 2) return {}
+  const featureOf = (n: number) =>
+    SPOTLIGHT_FAMILIES[new Rng(n * 7919 + 17).int(SPOTLIGHT_FAMILIES.length)]
+  const feature = featureOf(caseNo)
+  // A day that features the exact-distance family is naturally an allowed day.
+  const offsetAllowed = feature === 'offset' || new Rng(caseNo * 104729 + 5).int(3) === 0
+  const banned = [...new Set([featureOf(caseNo - 1), featureOf(caseNo - 2)])].filter(
+    (f) => f !== feature,
+  )
+  return {
+    familyCaps: { offset: offsetAllowed ? 1 : 0 },
+    ...(banned.length > 0 ? { bannedFamilies: banned } : {}),
+    spotlightFamily: feature,
+  }
+}
+
+/**
  * The level for a day: stored → returned as-is (never regenerated); otherwise
  * generated deterministically and persisted. Up to three seed rounds — a round
  * only ever runs if the previous one found nothing, which is itself a
@@ -290,6 +322,9 @@ export function getDailyLevel(key: string): DailyHandle {
         windows: true,
         doors: false,
         seed: dailySeed(info.caseNo, round),
+        // Deterministic per-day variety (see dailyRecipe) — the daily's substitute for
+        // the device-local cooldown, identical on every device.
+        ...dailyRecipe(info.caseNo, round),
       })
       try {
         const level = brandDaily(await inner.promise, info)

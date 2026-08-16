@@ -219,6 +219,18 @@ export interface GenerateOptions {
   doors?: boolean
   /** Search budget (see GenBudget). Omitted → historical defaults. */
   budget?: GenBudget
+  /** Variety cooldown (the client's local memory, game/variety.ts): capped clue FAMILIES
+   *  kept out of the candidate pools — but only while the search still has comfortable
+   *  time (fail-open past the soft deadline), so a cooldown can never cause "kein Level". */
+  bannedFamilies?: string[]
+  /** Variety spotlight: ONE capped family to actively feature — a random suspect is
+   *  narrowed onto it (the requiredClues mechanics). A soft wish: skipped when no suspect
+   *  has a matching candidate, dropped past the soft deadline, and never applied to the
+   *  easy construction (it pins by cell sets). */
+  spotlightFamily?: string
+  /** Per-request overrides of the per-level family caps (e.g. the daily's { offset: 1 }).
+   *  Purely rule-based — never clock-dependent, so the DETERMINISTIC daily may use it. */
+  familyCaps?: Record<string, number>
 }
 
 /** Random traits: gender; men beard/bald; everyone glasses + hair colour. */
@@ -546,6 +558,54 @@ const familyCap = (family: string): number =>
 /** Does a suspect's clue use a HARD (relational/social) family? */
 const isHardClue = (clue: ClueJson): boolean => leafTypes(clue).some((t) => HARD_CLUE_TYPES.has(t))
 
+/** The capped families of every suspect clue of a level, with multiplicity — the unit
+ *  the client's variety memory (game/variety.ts) counts. Single source: cappedFamilies,
+ *  so the cooldown counts exactly what the in-level caps count. */
+export function levelClueFamilies(level: LevelJson): string[] {
+  const out: string[] = []
+  for (const s of level.suspects) for (const c of s.clues ?? []) out.push(...cappedFamilies(c))
+  return out
+}
+
+/**
+ * Apply the client's variety plan to freshly built candidate pools: drop banned families,
+ * then narrow one random suspect onto the spotlight family (the requiredClues mechanics).
+ * Fail-open BY DESIGN: callers pass strict=false once the soft deadline has passed, a
+ * spotlight with no possible host is simply skipped, and a ban that empties someone's
+ * pool only fails THIS attempt (the free retries come via strict=false). Never applied
+ * to the easy construction's spotlight — it pins by intersecting cell sets, and a purely
+ * relational family would leave the host unpinnable (same reason requiredClues treats
+ * easy specially).
+ */
+function applyVariety(
+  candidates: Map<PersonId, ClueJson[]>,
+  plan: { bannedFamilies?: string[]; spotlightFamily?: string },
+  strict: boolean,
+  rng: Rng,
+  easyConstruct: boolean,
+): boolean {
+  if (!strict) return true
+  const banned = new Set(plan.bannedFamilies ?? [])
+  if (banned.size > 0) {
+    for (const [id, pool] of candidates) {
+      const kept = pool.filter((j) => !cappedFamilies(j).some((f) => banned.has(f)))
+      if (kept.length === 0) return false
+      candidates.set(id, kept)
+    }
+  }
+  const fam = plan.spotlightFamily
+  if (fam && !easyConstruct) {
+    const hosts = [...candidates.keys()].filter((id) =>
+      candidates.get(id)!.some((j) => cappedFamilies(j).includes(fam)),
+    )
+    const host = rng.shuffle(hosts)[0]
+    if (host !== undefined) {
+      candidates.set(host, candidates.get(host)!.filter((j) => cappedFamilies(j).includes(fam)))
+    }
+  }
+  return true
+}
+
 /** Canonical signature of a clue, independent of `and`-part order and key order. Two
  *  suspects whose clue has the same signature show the IDENTICAL hint — which the user
  *  rejects: never the exact same clue twice in one level. The subject ("he/she") is NOT
@@ -718,8 +778,11 @@ function isIdeal(level: LevelJson, target: GenDifficulty | undefined, maxRank: n
  *  coordinate-y and dull, so keep them scarce. */
 const MAX_LINE_CLUES = 1
 
-/** One generation attempt → a candidate level (with its pin count), or null. */
-type Attempt = (rng: Rng, seedIndex: number) => { level: LevelJson; pins: number } | null
+/** One generation attempt → a candidate level (with its pin count), or null. `strict`
+ *  is the variety fail-open switch: true while the search still has comfortable time
+ *  (bans/spotlight apply), false once the soft deadline passed without a candidate —
+ *  then the attempt searches FREE, so a cooldown can never cause "kein Level". */
+type Attempt = (rng: Rng, seedIndex: number, strict: boolean) => { level: LevelJson; pins: number } | null
 
 /**
  * Does any BOARD (global) clue carry nothing — the case cracks without it?
@@ -778,7 +841,9 @@ function pickBestLevel(
     // candidate the run already paid for — and kill the worker with it (exactly how the
     // ">9 rooms" bug turned every 11×11/12×12 run into a 1-second failure).
     try {
-      const result = attempt(new Rng(baseSeed + a * 7919), baseSeed + a)
+      // Variety stays strict while the soft window lasts; attempts past it only ever run
+      // when NOTHING was found yet — exactly when the cooldown must yield (fail-open).
+      const result = attempt(new Rng(baseSeed + a * 7919), baseSeed + a, performance.now() < softDeadline)
       if (result) {
         const rating = logicRating(result.level)
         // Only human-solvable levels are eligible — the player must be able to solve by a
@@ -963,10 +1028,13 @@ export function generateLevel(options: GenerateOptions): LevelJson {
     const start = performance.now()
     const constructDeadline = start + totalMs * 0.6
     const easyCap = options.budget?.easyAttempts ?? 200000
+    // Variety fail-open for the easy construction: strict for the first half of the
+    // construction window, free afterwards (mirrors pickBestLevel's soft-deadline switch).
+    const strictUntil = start + totalMs * 0.3
     for (let a = 0; a < easyCap && performance.now() < constructDeadline; a++) {
       // A crashing attempt counts as a failed one — never end the hunt (see pickBestLevel).
       try {
-        const result = tryGenerate(options, new Rng(baseSeed + a * 7919), baseSeed + a)
+        const result = tryGenerate(options, new Rng(baseSeed + a * 7919), baseSeed + a, undefined, performance.now() < strictUntil)
         if (result) {
           // The construction already guarantees an easy-typical puzzle (rank ≤ 2,
           // hidden singles at most) — so it IS easy. Label it directly instead of
@@ -981,7 +1049,7 @@ export function generateLevel(options: GenerateOptions): LevelJson {
     }
     const remainMs = Math.max(2000, totalMs - (performance.now() - start))
     const fallback = pickBestLevel(
-      (rng, seedIndex) => tryGenerate(options, rng, seedIndex, false),
+      (rng, seedIndex, strict) => tryGenerate(options, rng, seedIndex, false, strict),
       baseSeed + 104729,
       'easy',
       { ...pick, hardTimeBudgetMs: Math.min(pick.hardTimeBudgetMs ?? remainMs, remainMs) },
@@ -991,7 +1059,7 @@ export function generateLevel(options: GenerateOptions): LevelJson {
   }
 
   const level = pickBestLevel(
-    (rng, seedIndex) => tryGenerate(options, rng, seedIndex),
+    (rng, seedIndex, strict) => tryGenerate(options, rng, seedIndex, undefined, strict),
     baseSeed,
     options.difficulty,
     pick,
@@ -1020,6 +1088,12 @@ export interface FillBoardOptions {
    *  are filled in (clue texts need one). The cast is never restyled, so trait seeding is
    *  skipped: a requirement this cast can't satisfy fails honestly instead of mutating it. */
   keepPeople?: boolean
+  /** Variety cooldown / spotlight / cap overrides — same semantics as in GenerateOptions.
+   *  The client only sends banned/spotlight for fills WITHOUT a "Vorgaben" palette (an
+   *  explicit palette outranks the cooldown), and both are fail-open regardless. */
+  bannedFamilies?: string[]
+  spotlightFamily?: string
+  familyCaps?: Record<string, number>
 }
 
 /** Translate a caller budget into pickBestLevel's knobs. */
@@ -1047,10 +1121,24 @@ export function fillBoardClues(board: LevelJson, options: FillBoardOptions = {})
   if (options.difficulty === 'easy') {
     const deadline = performance.now() + (options.budget?.hardMs ?? 20000)
     const easyCap = options.budget?.easyAttempts ?? 200000
+    // Variety fail-open for the easy loop: strict for the first half of the wall clock,
+    // free afterwards — mirrors pickBestLevel's soft-deadline switch.
+    const strictUntil = performance.now() + (options.budget?.hardMs ?? 20000) * 0.5
     for (let a = 0; a < easyCap && performance.now() < deadline; a++) {
       // A crashing attempt counts as a failed one — never end the hunt (see pickBestLevel).
       try {
-        const result = fillAttempt(board, suspectIds, new Rng(baseSeed + a * 7919), 'easy', options.requiredClues, options.requiredAttributes, options.keepPeople)
+        const result = fillAttempt(
+          board,
+          suspectIds,
+          new Rng(baseSeed + a * 7919),
+          'easy',
+          options.requiredClues,
+          options.requiredAttributes,
+          options.keepPeople,
+          options,
+          options.familyCaps,
+          performance.now() < strictUntil,
+        )
         if (result && isShippable(result.level)) {
           // Constructed easy fill (rank ≤ 2, verified in fillAttempt) — label it easy
           // directly; difficultyOf would mislabel a hidden-single level as "medium".
@@ -1070,7 +1158,19 @@ export function fillBoardClues(board: LevelJson, options: FillBoardOptions = {})
     ? pickOptsFrom(options.budget)
     : { maxAttempts: 400, timeBudgetMs: 5000, hardTimeBudgetMs: 20000 }
   const filled = pickBestLevel(
-    (rng) => fillAttempt(board, suspectIds, rng, options.difficulty, options.requiredClues, options.requiredAttributes, options.keepPeople),
+    (rng, _seedIndex, strict) =>
+      fillAttempt(
+        board,
+        suspectIds,
+        rng,
+        options.difficulty,
+        options.requiredClues,
+        options.requiredAttributes,
+        options.keepPeople,
+        options,
+        options.familyCaps,
+        strict,
+      ),
     baseSeed,
     options.difficulty,
     pick,
@@ -1089,6 +1189,10 @@ function fillAttempt(
   requiredClues?: ((json: ClueJson) => boolean)[],
   requiredAttributes?: { attribute: string; value: AttributeValue; count: number }[],
   keepPeople?: boolean,
+  variety?: { bannedFamilies?: string[]; spotlightFamily?: string },
+  familyCaps?: Record<string, number>,
+  /** Variety fail-open switch (see Attempt): bans/spotlight apply only while true. */
+  strict = true,
 ): { level: LevelJson; pins: number } | null {
   const usedName = new Set<string>()
   if (keepPeople) for (const s of board.suspects) if (s.name) usedName.add(s.name)
@@ -1134,6 +1238,10 @@ function fillAttempt(
     const others = suspectIds.filter((o) => o !== id)
     candidates.set(id, candidatesFor(id, solution, basePuzzle, others, true))
   }
+  // Variety FIRST, "Vorgaben" second: an explicit palette outranks the cooldown — if a
+  // ban starves a required matcher, this attempt dies and the strict=false retries run
+  // free. (The client never sends both together anyway.)
+  if (!applyVariety(candidates, variety ?? {}, strict, rng, difficulty === 'easy')) return null
 
   // "Vorgaben": every required clue type must be USED by at least one suspect.
   //
@@ -1169,8 +1277,8 @@ function fillAttempt(
   // stays rare: at most TWO such clues across the whole level (rows and columns combined).
   const chosen =
     difficulty === 'easy'
-      ? constructEasyClues(base, suspectIds, solution, candidates, rng, requiredClues)
-      : constructLogicClues(base, suspectIds, candidates, rng, targetRankOf(difficulty), MAX_LINE_CLUES, difficulty === 'hard')
+      ? constructEasyClues(base, suspectIds, solution, candidates, rng, requiredClues, familyCaps)
+      : constructLogicClues(base, suspectIds, candidates, rng, targetRankOf(difficulty), MAX_LINE_CLUES, difficulty === 'hard', familyCaps)
   if (!chosen) return null
 
   // Limit how many suspects are obvious from the START (their own clue pins one cell):
@@ -1274,6 +1382,8 @@ function tryGenerate(
   /** Build the clues by easy forward-construction. Defaults to on for 'easy';
    *  the easy generator turns it OFF for its generic fallback (see generateLevel). */
   easyConstruct = options.difficulty === 'easy',
+  /** Variety fail-open switch (see Attempt): bans/spotlight apply only while true. */
+  strict = true,
 ): { level: LevelJson; pins: number } | null {
   const { width, height, suspects } = options
   const baseTheme = THEMES.find((t) => t.id === options.themeId) ?? rng.pick(THEMES)
@@ -1342,14 +1452,15 @@ function tryGenerate(
     // Easy construction uses the editor's flat clue vocabulary (same as the editor fill).
     candidates.set(id, candidatesFor(id, solution, basePuzzle, others, easyConstruct))
   }
+  if (!applyVariety(candidates, options, strict, rng, easyConstruct)) return null
 
   // EASY is built by forward construction (place + pin each suspect in the shrinking
   // board) — the SAME path the editor's fill uses, which yields cleaner, more
   // easy-typical puzzles than rating-filtering generic attempts. MEDIUM / HARD (and
   // the easy generic fallback) use natural clue selection.
   const chosen = easyConstruct
-    ? constructEasyClues(base, suspectIds, solution, candidates, rng)
-    : constructLogicClues(base, suspectIds, candidates, rng, targetRankOf(options.difficulty), MAX_LINE_CLUES, options.difficulty === 'hard')
+    ? constructEasyClues(base, suspectIds, solution, candidates, rng, undefined, options.familyCaps)
+    : constructLogicClues(base, suspectIds, candidates, rng, targetRankOf(options.difficulty), MAX_LINE_CLUES, options.difficulty === 'hard', options.familyCaps)
   if (!chosen) return null
 
   // At most ONE suspect may be directly placeable from the start at easy — and NONE from medium
@@ -2528,7 +2639,10 @@ function constructEasyClues(
    *  EVEN IF it isn't in the easy palette — an explicit instruction outranks the default
    *  taste. Whatever the user asks for must be usable, whichever difficulty they picked. */
   required?: ((json: ClueJson) => boolean)[],
+  /** Per-request family-cap overrides (GenerateOptions.familyCaps — e.g. the daily). */
+  familyCapOverrides?: Record<string, number>,
 ): Map<PersonId, ClueJson> | null {
+  const capOf = (family: string): number => familyCapOverrides?.[family] ?? familyCap(family)
   const puzzle = loadLevel(base)
   const board = puzzle.board
   // How naturally a clue reads (object/room first; bare "column/row N" only as a last
@@ -2665,7 +2779,7 @@ function constructEasyClues(
     return m
   }
   for (let guard = 0; guard < 200; guard++) {
-    const over = [...famCounts().entries()].find(([fam, n]) => n > familyCap(fam))?.[0]
+    const over = [...famCounts().entries()].find(([fam, n]) => n > capOf(fam))?.[0]
     if (over === undefined) break
     let fixed = false
     for (const id of rng.shuffle([...suspectIds])) {
@@ -2674,7 +2788,7 @@ function constructEasyClues(
       for (const e of cand.get(id)!) {
         if (e.json === cur || capTypes(e.json).includes(over)) continue
         chosen.set(id, e.json)
-        if ([...famCounts().entries()].every(([fam, n]) => n <= familyCap(fam)) && solvableChain()) {
+        if ([...famCounts().entries()].every(([fam, n]) => n <= capOf(fam)) && solvableChain()) {
           fixed = true
           break
         }
@@ -2705,7 +2819,7 @@ function constructEasyClues(
       })
     for (const e of opts) {
       chosen.set(id, e.json)
-      if ([...famCounts().entries()].every(([fam, n]) => n <= familyCap(fam)) && solvableChain()) break
+      if ([...famCounts().entries()].every(([fam, n]) => n <= capOf(fam)) && solvableChain()) break
       chosen.set(id, cur)
     }
   }
@@ -2726,7 +2840,7 @@ function constructEasyClues(
         chosen.set(id, e.json)
         if (
           duplicateClueCount(chosenList()) < before &&
-          [...famCounts().entries()].every(([fam, n]) => n <= familyCap(fam)) &&
+          [...famCounts().entries()].every(([fam, n]) => n <= capOf(fam)) &&
           solvableChain()
         ) {
           fixed = true
@@ -2851,7 +2965,10 @@ function constructLogicClues(
    *  level leans on MANY hard clues (the user's definition of hard), not on a single
    *  high-rank technique. */
   preferIndirect = false,
+  /** Per-request family-cap overrides (GenerateOptions.familyCaps — e.g. the daily). */
+  familyCapOverrides?: Record<string, number>,
 ): Map<PersonId, ClueJson> | null {
+  const capOf = (family: string): number => familyCapOverrides?.[family] ?? familyCap(family)
   for (const id of suspectIds) if (candidates.get(id)!.length === 0) return null
 
   // Parsed ONCE: board, victim, global/board clues never change while clues are being chosen —
@@ -3004,7 +3121,7 @@ function constructLogicClues(
   // broadening pass silently does nothing, and the repair below cannot take the FIRST of two
   // steps it needs (one swap rarely heals an overshoot of 2). Pass 3 drives this to 0.
   const capOverflow = (): number =>
-    [...typeCounts().entries()].reduce((n, [fam, c]) => n + Math.max(0, c - familyCap(fam)), 0)
+    [...typeCounts().entries()].reduce((n, [fam, c]) => n + Math.max(0, c - capOf(fam)), 0)
   const capOk = (): boolean => capOverflow() === 0
 
   // Tightener: AND another part onto a suspect until the case cracks.
@@ -3155,7 +3272,7 @@ function constructLogicClues(
   //    solvable and within the cap; give up on the board if it can't be met.
   for (let guard = 0; guard < 200 && !capOk(); guard++) {
     const overflowBefore = capOverflow()
-    const overType = [...typeCounts().entries()].find(([fam, n]) => n > familyCap(fam))?.[0]
+    const overType = [...typeCounts().entries()].find(([fam, n]) => n > capOf(fam))?.[0]
     if (overType === undefined) break
     let fixed = false
     for (const id of rng.shuffle([...suspectIds])) {

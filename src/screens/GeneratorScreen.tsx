@@ -5,6 +5,7 @@ import BloodText from '../components/BloodText.tsx'
 import BloodSplatter from '../components/BloodSplatter.tsx'
 import ObjectChip from '../components/ObjectChip.tsx'
 import { generateLevelAsync, longHintSeconds, type GenHandle } from '../game/generatorClient.ts'
+import { recordGeneratedLevel, varietyPlan } from '../game/variety.ts'
 import { levelMetaFromJson, type LevelMeta } from '../game/levels.ts'
 import { loadGenSettings, saveGenSettings } from '../game/storage.ts'
 import {
@@ -126,11 +127,15 @@ export default function GeneratorScreen({ onPlay, onBack, autoStart }: Props) {
       windows,
       doors,
       themeId: theme === 'random' ? undefined : theme,
+      // Variety memory: cool down recently overused clue families, feature one that
+      // hasn't shown up lately (fail-open inside the generator, daily untouched).
+      ...varietyPlan(),
     })
     handleRef.current = handle
     handle.promise
       .then((level) => {
         handleRef.current = null
+        recordGeneratedLevel(level)
         onPlay(levelMetaFromJson(level))
       })
       .catch((err: Error) => {

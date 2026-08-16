@@ -6,6 +6,7 @@ import SuspectsPanel from '../components/SuspectsPanel.tsx'
 import ObjectIcon from '../components/ObjectIcon.tsx'
 import { THEME_IDS, themeRooms, themeOutdoor, themeFromRoomKeys, themeDefaultObjects, redundantBoardClues } from '../engine/generator/index.ts'
 import { fillBoardCluesAsync, generateLevelAsync, longHintSeconds, type GenHandle } from '../game/generatorClient.ts'
+import { recordGeneratedLevel, varietyPlan } from '../game/variety.ts'
 import { VALUED_ATTRS, type Condition } from '../game/editorClues.ts'
 import { LEVELS, levelMetaFromJson, type Difficulty, type LevelMeta } from '../game/levels.ts'
 import {
@@ -281,12 +282,18 @@ export default function EditorScreen({ onBack, onPlay, initialLevel }: Props) {
       themeOutdoor(theme),
     )
     const constrained = !!palette && palette.length > 0
-    const handle = fillBoardCluesAsync(boardLevel, { difficulty, keepPeople }, constrained ? palette : undefined)
+    // Variety memory only for the FREE roll — an explicit "Vorgaben" palette outranks it.
+    const handle = fillBoardCluesAsync(
+      boardLevel,
+      { difficulty, keepPeople, ...(constrained ? {} : varietyPlan()) },
+      constrained ? palette : undefined,
+    )
     randomHandle.current = handle
     handle.promise
       .then((level) => {
         randomHandle.current = null
         setRandomizing(false)
+        if (!constrained) recordGeneratedLevel(level)
         const people = editorPeopleFromLevel(level)
         setState((s) => ({ ...s, suspects: people.suspects, victim: people.victim }))
       })
@@ -321,6 +328,8 @@ export default function EditorScreen({ onBack, onPlay, initialLevel }: Props) {
       themeId: theme,
       objects: themeDefaultObjects(theme),
     })
+    // No variety here: this regen only keeps the BOARD (people + clues are re-rolled
+    // separately), so recording its clue families would pollute the memory.
     regenHandle.current = handle
     handle.promise
       .then((level) => {

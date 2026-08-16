@@ -311,6 +311,32 @@ klein (synchron = UI-Freeze). Ab 10×10 zeigen Generator- UND Editor-Screen
 `generate.generatingLong`; die Sekundenzahl kommt aus `longHintSeconds()` (EINE Quelle,
 spiegelt hardMs — nie wieder hart kodieren).
 
+## Abwechslungs-Gedächtnis (Variety, 16.08.2026)
+
+Der Client merkt sich in localStorage (`murdoku.gen.variety.v1`, `game/variety.ts`) die
+gedeckelten Hinweis-Familien der letzten **4** selbst generierten Level (Einheit:
+`levelClueFamilies` ≡ `cappedFamilies` — der Cooldown zählt exakt, was die Level-Deckel
+zählen). Daraus je Generierung: **Cooldown** (Familien mit ≥2 Vorkommen im Fenster werden
+gesperrt — höchstens die **3 häufigsten gleichzeitig**, sonst ist die strenge Suche
+unbefriedigbar [ohne Kappe gemessen: Fail-open in 9/10 Läufen = gar kein Cooldown]) und
+**Spotlight** (eine im Fenster ungesehene Familie wird über die requiredClues-Mechanik
+aktiv eingebaut). Beides **FAIL-OPEN**: `pickBestLevel` reicht `strict` an jeden Versuch
+durch (streng nur bis zur Soft-Deadline; easy-Schleifen bis zur halben Wanduhr) — „kein
+Level" kann durch Variety nie entstehen. AUSNAHMEN: das **Daily** (muss geräteunabhängig
+sein — bekommt stattdessen das deterministische **Tages-Rezept** `dailyRecipe(caseNo,
+round)` in daily.ts: Feature-Familie des Tages per Rng aus SPOTLIGHT_FAMILIES [Listen-
+ORDNUNG ist Teil des Rezepts!], die Features von gestern/vorgestern gebannt =
+speicherfreier Cooldown, „genau N Felder" nur an ~jedem 3. Tag erlaubt [dann max 1,
+sonst `familyCaps: { offset: 0 }`]; im Daily flippt `strict` nie [Soft-Budget jenseits
+jeder Laufzeit] ⇒ Sperren sind dort hart — das Netz ist die Seed-Runden-Leiter: die
+LETZTE Runde läuft rezeptfrei. Test: `game/dailyRecipe.test.ts`) und **Editor-Vorgaben**
+(explizite Palette schlägt den Cooldown; nur der freie Wurf nutzt ihn). Aufgezeichnet wird NUR das ausgelieferte Level, nie Kandidaten, nie das Daily und
+nie der Editor-Brett-Regen. Gemessen (8×8 hard, echtes Worker-Budget, 10er-Serie):
+Familien-Überlappung aufeinanderfolgender Level 2,8 → 1,1, Level mit „offset" 10/10 →
+4/10, Spotlight-Treffer 8/10, **0** Fail-open-Verstöße. Tests:
+`generator/variety.test.ts` (Sperren/Spotlight/Deckel-Overrides beißen wirklich, per
+generateOnce-Einzelversuchen) + `game/variety.test.ts` (Fenster/Schwelle/MAX_BANS).
+
 ## Clue-API (`engine/clues/Clue.ts`)
 
 | Hook | Wer nutzt es | Regel |
