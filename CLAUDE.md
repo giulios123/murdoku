@@ -2,14 +2,14 @@
 
 Ein Deduktions-Krimi: Verdächtige + Opfer werden per Hinweisen auf einem Raster platziert.
 
-## Stand (gezählt 16.07.2026 — bei Abweichung neu zählen, nicht raten)
+## Stand (gezählt 16.08.2026 — bei Abweichung neu zählen, nicht raten)
 
-- **143 öffentliche Level** (55 hard, 44 medium, 42 easy, 2 Tutorial) + 32 versteckte
-  Garand-Level = 175 Dateien in `levels/`. **Öffentliche Zählung IMMER ohne Garand** —
+- **150 öffentliche Level** (58 hard, 48 medium, 42 easy, 2 Tutorial) + 32 versteckte
+  Garand-Level = 182 Dateien in `levels/`. **Öffentliche Zählung IMMER ohne Garand** —
   die sind versteckt und werden in der README nie erwähnt (Nutzer-Regel).
 - **14 Themes** (home, manor, grandhotel, precinct, auto-shop, school, hospital, farm,
   supermarkt, camping, castle, pool, zoo, ski) · **74 Objekt-Typen** (28 betretbar).
-- **40 Hinweistypen** (inkl. and/or/not) **+ 5 globale** (`BoardClueJson`) ·
+- **42 Hinweistypen** (inkl. and/or/not) **+ 5 globale** (`BoardClueJson`) ·
   **34 registrierte Techniken** (28 Klassen) in `forward.ts`.
 - **6 Sprachen** (de/en/es/pt/fr/ru; pt = **pt-PT** mit „tu", fr mit **„vous"**, ru mit
   **«вы»** — Personennamen bleiben lateinisch) ·
@@ -47,7 +47,15 @@ Für je zwei Personen gilt `Δrow ≠ 0` **und** `Δcol ≠ 0`. Deshalb sind fol
 
 Was überlebt: **diagonale Berührung** (`|Δrow|=1 && |Δcol|=1` — die einzige mögliche Nachbarschaft),
 **Distanz** (Chebyshev ≥ 1), **alles über Räume** (Blobs, keine Linien), **Raum-Nachbarschaft**,
-**globale Merkmals-Verteilung**.
+**globale Merkmals-Verteilung** — und **exakte Achsen-Abstände zu anonymen Ankern**
+(`offsetFrom`: jemand neben/auf Objekt oder mit Merkmal; `offsetFromObject`: ∃-INSTANZ,
+`Board.objectInstances` — ein 2-Zellen-Bett/verschmolzener Teppich zählt als EIN Objekt,
+gemessen ab der zugewandten KANTE: „2 Zeilen südlich vom Bett" = Südkante + 2; Dirk 16.08.).
+ACHTUNG bei Letzterem: „genau N Felder von EINER bestimmten Zelle / von JEDER Zelle" kollabiert
+bei exaktem Abstand immer auf genau eine Zeile/Spalte (= verkappter Linien-Hinweis) — deshalb
+existiert NUR die ∃-Lesart, und der Generator wirft kollabierende Kandidaten per
+`collapsesToLine` weg. Das ALTE `directionFromObject` liest weiter zellenweise (bewusst
+„noch nicht" umgestellt — Alt-Level-Risiko), `sameLineAsObject` bleibt zellenweise (korrekt so).
 
 ### Abgeleitete Feinheiten
 
@@ -57,6 +65,12 @@ Was überlebt: **diagonale Berührung** (`|Δrow|=1 && |Δcol|=1` — die einzig
 - **Das Opfer zeigt nur sein Geschlecht.** Bart/Brille/Glatze/Haare sind zufällig und verdeckt
   (`Generator.candidatesFor` → `usableTrait`). Ein Hinweis darf nie an einem verdeckten
   Opfer-Merkmal hängen — sonst ist er für den Spieler nicht nachvollziehbar.
+- **Merkmals-Kataloge im Generator sind IMMER voll** (Dirk, 16.08.2026: „IMMER ALLES"):
+  jede trait-anhängige Emission (directionFromAttr, offsetFrom, roomAttribute inkl.
+  Negationen, besideSameObject-Mates, CountWithAttr, sharedTraits für roomCompanion/
+  aloneWith) läuft über `allTraitPairs` — Geschlecht, Bart/Brille/Glatze UND jede
+  getragene Ausprägung von hair/hairstyle/beardStyle/glassesShape/glassesColor. Nie
+  wieder handverlesene Kurzlisten; `usableTrait` bleibt der Fairness-Wächter davor.
 - **`outside` ist ein reines Raum-FLAG, das die Grafik nirgends verrät** (die Bodentextur folgt
   dem Raum*namen*). Jeder Hinweis, der drinnen/draußen nutzt, braucht deshalb die Legende
   „Draußen: …" — sonst ist er unlösbar. Steuernd: `clues/clueRefs.ts` → `usesInsideOutside`,
@@ -281,15 +295,21 @@ Normalfall). 2-Kern-Gerät ⇒ Pool = 1 = altes Verhalten, **mobil nie schlechte
 toter Worker verkleinert den Pool; ALLE tot ⇒ ein Inline-Fallback (nie N parallele
 Hauptthread-Läufe — die frören die UI N-fach ein). `quality: 'fast' | 'max'` ist der
 vorverdrahtete UI-Regler. **Budgets sind größengestaffelt** (`workerBudget(width, quality,
-difficulty)`): softMs 8 s (≤9) / 18 s (10) / 25 s (11) / 32 s (12), hardMs 42/40 s (Dirks
-Linie: nie mehr als ~45 s inkl. In-flight-Überhang); Grace 2,5 s, ab 10×10 5 s. AUSNAHME
-**12×12 hard: soft 80 s / hard 90 s** (Dirks Wunsch — ein Versuch kostet dort Ø 3,1 s, nur
-~1,1 % bestehen alle Tore [4/360 gemessen]; 90 s drücken P(„kein Level") von ~50 % auf
-~15 % bei Pool 6). Der Pool hat eine ABSOLUTE Deadline (hardMs+Grace — einzelne Versuche
-liefen bis 69 s über), und der synchrone Inline-Fallback springt nur noch an, wenn ALLE
-Worker am Environment starben ('worker failed'), nie nach ehrlicher erfolgloser Suche.
-Ab 10×10 zeigt der Generator-Screen `generate.generatingLong` ({{seconds}}: 90 bei
-12×12 hard, sonst 45).
+difficulty)`): softMs 8 s (≤9) / 18 s (10) / 25 s (11) / 32 s (12), 12×12 hard behält
+soft 80 s (Qualitätsfenster). **hardMs: 42 s (≤9); ab 10×10 gilt 90/135/180 s für
+10/11/12 — ALLE Schwierigkeiten** (Dirk 16.08.2026: „Ziel ist, dass wir ein Level finden,
+auch auf schlechten Rechnern"; die alte ~45-s-Linie gilt nur noch ≤9×9). Die Wand greift
+nur, solange KEIN Kandidat existiert — typische Wartezeiten (softMs) unverändert.
+Messbasis 16.08.2026 (nach der offsetFrom-Familie): Versuch Ø 0,65/2,0/3,2 s bei
+Bestehquote 25/21/11 % für 10/11/12 hard — die alte 12×12-Quote von 1,1 % [4/360] hat
+sich damit ~verzehnfacht; 180 s heben ein halb so schnelles 2-Kern-Gerät von ~80 % auf
+~96 % Findewahrscheinlichkeit. Grace 2,5 s, ab 10×10 5 s. Der Pool hat eine ABSOLUTE
+Deadline (hardMs+Grace — einzelne Versuche liefen bis 69 s über), und der synchrone
+Inline-Fallback springt nur noch an, wenn ALLE Worker am Environment starben
+('worker failed'), nie nach ehrlicher erfolgloser Suche — sein Budget bleibt bewusst
+klein (synchron = UI-Freeze). Ab 10×10 zeigen Generator- UND Editor-Screen
+`generate.generatingLong`; die Sekundenzahl kommt aus `longHintSeconds()` (EINE Quelle,
+spiegelt hardMs — nie wieder hart kodieren).
 
 ## Clue-API (`engine/clues/Clue.ts`)
 
@@ -368,7 +388,7 @@ für Personen), `fullLinesIn(room, axis)`, `guaranteedRoomOf(id)`, `roomsOf(id)`
 
 ```
 npx tsc -b && npx vitest run && npx eslint .
-npx tsx src/dev/check-all.ts ""        # ALLE Level eineindeutig (aktuell 175 Dateien)
+npx tsx src/dev/check-all.ts ""        # ALLE Level eineindeutig (aktuell 182 Dateien)
 npx tsx src/dev/soundness-check.ts     # keine Technique streicht je eine wahre Zelle
 ```
 
@@ -488,7 +508,7 @@ JSON-Export (Filesystem base64 OHNE `encoding` + Share-Sheet); komplett offline-
 ## Handakte (FAQ-Nachschlagewerk, 08/2026)
 
 Erklärt JEDE Hinweisart mit Live-Demo-Brett: `game/faqEntries.ts` (8 Kategorien,
-40 Einträge, Varianten-Chips rechnen das Highlight live um) + `game/faqBoards.ts`
+42 Einträge, Varianten-Chips rechnen das Highlight live um) + `game/faqBoards.ts`
 (3 Demo-LevelJson — **NIE nach `levels/`**, check-all verlangte sonst Eindeutigkeit) +
 `screens/FaqScreen.tsx` + `components/FaqBoard.tsx` (volles `drawBoard` nach
 EditorBoard-Muster). Einstieg: ?-Knopf oben links im StartScreen, Deep-Link `#faq`.

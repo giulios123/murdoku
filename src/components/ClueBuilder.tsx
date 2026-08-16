@@ -945,9 +945,48 @@ export default function ClueBuilder({ group, ctx, onChange, templateMode = false
           </>
         )
       }
-      case 'offset':
-        // "exactly N cells {cardinal} of {person}": distance + cardinal direction + person.
-        return (
+      case 'offset': {
+        // "exactly N cells {cardinal} of …": distance + cardinal + target — a person,
+        // a trait-bearer, an anonymous someone on/beside an object (with the
+        // "jemand"/"Verdächtiger" scope), or an object tile itself (∃, + room rel).
+        const target =
+          c.dirTarget === 'attr' || c.dirTarget === 'objectPerson' || c.dirTarget === 'object'
+            ? c.dirTarget
+            : 'person'
+        const occupiable = () =>
+          ctx.objects.find((o) => OCCUPIABLE_OBJECT_TYPES.includes(o)) ?? ctx.objects[0]
+        const targetSelect = (
+          <select
+            className="mk-select-input mk-cond__val"
+            value={target}
+            onChange={(e) => {
+              const dt = e.target.value as 'person' | 'attr' | 'objectPerson' | 'object'
+              const patch: Partial<Condition> = { dirTarget: dt }
+              if (dt === 'person' && !c.of) patch.of = ctx.others[0]?.id
+              if (dt === 'object' && !c.object) patch.object = ctx.objects[0]
+              if (dt === 'objectPerson') {
+                const rel = c.objRel === 'near' ? 'near' : 'on'
+                patch.objRel = rel
+                if (rel === 'on' && (!c.object || !OCCUPIABLE_OBJECT_TYPES.includes(c.object))) {
+                  patch.object = occupiable()
+                } else if (!c.object) {
+                  patch.object = ctx.objects[0]
+                }
+              }
+              // 'any'/'object' aren't real traits — give the trait picker a valid start.
+              if (dt === 'attr' && (c.attribute === 'any' || c.attribute === 'object' || !c.attribute)) {
+                patch.attribute = 'beard'
+              }
+              update(i, patch)
+            }}
+          >
+            <option value="person">{t('cond.dirTargetPerson')}</option>
+            <option value="attr">{t('cond.dirTargetAttr')}</option>
+            <option value="objectPerson">{t('cond.offTargetObjPerson')}</option>
+            <option value="object">{t('cond.dirTargetObject')}</option>
+          </select>
+        )
+        const base = (
           <>
             <input
               className="mk-input mk-cond__val mk-cond__num"
@@ -958,9 +997,65 @@ export default function ClueBuilder({ group, ctx, onChange, templateMode = false
             />
             <span className="mk-cond__unit">{t('cond.cells')}</span>
             {cardinalSelect((c.dir as Direction) ?? 'east', (d) => update(i, { dir: d }))}
+            {targetSelect}
+          </>
+        )
+        if (target === 'attr') {
+          return (
+            <>
+              {base}
+              {attrSelect(c, i)}
+            </>
+          )
+        }
+        if (target === 'objectPerson') {
+          const rel = c.objRel === 'near' ? 'near' : 'on'
+          return (
+            <>
+              {base}
+              <select
+                className="mk-select-input mk-cond__val"
+                value={c.scope ?? 'people'}
+                onChange={(e) => update(i, { scope: e.target.value as 'people' | 'suspects' })}
+              >
+                <option value="people">{t('cond.scopePeople')}</option>
+                <option value="suspects">{t('cond.scopeSuspects')}</option>
+              </select>
+              <select
+                className="mk-select-input mk-cond__val"
+                value={rel}
+                onChange={(e) => {
+                  const objRel = e.target.value as 'on' | 'near'
+                  const patch: Partial<Condition> = { objRel }
+                  if (objRel === 'on' && c.object && !OCCUPIABLE_OBJECT_TYPES.includes(c.object)) {
+                    patch.object = occupiable()
+                  }
+                  update(i, patch)
+                }}
+              >
+                <option value="on">{t('cond.relOn')}</option>
+                <option value="near">{t('cond.relNear')}</option>
+              </select>
+              {objectSelect(c, i, rel === 'on')}
+            </>
+          )
+        }
+        if (target === 'object') {
+          return (
+            <>
+              {base}
+              {objectSelect(c, i)}
+              {roomRelSelect(c, i)}
+            </>
+          )
+        }
+        return (
+          <>
+            {base}
             {personSelect(c, i)}
           </>
         )
+      }
       case 'aloneWith':
         // "alone with {person} + N others matching {trait}, one of them {direction}".
         return (

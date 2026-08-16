@@ -63,6 +63,7 @@ export class Renderer {
     objectGen: 'object',
     objectIns: 'object',
     whoIns: 'who',
+    subjectFrom: 'subjectObj',
   }
 
   static paramValue(params: Record<string, string | number>, name: string): string | number {
@@ -104,6 +105,11 @@ export class Renderer {
       // Object pronoun of the subject ("ihm/ihr" / "him/her") — for "north of him".
       case 'subjectObj':
         return this.lookup(`pronObj.${this.genderOf(String(value))}`) ?? this.puzzle.nameOf(String(value))
+      // The whole "of the subject" phrase incl. its preposition ("von ihr" / "of her" /
+      // "d'elle" / "dela") — languages contract or elide preposition+pronoun, so the pair
+      // must live in ONE token (pt "dela", fr "d'elle" can't be composed in the template).
+      case 'subjectFrom':
+        return this.lookup(`pronFrom.${this.genderOf(String(value))}`) ?? this.puzzle.nameOf(String(value))
       case 'poss':
         return this.lookup(`poss.${this.genderOf(String(value))}`) ?? this.puzzle.nameOf(String(value))
       case 'people':

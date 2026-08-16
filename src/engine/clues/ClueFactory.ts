@@ -19,11 +19,14 @@ import {
   DirectionFromAttrClue,
   InsideXorClue,
   OffsetClue,
+  OffsetFromPersonClue,
   SameRoomClue,
 } from './relationalClues.ts'
+import type { OffsetAnchor, OffsetScope } from './relationalClues.ts'
 import {
   BesideSameObjectClue,
   DirectionFromObjectClue,
+  OffsetFromObjectClue,
   SameLineAsObjectClue,
   SameRoomAsObjectClue,
 } from './objectClues.ts'
@@ -101,6 +104,14 @@ export type ClueJson =
   | { type: 'directionFromAttr'; attribute: string; value: AttributeValue; dir: Direction8; quantifier?: 'some' | 'all' }
   | { type: 'insideXor'; with: PersonId }
   | { type: 'offset'; of: PersonId; dir: Direction; distance: number }
+  /** Exactly `distance` rows/columns `dir` of an ANONYMOUS someone: a trait-bearer or
+   *  a person on/beside an object. `scope` (object kinds only): 'people' counts the
+   *  victim, 'suspects' does not; default 'people'. */
+  | { type: 'offsetFrom'; who: OffsetAnchor; dir: Direction; distance: number; scope?: OffsetScope }
+  /** Exactly `distance` rows/columns `dir` of AT LEAST ONE tile of the object type
+   *  (∃; optional same/other-room qualifier). Deliberately no `at`/`all` readings —
+   *  with an exact distance they collapse to a disguised row/column clue. */
+  | { type: 'offsetFromObject'; object: string; dir: Direction; distance: number; room?: RoomRel }
   | { type: 'sameRoom'; as: PersonId; alone?: boolean }
   /** The two stand in DIFFERENT rooms that share a wall edge. Symmetric. */
   | { type: 'adjacentRooms'; as: PersonId }
@@ -200,6 +211,10 @@ export function createClue(json: ClueJson): Clue {
       return new DirectionFromAttrClue(json.attribute, json.value, json.dir, json.quantifier ?? 'some')
     case 'offset':
       return new OffsetClue(json.of, json.dir, json.distance)
+    case 'offsetFrom':
+      return new OffsetFromPersonClue(json.who, json.dir, json.distance, json.scope ?? 'people')
+    case 'offsetFromObject':
+      return new OffsetFromObjectClue(json.object, json.dir, json.distance, json.room ?? 'any')
     case 'sameRoom':
       return new SameRoomClue(json.as, json.alone ?? false)
     case 'adjacentRooms':

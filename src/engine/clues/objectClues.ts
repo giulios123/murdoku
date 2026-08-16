@@ -3,7 +3,7 @@ import { inDirection8 } from '../model/types.ts'
 import type { Board } from '../model/Board.ts'
 import type { Solution } from '../model/Solution.ts'
 import type { Puzzle } from '../model/Puzzle.ts'
-import type { AttributeValue, Cell, Direction8, Explanation, PersonId } from '../model/types.ts'
+import type { AttributeValue, Cell, Direction, Direction8, Explanation, PersonId } from '../model/types.ts'
 
 /**
  * Object-relative clues. Because object positions are FIXED on the board, these
@@ -189,6 +189,76 @@ export class DirectionFromObjectClue extends UnaryClue {
         roomRel: this.room,
         atCell: this.at !== null ? `${this.object}:${this.at}` : '',
       },
+    }
+  }
+}
+
+/**
+ * "{name} was exactly {distance} row(s)/column(s) {direction} of a {object}" — of AT
+ * LEAST ONE INSTANCE of the type (∃), optionally same/other room than the subject.
+ * Multi-cell instances (a 2-cell bed, a merged carpet — `Board.objectInstances`, the
+ * same pairing/merge rules as "beside") count as ONE object, and the distance is
+ * measured from the FACING EDGE: "2 rows south of the bed" = its southernmost row + 2
+ * (Dirks Regel: "südlich vom Bett heißt das komplette Bett"). There is deliberately
+ * no `at`/`all` reading here: with an EXACT distance both collapse to a single
+ * row/column, i.e. a disguised line clue (the pattern the generator caps).
+ */
+export class OffsetFromObjectClue extends UnaryClue {
+  constructor(
+    readonly object: string,
+    readonly direction: Direction,
+    readonly distance: number,
+    readonly room: RoomRel = 'any',
+  ) {
+    super()
+  }
+
+  /** Whether this offset is along columns, and the signed delta (subject = edge + delta). */
+  resolve(): { isColumn: boolean; delta: number } {
+    const isColumn = this.direction === 'west' || this.direction === 'east'
+    const negative = this.direction === 'west' || this.direction === 'north'
+    return { isColumn, delta: negative ? -this.distance : this.distance }
+  }
+
+  /** Each instance boiled down to what the clue needs: the line the subject must be on
+   *  (facing edge + delta) and the rooms the instance touches (for the room qualifier). */
+  private instanceLines(board: Board): { line: number; rooms: Set<string> }[] {
+    const { isColumn, delta } = this.resolve()
+    return board.objectInstances(this.object).map((cells) => {
+      let edge: number | null = null
+      const rooms = new Set<string>()
+      for (const cell of cells) {
+        const rc = board.rc(cell)
+        const v = isColumn ? rc.col : rc.row
+        // Facing edge: measuring southwards/eastwards starts at the instance's MAX line,
+        // north/west at its MIN — "2 south of the bed" counts from its southern edge.
+        edge = edge === null ? v : delta > 0 ? Math.max(edge, v) : Math.min(edge, v)
+        rooms.add(board.roomIdOf(cell))
+      }
+      return { line: edge! + delta, rooms }
+    })
+  }
+
+  protected computeCandidateCells(board: Board): Set<Cell> {
+    const instances = this.instanceLines(board)
+    const { isColumn } = this.resolve()
+    const out = new Set<Cell>()
+    for (const cell of board.occupiableCells()) {
+      const s = board.rc(cell)
+      const line = isColumn ? s.col : s.row
+      const sRoom = board.roomIdOf(cell)
+      if (instances.some((i) => i.line === line && roomRelOk(this.room, i.rooms.has(sRoom)))) {
+        out.add(cell)
+      }
+    }
+    return out
+  }
+
+  describe(): Explanation {
+    const { isColumn } = this.resolve()
+    return {
+      key: `clue.offsetFromObject${isColumn ? 'Cols' : 'Rows'}`,
+      params: { n: this.distance, direction: this.direction, object: this.object, roomRel: this.room },
     }
   }
 }

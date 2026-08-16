@@ -26,6 +26,8 @@ import {
   NotAloneClue,
   NotClue,
   OffsetClue,
+  OffsetFromObjectClue,
+  OffsetFromPersonClue,
   OnObjectClue,
   OrClue,
   OutsideClue,
@@ -734,6 +736,74 @@ export const FAQ_CATEGORIES: FaqCategory[] = [
         ],
       },
       {
+        // Exact offset from an ANONYMOUS someone: beside/on an object, or a trait-
+        // bearer. Object kinds get automatic marks (candidateCells is real); the
+        // trait kinds place the carriers so `violatedBy`'s pigeonhole really prunes.
+        id: 'offsetFrom',
+        board: 'house',
+        subject: 'C',
+        axes: true,
+        variants: [
+          {
+            labelKey: 'faq.v.offNearPlant',
+            clue: { type: 'offsetFrom', who: { kind: 'near', object: 'plant' }, dir: 'east', distance: 1 },
+            decor: objectRing('plant'),
+          },
+          {
+            labelKey: 'faq.v.offSuspectOnly',
+            // Same clue, but "ein Verdächtiger" — with the VICTIM placed beside the
+            // plant, its column drops out: whoever stands there is not a suspect.
+            clue: { type: 'offsetFrom', who: { kind: 'near', object: 'plant' }, dir: 'east', distance: 1, scope: 'suspects' },
+            victimAt: c(5, 0),
+            decor: objectRing('plant'),
+          },
+          {
+            labelKey: 'faq.v.offOnChair',
+            clue: { type: 'offsetFrom', who: { kind: 'on', object: 'chair' }, dir: 'south', distance: 1 },
+            decor: objectRing('chair'),
+          },
+          {
+            labelKey: 'faq.v.offBeard',
+            // Both bearded suspects placed → the anchor row is pinned, only rows
+            // exactly two below a beard survive (the engine's pigeonhole pruning).
+            clue: { type: 'offsetFrom', who: { kind: 'attr', attribute: 'beard', value: true }, dir: 'south', distance: 2 },
+            refs: { B: c(2, 3), E: c(4, 0) },
+          },
+          {
+            labelKey: 'faq.v.offWoman',
+            clue: { type: 'offsetFrom', who: { kind: 'attr', attribute: 'gender', value: 'f' }, dir: 'east', distance: 1 },
+            refs: { A: c(2, 3) },
+          },
+        ],
+      },
+      {
+        // Exact offset from the OBJECT INSTANCES themselves (∃ at least one; optional
+        // same/other-room qualifier; multi-cell instances measure from the facing
+        // EDGE). Pure candidateCells — marks are automatic. The west variant runs
+        // along the merged 2-cell dining table, so the edge rule is visible.
+        id: 'offsetFromObject',
+        board: 'house',
+        subject: 'D',
+        axes: true,
+        variants: [
+          {
+            labelKey: 'faq.v.offObjTables',
+            clue: { type: 'offsetFromObject', object: 'table', dir: 'west', distance: 1, room: 'any' },
+            decor: objectRing('table'),
+          },
+          {
+            labelKey: 'faq.v.offObjSameRoom',
+            clue: { type: 'offsetFromObject', object: 'chair', dir: 'north', distance: 1, room: 'same' },
+            decor: objectRing('chair'),
+          },
+          {
+            labelKey: 'faq.v.offObjOtherRoom',
+            clue: { type: 'offsetFromObject', object: 'plant', dir: 'north', distance: 2, room: 'other' },
+            decor: objectRing('plant'),
+          },
+        ],
+      },
+      {
         id: 'directionFromAttr',
         board: 'house',
         subject: 'A',
@@ -846,7 +916,16 @@ export const FAQ_CATEGORIES: FaqCategory[] = [
         subject: 'A',
         variants: [
           {
+            labelKey: 'faq.v.aloneWithPlain',
             clue: { type: 'aloneWith', people: ['B'], attribute: 'gender', value: 'f', extraCount: 1 },
+            refs: { B: c(1, 1) },
+          },
+          {
+            // The direction addendum: ONE of the (anonymous) extras stands that way from
+            // the subject — with a single extra simply "east of her". Shown mostly for the
+            // WORDING; the extra is unplaced, so the constraint binds them, not a cell.
+            labelKey: 'faq.v.aloneWithDir',
+            clue: { type: 'aloneWith', people: ['B'], attribute: 'gender', value: 'f', extraCount: 1, dir: 'east' },
             refs: { B: c(1, 1) },
           },
         ],
@@ -1112,6 +1191,8 @@ const LEAF_ENTRY: ReadonlyArray<readonly [ClueCtor, string]> = [
   [DirectionFromAttrClue, 'directionFromAttr'],
   [InsideXorClue, 'insideXor'],
   [OffsetClue, 'offset'],
+  [OffsetFromPersonClue, 'offsetFrom'],
+  [OffsetFromObjectClue, 'offsetFromObject'],
   [SameRoomClue, 'sameRoom'],
   [AdjacentRoomsClue, 'adjacentRooms'],
   [SameLineAsObjectClue, 'sameLineAsObject'],

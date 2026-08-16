@@ -33,6 +33,8 @@ import {
   NearObjectClue,
   NearWindowClue,
   NotClue,
+  OffsetFromObjectClue,
+  OffsetFromPersonClue,
   OnObjectClue,
   OrClue,
   OutsideClue,
@@ -156,6 +158,17 @@ function addClue(clue: Clue, board: Board, neg: boolean, out: HelpMarks): void {
   }
   if (clue instanceof NearAnyObjectClue) {
     for (const type of clue.objects) addAll(ring, objectRef(board, type))
+    return
+  }
+  // Exact offset from an anonymous someone on/beside an object, or from the object
+  // tiles themselves → ring the referenced object. The trait kind references no board
+  // feature (it moves with people) and marks nothing, like the other relational clues.
+  if (clue instanceof OffsetFromPersonClue) {
+    if (clue.who.kind !== 'attr') addAll(ring, objectRef(board, clue.who.object))
+    return
+  }
+  if (clue instanceof OffsetFromObjectClue) {
+    addAll(ring, objectRef(board, clue.object))
     return
   }
   if (clue instanceof DirectionFromObjectClue) {

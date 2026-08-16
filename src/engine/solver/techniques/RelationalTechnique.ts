@@ -4,6 +4,7 @@ import {
   DirectionClue,
   DirectionFromAttrClue,
   OffsetClue,
+  OffsetFromPersonClue,
   SameRoomClue,
 } from '../../clues/relationalClues.ts'
 import { AndClue, NotClue } from '../../clues/compositeClues.ts'
@@ -13,13 +14,20 @@ import type { DeductionStep, Elimination } from '../DeductionStep.ts'
 import type { PersonId } from '../../model/types.ts'
 import type { Puzzle } from '../../model/Puzzle.ts'
 
-type Relational = DirectionClue | DirectionFromAttrClue | OffsetClue | SameRoomClue | AdjacentRoomsClue
+type Relational =
+  | DirectionClue
+  | DirectionFromAttrClue
+  | OffsetClue
+  | OffsetFromPersonClue
+  | SameRoomClue
+  | AdjacentRoomsClue
 
 function relationalClues(clue: Clue): Relational[] {
   if (
     clue instanceof DirectionClue ||
     clue instanceof DirectionFromAttrClue ||
     clue instanceof OffsetClue ||
+    clue instanceof OffsetFromPersonClue ||
     clue instanceof SameRoomClue ||
     clue instanceof AdjacentRoomsClue
   ) {
@@ -66,6 +74,7 @@ export class RelationalTechnique extends Technique {
         if (clue instanceof DirectionClue) step = this.applyDirection(ctx, suspect.id, clue)
         else if (clue instanceof DirectionFromAttrClue) step = this.applyDirectionAttr(ctx, suspect.id, clue)
         else if (clue instanceof OffsetClue) step = this.applyOffset(ctx, suspect.id, clue)
+        else if (clue instanceof OffsetFromPersonClue) step = this.applyOffsetFrom(ctx, suspect.id, clue)
         else if (clue instanceof AdjacentRoomsClue) step = this.applyAdjacentRooms(ctx, suspect.id, clue)
         else step = this.applySameRoom(ctx, suspect.id, clue)
         if (step) return step
@@ -304,6 +313,63 @@ export class RelationalTechnique extends Technique {
       personId: subjectId,
       // `subject` lets a standalone reason NAME the subject ("Alysson war 1 Spalte westlich
       // von George") instead of the card pronoun ("sie war …") — see CluePanel's nameSubject.
+      explanation: { key: described.key, params: { ...described.params, name: subjectId, subject: subjectId } },
+    }
+  }
+
+  /**
+   * "{subject} exactly N rows/cols {dir} of SOMEONE with a trait / on/beside an object."
+   * Two sound prunings, both riding on "one person per row & column":
+   * 1. Forward: the subject's line must be (line of some still-possible qualifying
+   *    anchor) + delta — anchors are the matchers' remaining cells, intersected with
+   *    the object cells for the on/near kinds.
+   * 2. Pigeonhole back: once the subject's line is KNOWN, the anchor line k is fixed,
+   *    and whoever occupies line k must qualify — non-matchers (e.g. the victim for a
+   *    suspects-scoped clue) lose line k entirely, matchers keep only qualifying cells.
+   */
+  private applyOffsetFrom(
+    ctx: SolveContext,
+    subjectId: PersonId,
+    clue: OffsetFromPersonClue,
+  ): DeductionStep | null {
+    const { isColumn, delta } = clue.resolve()
+    const axis: Axis = isColumn ? 'col' : 'row'
+    if (ctx.linesOf(subjectId, axis).size === 0) return null
+    const matchers = clue.matchers(subjectId, ctx.puzzle)
+    if (matchers.length === 0) return null
+    const anchors = clue.anchorCells(ctx.board)
+
+    const anchorLines = new Set<number>()
+    for (const m of matchers) {
+      for (const cell of ctx.cellsOf(m)) {
+        if (anchors !== null && !anchors.has(cell)) continue
+        anchorLines.add(ctx.axisOf(cell, axis))
+      }
+    }
+    const allowedSubj = new Set([...anchorLines].map((l) => l + delta))
+    const eliminated: Elimination[] = []
+    this.removeFrom(ctx, subjectId, (c) => !allowedSubj.has(ctx.axisOf(c, axis)), eliminated)
+
+    const subjNow = ctx.linesOf(subjectId, axis)
+    if (subjNow.size === 1) {
+      const k = [...subjNow][0] - delta
+      const matcherSet = new Set(matchers)
+      for (const person of ctx.people) {
+        if (person.id === subjectId) continue
+        if (!matcherSet.has(person.id)) {
+          this.removeFrom(ctx, person.id, (c) => ctx.axisOf(c, axis) === k, eliminated)
+        } else if (anchors !== null) {
+          this.removeFrom(ctx, person.id, (c) => ctx.axisOf(c, axis) === k && !anchors.has(c), eliminated)
+        }
+      }
+    }
+    if (eliminated.length === 0) return null
+    const described = clue.describe()
+    return {
+      technique: 'relational',
+      personId: subjectId,
+      eliminated,
+      // `subject` lets a standalone reason NAME the subject (see applyOffset above).
       explanation: { key: described.key, params: { ...described.params, name: subjectId, subject: subjectId } },
     }
   }

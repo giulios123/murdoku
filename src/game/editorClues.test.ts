@@ -33,6 +33,39 @@ const CASES: { name: string; json: ClueJson }[] = [
   { name: 'onObject', json: { type: 'onObject', object: 'chair' } },
   { name: 'corner', json: { type: 'corner' } },
   { name: 'direction', json: { type: 'direction', of: 'B', dir: 'northeast' } },
+  // --- the exact-offset family incl. the anonymous anchors ---
+  { name: 'offset (Person)', json: { type: 'offset', of: 'B', dir: 'west', distance: 2 } },
+  { name: 'offset negiert', json: { type: 'not', clue: { type: 'offset', of: 'C', dir: 'south', distance: 1 } } },
+  {
+    name: 'offsetFrom Merkmal (bool)',
+    json: { type: 'offsetFrom', who: { kind: 'attr', attribute: 'beard', value: true }, dir: 'north', distance: 2 },
+  },
+  {
+    name: 'offsetFrom Merkmal (Geschlecht)',
+    json: { type: 'offsetFrom', who: { kind: 'attr', attribute: 'gender', value: 'f' }, dir: 'east', distance: 1 },
+  },
+  {
+    name: 'offsetFrom Merkmal (Frisur)',
+    json: { type: 'offsetFrom', who: { kind: 'attr', attribute: 'hairstyle', value: 'bob' }, dir: 'west', distance: 3 },
+  },
+  {
+    name: 'offsetFrom neben Objekt (jemand)',
+    json: { type: 'offsetFrom', who: { kind: 'near', object: 'plant' }, dir: 'east', distance: 1 },
+  },
+  {
+    name: 'offsetFrom auf Objekt (Verdächtiger)',
+    json: { type: 'offsetFrom', who: { kind: 'on', object: 'chair' }, dir: 'south', distance: 2, scope: 'suspects' },
+  },
+  {
+    name: 'offsetFrom negiert',
+    json: { type: 'not', clue: { type: 'offsetFrom', who: { kind: 'near', object: 'plant' }, dir: 'north', distance: 1 } },
+  },
+  { name: 'offsetFromObject', json: { type: 'offsetFromObject', object: 'plant', dir: 'east', distance: 2, room: 'any' } },
+  { name: 'offsetFromObject same room', json: { type: 'offsetFromObject', object: 'chair', dir: 'north', distance: 1, room: 'same' } },
+  {
+    name: 'offsetFromObject negiert',
+    json: { type: 'not', clue: { type: 'offsetFromObject', object: 'plant', dir: 'west', distance: 1, room: 'other' } },
+  },
 ]
 
 describe('editor clue round-trip (ClueJson → Condition → ClueJson)', () => {

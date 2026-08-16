@@ -83,6 +83,9 @@ interface RelationalLink {
   target: PersonId
 }
 
+// OffsetFromPersonClue has NO entry here on purpose: a link needs a NAMED target whose
+// domain change re-triggers the clue — the anonymous anchor has none. Its pruning rides
+// on `violatedBy` via `narrow()` (strong: the anchor line's occupant is pinned down).
 function relationalLinks(clue: Clue): RelationalLink[] {
   if (clue instanceof DirectionClue || clue instanceof OffsetClue) {
     return [{ clue, target: clue.target }]

@@ -27,28 +27,37 @@ function requestWidth(request: WorkerRequest): number {
  * gate-passing candidate (pure quality); `hardMs` = the absolute wall. Cancel is still
  * worker.terminate() — the long soft budgets cost nothing when the user bails out.
  *
- * Why size-scaled: a gate-passing candidate needs ~1 in 12 attempts à ~0.4s at 10×10 but
- * ~1 in 40 attempts à ~1.1s at 12×12 (measured). A flat 8s soft budget bought 12×12 about
- * seven attempts — usually zero passers — so the first worker returned a mediocre level
- * and the grace window cut everyone else off. hardMs sits under the user's "never more
- * than ~45s" line INCLUDING the in-flight overrun of a running attempt (~2–4s at 12×12).
+ * Why size-scaled: a gate-passing candidate needs ~1 in 4 attempts à ~0.65s at 10×10 but
+ * ~1 in 9 attempts à ~3.2s at 12×12 (re-measured 16.08.2026, after the offsetFrom clue
+ * family — pass rates rose ~10× versus the old 1.1%). The hard walls at ≥10×10 are
+ * Dirks Linie vom 16.08.2026: "Ziel ist, dass wir ein Level finden, auch auf schlechten
+ * Rechnern" — 90/135/180s for 10/11/12, ALL difficulties. The wall only bites while NO
+ * candidate exists yet (a worker holding one returns at softMs), so typical waits stay
+ * unchanged; on a half-speed 2-core device it lifts 12×12 hard from ~80% to ~96%
+ * find-probability. ≤9×9 keeps the old "never more than ~45s" line.
  */
 function workerBudget(width: number, quality: GenQuality, difficulty?: GenDifficulty): GenBudget {
-  // 12×12 HARD is the one config where 40s genuinely isn't enough: an attempt costs ~3.1s
-  // and only ~1.1% pass every quality gate (measured over 360 attempts), so 40s left
-  // roughly every second run empty-handed. The user's explicit call: this config may take
-  // ~90s — that triples the attempts and drops P("kein Level") to ~15% on a 6-worker pool.
-  // The overlay says so (generate.generatingLong with a dynamic seconds figure).
+  // 12×12 HARD additionally keeps its big QUALITY window (soft 80s): an attempt costs
+  // ~3.2s, so a small window would ship the first passer instead of a good one. The
+  // overlay says so (generate.generatingLong via longHintSeconds).
   if (width >= 12 && difficulty === 'hard') {
-    return { maxAttempts: 4000, softMs: quality === 'fast' ? 40000 : 80000, hardMs: 90000 }
+    return { maxAttempts: 4000, softMs: quality === 'fast' ? 40000 : 80000, hardMs: 180000 }
   }
   const soft = width <= 9 ? 8000 : width <= 10 ? 18000 : width <= 11 ? 25000 : 32000
   const fastSoft = width <= 9 ? 2500 : Math.round(soft / 2)
+  const hard = width <= 9 ? 42000 : width <= 10 ? 90000 : width <= 11 ? 135000 : 180000
   return {
     maxAttempts: 4000,
     softMs: quality === 'fast' ? fastSoft : soft,
-    hardMs: width <= 9 ? 42000 : 40000,
+    hardMs: hard,
   }
+}
+
+/** The seconds figure of the "this can take a while" overlay — mirrors workerBudget's
+ *  hard wall. ONE source for GeneratorScreen and both EditorScreen dialogs, so the
+ *  shown number can never drift from the real budget again. */
+export function longHintSeconds(width: number, difficulty?: GenDifficulty): number {
+  return Math.round(workerBudget(width, 'max', difficulty).hardMs / 1000)
 }
 
 /**

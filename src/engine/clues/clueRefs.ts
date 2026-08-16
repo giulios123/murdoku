@@ -1,7 +1,7 @@
 import type { Clue } from './Clue.ts'
 import { AndClue, OrClue, NotClue } from './compositeClues.ts'
 import { RoomAttributeClue, RoomCompanionClue, RoomExistsClue, AloneWithClue } from './socialClues.ts'
-import { AdjacentRoomsClue, DirectionClue, OffsetClue, SameRoomClue, InsideXorClue, DirectionFromAttrClue } from './relationalClues.ts'
+import { AdjacentRoomsClue, DirectionClue, OffsetClue, OffsetFromPersonClue, SameRoomClue, InsideXorClue, DirectionFromAttrClue } from './relationalClues.ts'
 import { BesideSameObjectClue } from './objectClues.ts'
 import { OutsideClue } from './unaryClues.ts'
 import { UniqueOutsideClue } from './uniquenessClues.ts'
@@ -59,6 +59,13 @@ function collect(clue: Clue, into: ClueRefs): void {
     clue instanceof DirectionFromAttrClue
   ) {
     into.traits.push({ attribute: clue.attribute, value: clue.value })
+    return
+  }
+  if (clue instanceof OffsetFromPersonClue) {
+    // Only the trait anchor names people by appearance; the object anchors don't.
+    if (clue.who.kind === 'attr') {
+      into.traits.push({ attribute: clue.who.attribute, value: clue.who.value })
+    }
     return
   }
   if (clue instanceof AloneWithClue) {

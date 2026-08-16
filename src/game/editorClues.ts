@@ -25,7 +25,7 @@ export type CondKind =
   | 'boardPos' // in a corner / at a wall
   // Richtung & Abstand
   | 'direction' // 8-way direction from a person OR an object
-  | 'offset' // exactly N cells in a cardinal direction of a person
+  | 'offset' // exactly N cells in a cardinal direction of a person / a trait-bearer / someone on-beside an object / an object tile
   | 'insideXor'
 
 /** The menu sections (optgroup headers), in order. `portal` is filtered out by the
@@ -154,7 +154,10 @@ export interface Condition {
   roomMode?: 'alone' | 'in' | 'with' | 'onObject' | 'adjacent' | 'neighborEmpty' | 'neighborCount'
   adjTarget?: 'room' | 'person' // room(adjacent) — borders a named room, or that person's room
   neighborDir?: 'none' | Direction // room(neighborCount) — the bordering room lies ENTIRELY this way (cardinals only: a diagonal would force the whole quadrant)
-  dirTarget?: 'person' | 'object' | 'attr' // direction — relative to a person, an object or a trait-bearer
+  /** direction/offset — relative to a person, an object (tile), a trait-bearer, or
+   *  (offset only) an anonymous someone on/beside an object ('objectPerson'). */
+  dirTarget?: 'person' | 'object' | 'attr' | 'objectPerson'
+  scope?: 'people' | 'suspects' // offset(objectPerson) — "jemand" (incl. Opfer) vs. "ein Verdächtiger"
   pos?: 'corner' | 'wall' // boardPos — in a corner or at a wall
 }
 
@@ -344,10 +347,35 @@ function baseJson(c: Condition): ClueJson | null {
       }
       return c.of ? { type: 'direction', of: c.of, dir: c.dir ?? 'north' } : null
     }
-    case 'offset':
-      return c.of
-        ? { type: 'offset', of: c.of, dir: (c.dir as Direction) ?? 'east', distance: Math.max(1, c.dist ?? 1) }
-        : null
+    case 'offset': {
+      // "exactly N cells {cardinal} of …": a person, a trait-bearer, someone on/beside
+      // an object (with the "jemand"/"Verdächtiger" scope), or an object tile itself.
+      const dist = Math.max(1, c.dist ?? 1)
+      const dir = (c.dir as Direction) ?? 'east'
+      const target = c.dirTarget ?? 'person'
+      if (target === 'attr') {
+        const { attribute, value } = attrValue(c)
+        return { type: 'offsetFrom', who: { kind: 'attr', attribute, value }, dir, distance: dist }
+      }
+      if (target === 'objectPerson') {
+        if (!c.object) return null
+        const kind = c.objRel === 'near' ? ('near' as const) : ('on' as const)
+        // Omit the default scope ('people') so unchanged levels keep their old JSON.
+        return {
+          type: 'offsetFrom',
+          who: { kind, object: c.object },
+          dir,
+          distance: dist,
+          ...(c.scope === 'suspects' ? { scope: 'suspects' as const } : {}),
+        }
+      }
+      if (target === 'object') {
+        return c.object
+          ? { type: 'offsetFromObject', object: c.object, dir, distance: dist, room: c.roomRel ?? 'any' }
+          : null
+      }
+      return c.of ? { type: 'offset', of: c.of, dir, distance: dist } : null
+    }
     case 'insideXor':
       return c.of ? { type: 'insideXor', with: c.of } : null
     case 'aloneWith': {
@@ -383,8 +411,7 @@ export function groupToClues(group: ClueGroup): ClueJson[] {
 }
 
 /** Reverse of `condJson`: turn one engine clue back into a builder condition.
- *  Returns null for clue types the flat builder can't represent (roomExists,
- *  aloneWith, offset, nearObjectAny, nested and/or). */
+ *  Returns null for clue types the flat builder can't represent (nested and/or). */
 function jsonToCondition(json: ClueJson): Condition | null {
   let not = false
   let c: ClueJson = json
@@ -420,6 +447,7 @@ function jsonToCondition(json: ClueJson): Condition | null {
     adjTarget: 'room',
     neighborDir: 'none',
     dirTarget: 'person',
+    scope: 'people',
     pos: 'corner',
     ...extra,
   })
@@ -521,7 +549,33 @@ function jsonToCondition(json: ClueJson): Condition | null {
         quantifier: c.quantifier ?? 'some',
       })
     case 'offset':
-      return make('offset', { of: c.of, dir: c.dir, dist: c.distance })
+      return make('offset', { dirTarget: 'person', of: c.of, dir: c.dir, dist: c.distance })
+    case 'offsetFrom':
+      if (c.who.kind === 'attr') {
+        return make('offset', {
+          dirTarget: 'attr',
+          attribute: c.who.attribute as AttrKind,
+          value: typeof c.who.value === 'string' ? c.who.value : undefined,
+          dir: c.dir,
+          dist: c.distance,
+        })
+      }
+      return make('offset', {
+        dirTarget: 'objectPerson',
+        object: c.who.object,
+        objRel: c.who.kind,
+        scope: c.scope ?? 'people',
+        dir: c.dir,
+        dist: c.distance,
+      })
+    case 'offsetFromObject':
+      return make('offset', {
+        dirTarget: 'object',
+        object: c.object,
+        roomRel: c.room ?? 'any',
+        dir: c.dir,
+        dist: c.distance,
+      })
     case 'insideXor':
       return make('insideXor', { of: c.with })
     case 'roomAttribute':
@@ -613,6 +667,7 @@ export function defaultCondition(
     adjTarget: 'room',
     neighborDir: 'none',
     dirTarget: 'person',
+    scope: 'people',
     pos: 'corner',
     dist: 1,
     objects: kind === 'nearObject' && ctx.objects[0] ? [ctx.objects[0]] : [],

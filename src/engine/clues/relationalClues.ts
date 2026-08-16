@@ -1,5 +1,7 @@
 import { Clue } from './Clue.ts'
+import { ON_OBJECT_KEY_SUFFIX } from './unaryClues.ts'
 import { inDirection8 } from '../model/types.ts'
+import type { Board } from '../model/Board.ts'
 import type { Solution } from '../model/Solution.ts'
 import type { Puzzle } from '../model/Puzzle.ts'
 import type { AttributeValue, Cell, Direction, Direction8, Explanation, PersonId } from '../model/types.ts'
@@ -280,5 +282,156 @@ export class OffsetClue extends Clue {
     const key =
       'clue.offset' + this.direction.charAt(0).toUpperCase() + this.direction.slice(1)
     return { key, params: { n: this.distance, target: this.target } }
+  }
+}
+
+/** The anonymous anchor of an exact-offset clue: someone carrying a trait, or someone
+ *  on/beside an object (instance-aware, `Board.isBesideObject` semantics). */
+export type OffsetAnchor =
+  | { kind: 'attr'; attribute: string; value: AttributeValue }
+  | { kind: 'on' | 'near'; object: string }
+
+/** Whether the anchor may be anyone (victim included) or only a suspect. Only the
+ *  object kinds get the choice — a trait anchor picks its set implicitly (gender is
+ *  shown for the victim so it counts; hidden traits never match it). */
+export type OffsetScope = 'people' | 'suspects'
+
+/**
+ * "{name} was exactly {distance} row(s)/column(s) {direction} of someone …" where the
+ * someone is anonymous: a trait-bearer, or a person on/beside an object. Existential —
+ * at least one qualifying person sits at that exact line. In a full permutation each
+ * line holds exactly ONE person, so the clue pins down WHO stands on the anchor line:
+ * that person must qualify (the pigeonhole reading the techniques exploit).
+ * Trait anchors match like `DirectionFromAttrClue` (all people except the subject).
+ */
+export class OffsetFromPersonClue extends Clue {
+  constructor(
+    readonly who: OffsetAnchor,
+    readonly direction: Direction,
+    readonly distance: number,
+    readonly scope: OffsetScope = 'people',
+  ) {
+    super()
+  }
+
+  /** Whether this offset is along columns, and the signed delta (subject = anchor + delta). */
+  resolve(): { isColumn: boolean; delta: number } {
+    const isColumn = this.direction === 'west' || this.direction === 'east'
+    const negative = this.direction === 'west' || this.direction === 'north'
+    return { isColumn, delta: negative ? -this.distance : this.distance }
+  }
+
+  /** Cells where a person qualifies by POSITION (object kinds; null for a trait anchor). */
+  anchorCells(board: Board): Set<Cell> | null {
+    if (this.who.kind === 'attr') return null
+    return this.who.kind === 'on'
+      ? board.cellsWithObject(this.who.object)
+      : board.cellsNearObject(this.who.object)
+  }
+
+  /** People other than the subject that could ever be the anchor. */
+  matchers(subjectId: PersonId, puzzle: Puzzle): PersonId[] {
+    const ids = puzzle.allIds().filter((id) => id !== subjectId)
+    if (this.who.kind === 'attr') {
+      const { attribute, value } = this.who
+      return ids.filter((id) => puzzle.attributesOf(id)[attribute] === value)
+    }
+    return this.scope === 'suspects' ? ids.filter((id) => id !== puzzle.victim.id) : ids
+  }
+
+  /** Positional part of the qualifier (always true for trait anchors). */
+  qualifiesAt(cell: Cell, board: Board): boolean {
+    const cells = this.anchorCells(board)
+    return cells === null || cells.has(cell)
+  }
+
+  test(subjectId: PersonId, solution: Solution, puzzle: Puzzle): boolean {
+    const board = puzzle.board
+    const { isColumn, delta } = this.resolve()
+    const s = board.rc(solution.cellOf(subjectId))
+    const anchorLine = (isColumn ? s.col : s.row) - delta
+    for (const id of this.matchers(subjectId, puzzle)) {
+      const cell = solution.cellOf(id)
+      const rc = board.rc(cell)
+      if ((isColumn ? rc.col : rc.row) !== anchorLine) continue
+      if (this.qualifiesAt(cell, board)) return true
+    }
+    return false
+  }
+
+  protected override computeCandidateCells(board: Board): Set<Cell> | null {
+    // Object anchors stand on FIXED cells, so the subject's possible lines are fixed
+    // too: every anchor-cell line shifted by delta. Trait anchors move with people →
+    // no fixed set (relational, pruned by the technique instead).
+    const anchors = this.anchorCells(board)
+    if (anchors === null) return null
+    const { isColumn, delta } = this.resolve()
+    const lines = new Set<number>()
+    for (const a of anchors) {
+      const rc = board.rc(a)
+      lines.add((isColumn ? rc.col : rc.row) + delta)
+    }
+    const out = new Set<Cell>()
+    for (const cell of board.occupiableCells()) {
+      const rc = board.rc(cell)
+      if (lines.has(isColumn ? rc.col : rc.row)) out.add(cell)
+    }
+    return out
+  }
+
+  override violatedBy(
+    subjectId: PersonId,
+    placement: ReadonlyMap<PersonId, Cell>,
+    puzzle: Puzzle,
+  ): boolean {
+    const s = placement.get(subjectId)
+    if (s === undefined) return false
+    const board = puzzle.board
+    const { isColumn, delta } = this.resolve()
+    const rcS = board.rc(s)
+    const anchorLine = (isColumn ? rcS.col : rcS.row) - delta
+    if (anchorLine < 0 || anchorLine >= (isColumn ? board.width : board.height)) return true
+    // One person per row/column (game rule): a placed person on the anchor line IS the
+    // line's only occupant — if they don't qualify, the clue can never hold anymore.
+    const matcherSet = new Set(this.matchers(subjectId, puzzle))
+    let occupied = false
+    let allMatchersPlaced = true
+    let satisfied = false
+    for (const id of puzzle.allIds()) {
+      if (id === subjectId) continue
+      const c = placement.get(id)
+      if (c === undefined) {
+        if (matcherSet.has(id)) allMatchersPlaced = false
+        continue
+      }
+      const rc = board.rc(c)
+      if ((isColumn ? rc.col : rc.row) !== anchorLine) continue
+      occupied = true
+      if (matcherSet.has(id) && this.qualifiesAt(c, board)) satisfied = true
+    }
+    if (satisfied) return false
+    if (occupied) return true
+    return allMatchersPlaced // nobody left who could still stand on the anchor line
+  }
+
+  describe(): Explanation {
+    const { isColumn } = this.resolve()
+    const axis = isColumn ? 'Cols' : 'Rows'
+    const params: Record<string, string | number> = { n: this.distance, direction: this.direction }
+    if (this.who.kind === 'attr') {
+      // Gender uses a who-token ("einem Mann" — neutral, the victim counts); other
+      // traits read as suspects (the victim's are hidden), via the attr.* token.
+      if (this.who.attribute === 'gender') {
+        return { key: `clue.offsetFromGender${axis}`, params: { ...params, who: `${this.who.value}_dat` } }
+      }
+      const token = this.who.value === true ? this.who.attribute : `${this.who.attribute}_${this.who.value}`
+      return { key: `clue.offsetFromTrait${axis}`, params: { ...params, attribute: token } }
+    }
+    const who = this.scope === 'suspects' ? 'any_dat_susp' : 'any_dat'
+    if (this.who.kind === 'near') {
+      return { key: `clue.offsetFromNear${axis}`, params: { ...params, who, object: this.who.object } }
+    }
+    const suffix = ON_OBJECT_KEY_SUFFIX[this.who.object] ?? ''
+    return { key: `clue.offsetFromOn${axis}${suffix}`, params: { ...params, who, object: this.who.object } }
   }
 }

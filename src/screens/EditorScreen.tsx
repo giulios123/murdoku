@@ -5,7 +5,7 @@ import EditorBoard from '../components/EditorBoard.tsx'
 import SuspectsPanel from '../components/SuspectsPanel.tsx'
 import ObjectIcon from '../components/ObjectIcon.tsx'
 import { THEME_IDS, themeRooms, themeOutdoor, themeFromRoomKeys, themeDefaultObjects, redundantBoardClues } from '../engine/generator/index.ts'
-import { fillBoardCluesAsync, generateLevelAsync, type GenHandle } from '../game/generatorClient.ts'
+import { fillBoardCluesAsync, generateLevelAsync, longHintSeconds, type GenHandle } from '../game/generatorClient.ts'
 import { VALUED_ATTRS, type Condition } from '../game/editorClues.ts'
 import { LEVELS, levelMetaFromJson, type Difficulty, type LevelMeta } from '../game/levels.ts'
 import {
@@ -1551,10 +1551,10 @@ export default function EditorScreen({ onBack, onPlay, initialLevel }: Props) {
             <span className="mk-spinner" />
             <p>{t('editor.randomizing')}</p>
             {/* Same budgets as the generator screen (the fill runs through the same pool):
-                big boards hunt for most of 45s, 12×12 hard up to 90s — say so. */}
+                the figure IS workerBudget's hard wall (longHintSeconds — single source). */}
             {state.size >= 10 && (
               <p className="mk-genhint">
-                {t('generate.generatingLong', { seconds: state.size >= 12 && difficulty === 'hard' ? 90 : 45 })}
+                {t('generate.generatingLong', { seconds: longHintSeconds(state.size, difficulty) })}
               </p>
             )}
             <button type="button" className="mk-btn mk-btn--ghost" onClick={cancelRandom}>
@@ -1571,7 +1571,7 @@ export default function EditorScreen({ onBack, onPlay, initialLevel }: Props) {
             <p>{t('editor.randomizingBoard')}</p>
             {state.size >= 10 && (
               <p className="mk-genhint">
-                {t('generate.generatingLong', { seconds: state.size >= 12 && difficulty === 'hard' ? 90 : 45 })}
+                {t('generate.generatingLong', { seconds: longHintSeconds(state.size, difficulty) })}
               </p>
             )}
             <button type="button" className="mk-btn mk-btn--ghost" onClick={cancelRegen}>

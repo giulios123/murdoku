@@ -19,12 +19,15 @@ export {
   DirectionFromAttrClue,
   InsideXorClue,
   OffsetClue,
+  OffsetFromPersonClue,
   SameRoomClue,
 } from './relationalClues.ts'
+export type { OffsetAnchor, OffsetScope } from './relationalClues.ts'
 export {
   SameLineAsObjectClue,
   SameRoomAsObjectClue,
   DirectionFromObjectClue,
+  OffsetFromObjectClue,
   BesideSameObjectClue,
 } from './objectClues.ts'
 export type { LineKind, RoomRel } from './objectClues.ts'

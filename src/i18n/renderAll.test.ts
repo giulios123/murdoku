@@ -93,6 +93,41 @@ describe('every bundled level renders in every language', () => {
     }
   })
 
+  it('every offsetFrom / offsetFromObject form renders (incl. negation, plurals, on-prepositions)', () => {
+    const puzzle = loadLevel(readLevel(files[0]))
+    const subject = puzzle.suspects[0].id
+    const shapes: ClueJson[] = []
+    for (const dir of ['north', 'south', 'east', 'west'] as const) {
+      // 1 → _one, 2 → ru _few, 5 → base plural.
+      for (const distance of [1, 2, 5]) {
+        shapes.push({ type: 'offsetFrom', who: { kind: 'attr', attribute: 'gender', value: 'f' }, dir, distance })
+        shapes.push({ type: 'offsetFrom', who: { kind: 'attr', attribute: 'beard', value: true }, dir, distance })
+        shapes.push({ type: 'offsetFrom', who: { kind: 'attr', attribute: 'hair', value: 'blond' }, dir, distance })
+        for (const scope of ['people', 'suspects'] as const) {
+          shapes.push({ type: 'offsetFrom', who: { kind: 'near', object: 'plant' }, dir, distance, scope })
+          // The four on-preposition families: plain / In / Under / Behind.
+          for (const object of ['chair', 'tent', 'parasol', 'paravent']) {
+            shapes.push({ type: 'offsetFrom', who: { kind: 'on', object }, dir, distance, scope })
+          }
+        }
+        for (const room of ['any', 'same', 'other'] as const) {
+          shapes.push({ type: 'offsetFromObject', object: 'plant', dir, distance, room })
+        }
+      }
+    }
+    for (const lg of LANGS) {
+      const r = new Renderer(dicts[lg], puzzle)
+      for (const json of shapes) {
+        for (const wrapped of [json, { type: 'not', clue: json } as ClueJson]) {
+          const text = r.clue(createClue(wrapped).describe(), subject)
+          expect(looksLikeKey(text), `${lg} ${JSON.stringify(wrapped)} → ${text}`).toBe(false)
+          expect(hasUnfilledSlot(text), `${lg} ${JSON.stringify(wrapped)} → ${text}`).toBe(false)
+          expect(text.length).toBeGreaterThan(0)
+        }
+      }
+    }
+  })
+
   it('every neighborRoomCountDir form renders (generator-only, no bundled level carries it)', () => {
     const puzzle = loadLevel(readLevel(files[0]))
     const subject = puzzle.suspects[0].id

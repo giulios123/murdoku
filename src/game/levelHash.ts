@@ -77,6 +77,8 @@ const CLUE_DEFAULTS: Partial<Record<ClueJson['type'], Record<string, unknown>>> 
   sameRoomAsObject: { alone: false },
   directionFromObject: { at: null, all: false },
   directionFromAttr: { quantifier: 'some' },
+  offsetFrom: { scope: 'people' },
+  offsetFromObject: { room: 'any' },
   besideSameObject: { dir: null },
   aloneWith: { dir: null },
   neighborRoomCount: { dir: null },
@@ -133,6 +135,8 @@ function referencedAttrKeys(level: LevelJson): Set<string> {
       keys.add(clue.attribute)
     } else if (clue.type === 'besideSameObject' && clue.mate.kind === 'attr') {
       keys.add(clue.mate.attribute)
+    } else if (clue.type === 'offsetFrom' && clue.who.kind === 'attr') {
+      keys.add(clue.who.attribute)
     }
   }
   for (const s of level.suspects) (s.clues ?? []).forEach(walk)

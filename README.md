@@ -21,7 +21,7 @@
 ## Why you'll get hooked
 
 - **Pure deduction, zero luck.** Every case has exactly **one** solution, provable by logic alone — no guessing, ever.
-- **143 case files out of the box.** Hand-built mysteries from a cosy **4×4** to a sprawling **12×12**, across three difficulties and a tutorial.
+- **150 case files out of the box.** Hand-built mysteries from a cosy **4×4** to a sprawling **12×12**, across three difficulties and a tutorial.
 - **An endless supply of mysteries.** A built-in generator rolls fresh, guaranteed-unique cases across **14 themed settings** in three difficulties — you'll never run out.
 - **A fresh case every day.** The daily mystery waits right on the front page — one date, one board, one culprit.
 - **Build your own — and share it.** A full editor lets you paint a crime scene, write the clues and verify it's solvable — then play it, save it, or **upload it for everyone**.

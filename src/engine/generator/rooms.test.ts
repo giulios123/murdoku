@@ -36,10 +36,15 @@ describe('generateOnce on big boards', () => {
   // 4 full 12×12 attempts à ~1–2s — well over vitest's default 5s.
   it('never throws at 12×12 and yields loadable levels (incl. 10+ room boards)', { timeout: 30000 }, () => {
     let bigRoomBoards = 0
-    // 80190 and 206894 are seeds whose attempt RETURNS a level with 10/11 rooms — the
+    // 400000 and 400034 are seeds whose attempt RETURNS a level with 11 rooms — the
     // exact case the old `String(room + 1)` encoding crashed on. Asserted below, so a
     // future re-roll of roomCountFor can't silently drop the regression coverage.
-    for (const seed of [1000, 8919, 80190, 206894]) {
+    // NOTE these seeds are gate-sensitive: ANY change to the generator's accept gates
+    // or candidate pools (measured twice on 16.08.2026: the merged exact-offset family
+    // cap, then the instance-edge semantics) can turn a returning seed into a failing
+    // one — then HUNT fresh seeds (generateOnce loop over seeds, keep those returning
+    // >= 10 rooms), never weaken the assertion.
+    for (const seed of [1000, 8919, 400000, 400034]) {
       const result = generateOnce(
         { width: 12, height: 12, suspects: 11, difficulty: 'hard', seed },
         seed,

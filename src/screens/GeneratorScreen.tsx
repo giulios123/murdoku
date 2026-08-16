@@ -4,7 +4,7 @@ import SettingsButton from '../components/SettingsButton.tsx'
 import BloodText from '../components/BloodText.tsx'
 import BloodSplatter from '../components/BloodSplatter.tsx'
 import ObjectChip from '../components/ObjectChip.tsx'
-import { generateLevelAsync, type GenHandle } from '../game/generatorClient.ts'
+import { generateLevelAsync, longHintSeconds, type GenHandle } from '../game/generatorClient.ts'
 import { levelMetaFromJson, type LevelMeta } from '../game/levels.ts'
 import { loadGenSettings, saveGenSettings } from '../game/storage.ts'
 import {
@@ -321,10 +321,10 @@ export default function GeneratorScreen({ onPlay, onBack, autoStart }: Props) {
             <p>{t('generate.generating')}</p>
             {/* Big cases hunt candidates for most of their budget — say so, or the wait
                 reads as a hang. Small boards return in seconds and need no warning. The
-                figure mirrors workerBudget: 12×12 hard may run ~90s, everything else ≤45s. */}
+                figure IS workerBudget's hard wall (longHintSeconds — single source). */}
             {size >= 10 && (
               <p className="mk-genhint">
-                {t('generate.generatingLong', { seconds: size >= 12 && difficulty === 'hard' ? 90 : 45 })}
+                {t('generate.generatingLong', { seconds: longHintSeconds(size, difficulty) })}
               </p>
             )}
             <button type="button" className="mk-btn mk-btn--ghost" onClick={cancel}>

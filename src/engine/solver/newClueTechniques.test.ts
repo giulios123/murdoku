@@ -261,3 +261,120 @@ describe('new clue semantics against a real solution', () => {
     expect(createBoardClue({ type: 'everyRoomCount', count: counts[0] }).test(solution, puzzle)).toBe(uniform)
   })
 })
+
+// ---------------------------------------------------------------------------
+// Exact offset from an anonymous anchor (offsetFrom / offsetFromObject)
+// ---------------------------------------------------------------------------
+
+/** Object types present anywhere on the board. */
+function boardObjectTypes(puzzle: Puzzle): string[] {
+  const board = puzzle.board
+  const all = new Set<string>()
+  for (let c = 0; c < board.width * board.height; c++) {
+    for (const obj of board.tileAt(c).objects()) all.add(obj.type)
+  }
+  return [...all]
+}
+
+/** Every offsetFrom / offsetFromObject clue TRUE for `subject` in `solution` (deduped). */
+function trueOffsetFromClues(puzzle: Puzzle, solution: Solution, subject: PersonId): ClueJson[] {
+  const board = puzzle.board
+  const { row, col } = board.rc(solution.cellOf(subject))
+  const types = boardObjectTypes(puzzle)
+  const out: ClueJson[] = []
+  const deltasTo = (o: { row: number; col: number }): { dir: 'north' | 'south' | 'east' | 'west'; distance: number }[] => {
+    const d: { dir: 'north' | 'south' | 'east' | 'west'; distance: number }[] = []
+    if (o.col !== col) d.push({ dir: col > o.col ? 'east' : 'west', distance: Math.abs(col - o.col) })
+    if (o.row !== row) d.push({ dir: row > o.row ? 'south' : 'north', distance: Math.abs(row - o.row) })
+    return d
+  }
+  for (const id of puzzle.allIds()) {
+    if (id === subject) continue
+    const oCell = solution.cellOf(id)
+    for (const { dir, distance } of deltasTo(board.rc(oCell))) {
+      const g = puzzle.attributesOf(id).gender
+      if (g === 'm' || g === 'f') {
+        out.push({ type: 'offsetFrom', who: { kind: 'attr', attribute: 'gender', value: g }, dir, distance })
+      }
+      for (const t of types) {
+        if (board.cellsNearObject(t).has(oCell)) {
+          out.push({ type: 'offsetFrom', who: { kind: 'near', object: t }, dir, distance })
+          if (id !== VICTIM_ID) {
+            out.push({ type: 'offsetFrom', who: { kind: 'near', object: t }, dir, distance, scope: 'suspects' })
+          }
+        }
+        if (board.cellsWithObject(t).has(oCell)) {
+          out.push({ type: 'offsetFrom', who: { kind: 'on', object: t }, dir, distance })
+          if (id !== VICTIM_ID) {
+            out.push({ type: 'offsetFrom', who: { kind: 'on', object: t }, dir, distance, scope: 'suspects' })
+          }
+        }
+      }
+    }
+  }
+  for (const t of types) {
+    for (const tileCell of board.objectCells(t)) {
+      for (const { dir, distance } of deltasTo(board.rc(tileCell))) {
+        for (const room of ['any', 'same', 'other'] as const) {
+          out.push({ type: 'offsetFromObject', object: t, dir, distance, room })
+        }
+      }
+    }
+  }
+  const seen = new Set<string>()
+  return out.filter((j) => {
+    const key = JSON.stringify(j)
+    if (seen.has(key)) return false
+    seen.add(key)
+    return createClue(j).test(subject, solution, puzzle)
+  })
+}
+
+describe('offsetFrom: adding a TRUE clue keeps the level solvable and the deduction sound', () => {
+  // The technique must actually FIRE somewhere (see CLAUDE.md: a test that is green
+  // because the technique never runs proves nothing) — counted across all samples.
+  let fired = 0
+
+  for (const file of sample) {
+    it(`${file}`, () => {
+      const base = readLevel(file)
+      const puzzle = loadLevel(base)
+      const solution = new SearchSolver(puzzle).firstSolution()
+      expect(solution).not.toBeNull()
+      if (!solution) return
+      const truth = new Map<PersonId, number>()
+      for (const [id, cell] of solution.entries()) truth.set(id, cell)
+
+      let checked = 0
+      for (const s of puzzle.suspects) {
+        // Cap per suspect — each check runs a full uniqueness search + deduction.
+        for (const clue of trueOffsetFromClues(puzzle, solution, s.id).slice(0, 8)) {
+          const level = withClue(base, s.id, clue)
+          const label = `${file} ${s.id} ${JSON.stringify(clue)}`
+          expect(new SearchSolver(loadLevel(level)).countSolutions(2), `${label}: lost the solution`).toBe(1)
+          const result = new DeductionEngine(loadLevel(level)).solve()
+          for (const step of result.steps) {
+            if (step.explanation.key.startsWith('clue.offsetFrom')) fired++
+            for (const elim of step.eliminated ?? []) {
+              const trueCell = truth.get(elim.personId)
+              if (trueCell === undefined) continue
+              expect(
+                elim.cells.includes(trueCell),
+                `${label}: technique "${step.technique}" eliminated ${elim.personId}'s TRUE cell ${trueCell}`,
+              ).toBe(false)
+            }
+          }
+          if (result.solved && result.solution) {
+            for (const [id, cell] of truth) expect(result.solution.cellOf(id)).toBe(cell)
+          }
+          checked++
+        }
+      }
+      expect(checked, 'no offsetFrom clue was true anywhere — the test proves nothing').toBeGreaterThan(0)
+    })
+  }
+
+  it('the relational offsetFrom deduction fired at least once across the samples', () => {
+    expect(fired).toBeGreaterThan(0)
+  })
+})

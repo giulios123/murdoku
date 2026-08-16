@@ -15,7 +15,7 @@ import type { Clue } from '../clues/Clue.ts'
 import { Puzzle } from '../model/Puzzle.ts'
 import { Suspect } from '../model/Suspect.ts'
 import { VICTIM_ID, inDirection8, HAIR_COLORS } from '../model/types.ts'
-import type { AttributeValue, Cell, PersonId, Side } from '../model/types.ts'
+import type { AttributeValue, Cell, Direction, PersonId, Side } from '../model/types.ts'
 import { OBJECT_CATALOG, EDITOR_ONLY_TYPES, type ObjectDef } from '../model/objects.ts'
 import { furnishRooms, kitFor } from './furnishing.ts'
 import type { Board } from '../model/Board.ts'
@@ -484,6 +484,7 @@ function breadthPenalty(level: LevelJson): number {
 const HARD_CLUE_TYPES = new Set<string>([
   'direction', // one direction from a person
   'directionFromAttr', // one direction from someone with a trait
+  'offsetFrom', // exact distance from an ANONYMOUS someone (trait / on/beside object)
   'besideSameObject', // same object instance as a person / someone with a trait
   'roomExists', // in a room where someone (with a trait) was on/beside an object
   'roomCompanion', // alone with someone who has a trait
@@ -518,15 +519,19 @@ const UNCAPPED_TYPES = new Set<string>([
 /** The capped families of a clue (the ones the variety limit counts). Row and column
  *  clues collapse to one "line" family; the two person/attribute direction clues collapse
  *  to one "direction" family (so "west of Alex" and "south-west of Alex" — or two
- *  directions off ANY anchor — count together and can't both appear); the two
- *  "what was in a room NEXT to his" clues collapse to one, so a level can't stack four
- *  near-identical neighbour statements. */
+ *  directions off ANY anchor — count together and can't both appear); ALL exact-distance
+ *  clues collapse to one "offset" family — "genau N Zeilen/Spalten von …" reads the same
+ *  whether the anchor is a person, an anonymous someone or an object tile, and three of
+ *  them in one level read monotonous (Dirk, 16.08.2026); the two "what was in a room NEXT
+ *  to his" clues collapse to one, so a level can't stack four near-identical neighbour
+ *  statements. */
 const cappedFamilies = (clue: ClueJson): string[] =>
   leafTypes(clue)
     .filter((t) => !UNCAPPED_TYPES.has(t))
     .map((t) => {
       if (t === 'inRow' || t === 'inCol') return 'line'
       if (t === 'direction' || t === 'directionFromAttr') return 'direction'
+      if (t === 'offset' || t === 'offsetFrom' || t === 'offsetFromObject') return 'offset'
       if (t === 'neighborRoomEmpty' || t === 'neighborRoomCount') return 'neighborRoom'
       return t
     })
@@ -572,8 +577,13 @@ function duplicateClueCount(clues: ClueJson[]): number {
  *  cell-distance offset from someone. TWO of them together reveal the exact cell, which the
  *  user forbids ("one offset is great, but never two that give away the direct spot"). */
 function isExactAxisClue(clue: ClueJson): boolean {
-  const t = clue.type === 'not' ? clue.clue.type : clue.type
-  return t === 'offset' || t === 'inRow' || t === 'inCol'
+  const c = clue.type === 'not' ? clue.clue : clue
+  if (c.type === 'offset' || c.type === 'inRow' || c.type === 'inCol' || c.type === 'offsetFromObject') {
+    return true
+  }
+  // The object-anchored offsetFrom kinds pin the subject to a FIXED line set (their
+  // anchor cells don't move); the trait kind doesn't — its anchor moves with people.
+  return c.type === 'offsetFrom' && c.who.kind !== 'attr'
 }
 
 /** How many suspects carry a hard relational/social clue. */
@@ -1447,11 +1457,14 @@ function trueBoardClues(puzzle: Puzzle, solution: Solution): BoardClueJson[] {
       { attribute: 'glasses', value: true },
       { attribute: 'bald', value: true },
     ]
-    for (const s of puzzle.suspects) {
-      const h = puzzle.attributesOf(s.id).hair
-      if (typeof h === 'string' && !traits.some((t) => t.attribute === 'hair' && t.value === h)) {
-        traits.push({ attribute: 'hair', value: h })
+    // Full catalogue ("IMMER ALLES"): every valued style a suspect actually wears.
+    for (const attr of ['hair', 'hairstyle', 'beardStyle', 'glassesShape', 'glassesColor'] as const) {
+      const values = new Set<string>()
+      for (const s of puzzle.suspects) {
+        const v = puzzle.attributesOf(s.id)[attr]
+        if (typeof v === 'string') values.add(v)
       }
+      for (const v of values) traits.push({ attribute: attr, value: v })
     }
     for (const { attribute, value } of traits) {
       if (!puzzle.suspects.some((s) => puzzle.attributesOf(s.id)[attribute] === value)) continue
@@ -1864,8 +1877,9 @@ function buildLevel(
  * first. Covers the full clue vocabulary; the test-filter keeps only true ones.
  * `editorSafe` restricts the pool to shapes the editor's flat clue builder can
  * round-trip (e.g. roomAttribute with excludeSelf).
+ * Exported ONLY for the pool-coverage test (candidates.test.ts) — not public API.
  */
-function candidatesFor(
+export function candidatesFor(
   suspectId: PersonId,
   solution: Solution,
   puzzle: Puzzle,
@@ -1887,6 +1901,46 @@ function candidatesFor(
   const usableTrait = (attribute: string, value: AttributeValue): boolean =>
     puzzle.suspects.some((s) => puzzle.attributesOf(s.id)[attribute] === value) &&
     (attribute === 'gender' || victimAttrs[attribute] !== value)
+
+  // The FULL trait catalogue (Dirks Regel: "IMMER ALLES"): gender, the boolean traits,
+  // and every valued style a suspect actually wears. ONE list feeds every trait-anchored
+  // emission below (directionFromAttr, offsetFrom, roomAttribute incl. negations,
+  // besideSameObject mates); usableTrait keeps fairness on top (a suspect carries it,
+  // hidden victim traits never hinge).
+  const allTraitPairs: { attribute: string; value: AttributeValue }[] = [
+    { attribute: 'gender', value: 'm' },
+    { attribute: 'gender', value: 'f' },
+    { attribute: 'beard', value: true },
+    { attribute: 'glasses', value: true },
+    { attribute: 'bald', value: true },
+  ]
+  for (const attr of ['hair', 'hairstyle', 'beardStyle', 'glassesShape', 'glassesColor'] as const) {
+    const values = new Set<string>()
+    for (const s of puzzle.suspects) {
+      const v = puzzle.attributesOf(s.id)[attr]
+      if (typeof v === 'string') values.add(v)
+    }
+    for (const v of values) allTraitPairs.push({ attribute: attr, value: v })
+  }
+
+  // Traits EVERY person in `ids` shares — same full catalogue. Feeds the "alone with
+  // N <trait>" shapes (roomCompanion / aloneWith), which need a value all mates carry.
+  const sharedTraits = (ids: PersonId[]): { attribute: string; value: AttributeValue }[] => {
+    const attrs = ids.map((id) => puzzle.attributesOf(id))
+    const shared: { attribute: string; value: AttributeValue }[] = []
+    const g = attrs[0].gender
+    if (attrs.every((a) => a.gender === g)) shared.push({ attribute: 'gender', value: g })
+    for (const attr of ['beard', 'glasses', 'bald'] as const) {
+      if (attrs.every((a) => a[attr] === true)) shared.push({ attribute: attr, value: true })
+    }
+    for (const attr of ['hair', 'hairstyle', 'beardStyle', 'glassesShape', 'glassesColor'] as const) {
+      const v = attrs[0][attr]
+      if (typeof v === 'string' && attrs.every((a) => a[attr] === v)) {
+        shared.push({ attribute: attr, value: v })
+      }
+    }
+    return shared
+  }
 
   // All eight compass directions and the three room qualifiers the editor offers — the
   // generator now emits the full set (the test-filter at the end keeps only the true ones),
@@ -1978,17 +2032,10 @@ function candidatesFor(
       const mates: ObjectMate[] = [
         { kind: 'any' },
         ...otherSuspects.map((id): ObjectMate => ({ kind: 'person', of: id })),
-        ...(
-          [
-            { attribute: 'gender', value: 'm' as const },
-            { attribute: 'gender', value: 'f' as const },
-            { attribute: 'beard', value: true as const },
-            { attribute: 'glasses', value: true as const },
-            { attribute: 'bald', value: true as const },
-          ]
-            .filter((av) => usableTrait(av.attribute, av.value))
-            .map((av): ObjectMate => ({ kind: 'attr', ...av }))
-        ),
+        // Full trait catalogue as mates too ("IMMER ALLES") — the filter keeps true ones.
+        ...allTraitPairs
+          .filter((av) => usableTrait(av.attribute, av.value))
+          .map((av): ObjectMate => ({ kind: 'attr', attribute: av.attribute, value: av.value })),
       ]
       for (const mate of mates) {
         out.push({ type: 'besideSameObject', object: def.type, mate })
@@ -2130,17 +2177,10 @@ function candidatesFor(
   }
 
   // "{dir} of {at least one | every} person with a trait" (victim counts) — offer the
-  // cardinal that holds, for each basic trait. 'some' is forward-deducible via the
-  // relational technique's one-sided bound, 'all' via the stronger two-sided bound; the
-  // candidate filter keeps only those that actually help.
-  const attrDirPairs: { attribute: string; value: AttributeValue }[] = [
-    { attribute: 'gender', value: 'm' },
-    { attribute: 'gender', value: 'f' },
-    { attribute: 'beard', value: true },
-    { attribute: 'glasses', value: true },
-    { attribute: 'bald', value: true },
-  ]
-  for (const { attribute, value } of attrDirPairs) {
+  // cardinal that holds, for the FULL trait catalogue. 'some' is forward-deducible via
+  // the relational technique's one-sided bound, 'all' via the stronger two-sided bound;
+  // the candidate filter keeps only those that actually help.
+  for (const { attribute, value } of allTraitPairs) {
     if (!usableTrait(attribute, value)) continue
     const matchers = puzzle
       .allIds()
@@ -2153,6 +2193,74 @@ function candidatesFor(
     }
   }
 
+  // --- exact offset from an ANONYMOUS anchor (offsetFrom) --------------------------
+  // "Exactly N rows/cols {dir} of someone …" — the person on that line is beside/on an
+  // object or carries a trait. Emitted from what is actually true here; the pigeonhole
+  // reading (that line's occupant MUST qualify) makes these broad but forward-deducible.
+  for (const id of puzzle.allIds()) {
+    if (id === suspectId) continue
+    const oCell = solution.cellOf(id)
+    const o = board.rc(oCell)
+    const deltas: { dir: Direction; distance: number }[] = []
+    if (o.col !== col) deltas.push({ dir: col > o.col ? 'east' : 'west', distance: Math.abs(col - o.col) })
+    if (o.row !== row) deltas.push({ dir: row > o.row ? 'south' : 'north', distance: Math.abs(row - o.row) })
+    if (deltas.length === 0) continue
+    // Object relations this anchor's cell actually satisfies ("on" needs occupiable;
+    // "beside" is the board's instance-aware rule).
+    const onTypes = [...board.tileAt(oCell).objects()].filter((ob) => ob.occupiable).map((ob) => ob.type)
+    const anchorRoom = board.roomIdOf(oCell)
+    const nearAnchor = new Set<string>()
+    for (const nb of board.neighbors4(oCell)) {
+      if (board.roomIdOf(nb) !== anchorRoom) continue
+      for (const ob of board.tileAt(nb).objects()) {
+        if (board.isBesideObject(oCell, ob.type)) nearAnchor.add(ob.type)
+      }
+    }
+    for (const { dir, distance } of deltas) {
+      for (const kind of ['on', 'near'] as const) {
+        for (const object of kind === 'on' ? onTypes : nearAnchor) {
+          out.push({ type: 'offsetFrom', who: { kind, object }, dir, distance })
+          // The suspects-scoped form is only true when this anchor IS a suspect.
+          if (id !== VICTIM_ID) {
+            out.push({ type: 'offsetFrom', who: { kind, object }, dir, distance, scope: 'suspects' })
+          }
+        }
+      }
+      // Trait anchors: every catalogue trait this anchor carries (victim only for
+      // gender — usableTrait already bars hidden victim traits from the pool).
+      for (const { attribute, value } of allTraitPairs) {
+        if (!usableTrait(attribute, value)) continue
+        if (puzzle.attributesOf(id)[attribute] !== value) continue
+        out.push({ type: 'offsetFrom', who: { kind: 'attr', attribute, value }, dir, distance })
+      }
+    }
+  }
+
+  // --- exact offset from an OBJECT TILE (offsetFromObject, ∃ at least one) ---------
+  // Only non-degenerate spreads survive: collapsesToLine drops every candidate that
+  // pins a single row/column — that is the honest inRow/inCol clue's job.
+  {
+    const seen = new Set<string>()
+    for (let c = 0; c < board.width * board.height; c++) {
+      const o = board.rc(c)
+      const pairs: { dir: Direction; distance: number }[] = []
+      if (o.col !== col) pairs.push({ dir: col > o.col ? 'east' : 'west', distance: Math.abs(col - o.col) })
+      if (o.row !== row) pairs.push({ dir: row > o.row ? 'south' : 'north', distance: Math.abs(row - o.row) })
+      if (pairs.length === 0) continue
+      for (const obj of board.tileAt(c).objects()) {
+        for (const { dir, distance } of pairs) {
+          for (const roomRel of ROOM_RELS) {
+            const key = `${obj.type}|${dir}|${distance}|${roomRel}`
+            if (seen.has(key)) continue
+            seen.add(key)
+            const json: ClueJson = { type: 'offsetFromObject', object: obj.type, dir, distance, room: roomRel }
+            if (!collapsesToLine(json)) out.push(json)
+          }
+        }
+      }
+    }
+  }
+
   // --- room-attribute clues: "no one / some / everyone else in the room had X" ---
   // Boolean traits AND gender now round-trip to the editor (gender via the "same room
   // as a man/woman" target). excludeSelf is ALWAYS true: the rendered wording is "ein
@@ -2161,24 +2269,12 @@ function candidatesFor(
   // false produced a clue whose stored meaning (counts the subject itself) contradicted
   // its own displayed text and flipped under a round-trip. Always true keeps all three
   // (generator / renderer / editor) in agreement.
-  const attrPairs: { attribute: string; value: AttributeValue }[] = [
-    { attribute: 'gender', value: 'm' },
-    { attribute: 'gender', value: 'f' },
-    { attribute: 'beard', value: true },
-    { attribute: 'glasses', value: true },
-    { attribute: 'bald', value: true },
-  ]
-  // Hair is a valued trait the editor offers for "same room as someone with hair X"
-  // (roomAttribute). Add every hair colour a suspect actually wears so this whole block
-  // (none/some/all + counted) AND the negation loop below emit hair variants too; the
-  // test-filter + usableTrait keep only the valid ones. Without it, the editor's hair
-  // "Vorgaben" could never be generated. See [[editor-generator-deduction-parity]].
-  const hairValues = new Set<AttributeValue>()
-  for (const s of puzzle.suspects) {
-    const h = puzzle.attributesOf(s.id).hair
-    if (typeof h === 'string') hairValues.add(h)
-  }
-  for (const v of hairValues) attrPairs.push({ attribute: 'hair', value: v })
+  // The FULL trait catalogue (allTraitPairs — every valued style a suspect wears, not
+  // just hair) feeds this whole block (none/some/all + counted) AND the negation loop
+  // below; the test-filter + usableTrait keep only the valid ones. Without the valued
+  // styles, the editor's "Vorgaben" for them could never be generated.
+  // See [[editor-generator-deduction-parity]].
+  const attrPairs = allTraitPairs
   for (const { attribute, value } of attrPairs) {
     if (!usableTrait(attribute, value)) continue
     for (const quantifier of ['none', 'some', 'all'] as const) {
@@ -2212,18 +2308,7 @@ function candidatesFor(
   const othersInRoom = otherSuspects.filter((id) => board.roomIdOf(solution.cellOf(id)) === room)
   if (othersInRoom.length >= 1) {
     const n = othersInRoom.length
-    const attrs = othersInRoom.map((id) => puzzle.attributesOf(id))
-    const companion: { attribute: string; value: AttributeValue }[] = []
-    const g = attrs[0].gender
-    if (attrs.every((a) => a.gender === g)) companion.push({ attribute: 'gender', value: g })
-    if (attrs.every((a) => a.beard === true)) companion.push({ attribute: 'beard', value: true })
-    if (attrs.every((a) => a.glasses === true)) companion.push({ attribute: 'glasses', value: true })
-    if (attrs.every((a) => a.bald === true)) companion.push({ attribute: 'bald', value: true })
-    const hair = attrs[0].hair
-    if (typeof hair === 'string' && attrs.every((a) => a.hair === hair)) {
-      companion.push({ attribute: 'hair', value: hair })
-    }
-    for (const { attribute, value } of companion) {
+    for (const { attribute, value } of sharedTraits(othersInRoom)) {
       out.push({ type: 'roomCompanion', count: n, attribute, value })
     }
   }
@@ -2241,18 +2326,7 @@ function candidatesFor(
     for (const named of othersInRoom) {
       const extras = othersInRoom.filter((id) => id !== named)
       if (extras.length === 0) continue
-      const eAttrs = extras.map((id) => puzzle.attributesOf(id))
-      const traits: { attribute: string; value: AttributeValue }[] = []
-      const eg = eAttrs[0].gender
-      if (eAttrs.every((a) => a.gender === eg)) traits.push({ attribute: 'gender', value: eg })
-      if (eAttrs.every((a) => a.beard === true)) traits.push({ attribute: 'beard', value: true })
-      if (eAttrs.every((a) => a.glasses === true)) traits.push({ attribute: 'glasses', value: true })
-      if (eAttrs.every((a) => a.bald === true)) traits.push({ attribute: 'bald', value: true })
-      const eHair = eAttrs[0].hair
-      if (typeof eHair === 'string' && eAttrs.every((a) => a.hair === eHair)) {
-        traits.push({ attribute: 'hair', value: eHair })
-      }
-      for (const { attribute, value } of traits) {
+      for (const { attribute, value } of sharedTraits(extras)) {
         if (!usableTrait(attribute, value)) continue
         out.push({ type: 'aloneWith', people: [named], attribute, value, extraCount: extras.length })
         for (const dir of ['north', 'south', 'east', 'west'] as const) {
@@ -2390,6 +2464,11 @@ function tightness(json: ClueJson, puzzle: Puzzle): number {
       return 8
     case 'offset':
       return 12
+    // The anonymous anchor makes it broader than a named offset, but the pigeonhole
+    // reading still bites hard — well before the room-level clues. (Only the attr kind
+    // lands here; the object kinds have real candidateCells and are sized above.)
+    case 'offsetFrom':
+      return 30
     case 'roomAttribute':
       return 35
     case 'sameRoom':
