@@ -2639,6 +2639,14 @@ button {
 .mk-hair--white {
   -webkit-text-stroke-color: #cfd3d8;
 }
+/* Global clues (and their Akten-Notiz) sit on the dark panel, not on parchment — the
+   dark ink + thin outline is unreadable there (user-reported: "graue Haare"). Hair
+   words render like the rest of the sentence (bold, panel colour); the FAQ's board-clue
+   card is parchment and keeps the tint. */
+.mk-boardclue .mk-hair {
+  color: inherit;
+  -webkit-text-stroke-width: 0;
+}
 .mk-token {
   width: 34px;
   height: 34px;
