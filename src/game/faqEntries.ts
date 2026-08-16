@@ -604,14 +604,8 @@ export const FAQ_CATEGORIES: FaqCategory[] = [
         board: 'rooms',
         subject: 'E',
         variants: [
-          // Dirk's own motivating example leads: "in einem angrenzenden Raum, der
-          // komplett östlich von Emil lag, waren genau 2 Verdächtige".
-          {
-            labelKey: 'faq.v.east',
-            clue: { type: 'neighborRoomCount', count: 2, dir: 'east' },
-            refs: { E: c(1, 0) },
-            marks: () => ({ rooms: new Set(['2', '3']), redRooms: new Set(['4']) }),
-          },
+          // The SOUTH case leads (Dirk: it is the hard-to-grasp one, so it is what the
+          // reader should see first); his original east sentence follows as a variant.
           {
             labelKey: 'faq.v.south',
             clue: { type: 'neighborRoomCount', count: 1, dir: 'south' },
@@ -619,6 +613,12 @@ export const FAQ_CATEGORIES: FaqCategory[] = [
             // Half-plane over the WHOLE room: rooms 3 AND 4 lie completely south of
             // Emil (room 3 also east — that is the lesson); room 2 does not qualify.
             marks: () => ({ rooms: new Set(['3', '4']), redRooms: new Set(['2']) }),
+          },
+          {
+            labelKey: 'faq.v.east',
+            clue: { type: 'neighborRoomCount', count: 2, dir: 'east' },
+            refs: { E: c(1, 0) },
+            marks: () => ({ rooms: new Set(['2', '3']), redRooms: new Set(['4']) }),
           },
           {
             labelKey: 'faq.v.noDir',

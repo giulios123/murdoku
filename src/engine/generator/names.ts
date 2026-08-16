@@ -62,6 +62,7 @@ export function suspectPerson(index: number, gender: 'm' | 'f', used: Set<string
   return { name: letter + index, gender }
 }
 
-export function victimPerson(rng: { int(max: number): number }): NamedPerson {
-  return VICTIMS[rng.int(VICTIMS.length)]
+export function victimPerson(rng: { int(max: number): number }, gender?: 'm' | 'f'): NamedPerson {
+  const bank = gender ? VICTIMS.filter((v) => v.gender === gender) : VICTIMS
+  return bank[rng.int(bank.length)]
 }

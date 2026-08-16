@@ -521,7 +521,8 @@ EditorBoard-Muster). Einstieg: ?-Knopf oben links im StartScreen, Deep-Link `#fa
   (`onFaqLookup=undefined`), wie der ✎-Knopf.
 - Das rooms-Demo-Brett ist Dirks „komplett südlich"-Beispiel 1:1; der
   neighborRoomCount-Eintrag („Angrenzender Raum, komplett in einer Richtung")
-  startet mit seinem Originalsatz (östlich, genau 2).
+  startet mit der SÜD-Variante (die schwerer zu verstehende, Dirks Wunsch);
+  sein Originalsatz (östlich, genau 2) ist der zweite Chip.
 
 ## UI-Regeln (Dirk, gelten immer)
 

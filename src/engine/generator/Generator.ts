@@ -1005,6 +1005,11 @@ export interface FillBoardOptions {
    *  like "≥count others with hair=white in the room" can only hold if enough suspects
    *  actually wear it; pure random assignment over many colours rarely produces enough. */
   requiredAttributes?: { attribute: string; value: AttributeValue; count: number }[]
+  /** Keep the board's people exactly as given (names, gender, every styled trait) instead
+   *  of rolling fresh identities — the editor's "Personen behalten". Only missing names
+   *  are filled in (clue texts need one). The cast is never restyled, so trait seeding is
+   *  skipped: a requirement this cast can't satisfy fails honestly instead of mutating it. */
+  keepPeople?: boolean
 }
 
 /** Translate a caller budget into pickBestLevel's knobs. */
@@ -1035,7 +1040,7 @@ export function fillBoardClues(board: LevelJson, options: FillBoardOptions = {})
     for (let a = 0; a < easyCap && performance.now() < deadline; a++) {
       // A crashing attempt counts as a failed one — never end the hunt (see pickBestLevel).
       try {
-        const result = fillAttempt(board, suspectIds, new Rng(baseSeed + a * 7919), 'easy', options.requiredClues, options.requiredAttributes)
+        const result = fillAttempt(board, suspectIds, new Rng(baseSeed + a * 7919), 'easy', options.requiredClues, options.requiredAttributes, options.keepPeople)
         if (result && isShippable(result.level)) {
           // Constructed easy fill (rank ≤ 2, verified in fillAttempt) — label it easy
           // directly; difficultyOf would mislabel a hidden-single level as "medium".
@@ -1055,7 +1060,7 @@ export function fillBoardClues(board: LevelJson, options: FillBoardOptions = {})
     ? pickOptsFrom(options.budget)
     : { maxAttempts: 400, timeBudgetMs: 5000, hardTimeBudgetMs: 20000 }
   const filled = pickBestLevel(
-    (rng) => fillAttempt(board, suspectIds, rng, options.difficulty, options.requiredClues, options.requiredAttributes),
+    (rng) => fillAttempt(board, suspectIds, rng, options.difficulty, options.requiredClues, options.requiredAttributes, options.keepPeople),
     baseSeed,
     options.difficulty,
     pick,
@@ -1073,18 +1078,39 @@ function fillAttempt(
   difficulty?: GenDifficulty,
   requiredClues?: ((json: ClueJson) => boolean)[],
   requiredAttributes?: { attribute: string; value: AttributeValue; count: number }[],
+  keepPeople?: boolean,
 ): { level: LevelJson; pins: number } | null {
   const usedName = new Set<string>()
+  if (keepPeople) for (const s of board.suspects) if (s.name) usedName.add(s.name)
   const suspectMeta: SuspectJson[] = suspectIds.map((id, i) => {
+    if (keepPeople) {
+      // The author's cast, verbatim — only a missing name is rolled (clue texts need one).
+      const given = board.suspects[i]
+      const gender: 'm' | 'f' = given.attributes?.gender === 'f' ? 'f' : 'm'
+      const name = given.name || suspectPerson(i, gender, usedName).name
+      return { id, name, attributes: { ...(given.attributes ?? {}), gender }, clues: [] }
+    }
     const gender: 'm' | 'f' = rng.chance(0.5) ? 'm' : 'f'
     const person = suspectPerson(i, gender, usedName)
     return { id, name: person.name, attributes: makeAttributes(gender, rng), clues: [] }
   })
   // The palette's seeds AND the board's own global clues — the latter are the user's and are
   // never pruned, so the fill must make them meaningful rather than hope the dice do.
+  // A KEPT cast is never restyled: an unsatisfiable seed fails honestly in placeOnBoard /
+  // clue construction instead of silently mutating the author's people.
   const seeds = [...(requiredAttributes ?? []), ...boardClueAttrSeeds(board)]
-  if (seeds.length > 0) seedRequiredAttributes(suspectMeta, seeds, rng)
-  const victim = victimPerson(rng)
+  if (!keepPeople && seeds.length > 0) seedRequiredAttributes(suspectMeta, seeds, rng)
+  let victim: { name: string; gender: 'm' | 'f' }
+  if (keepPeople) {
+    // Keep the author's victim (name + shown gender); the hidden traits below stay
+    // covert randomness either way. '?' is the editor's unnamed placeholder.
+    const gender: 'm' | 'f' = board.victim.attributes?.gender === 'f' ? 'f' : 'm'
+    const name =
+      board.victim.name && board.victim.name !== '?' ? board.victim.name : victimPerson(rng, gender).name
+    victim = { name, gender }
+  } else {
+    victim = victimPerson(rng)
+  }
   const victimMeta = { name: victim.name, attributes: makeAttributes(victim.gender, rng) }
   const base: LevelJson = { ...board, suspects: suspectMeta, victim: victimMeta }
   const basePuzzle = loadLevel(base)

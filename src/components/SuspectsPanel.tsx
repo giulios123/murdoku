@@ -36,9 +36,37 @@ interface Props {
   onChangeSuspect: (index: number, suspect: EditorSuspect) => void
   onChangeVictim: (name: string, gender: 'm' | 'f') => void
   /** Generate people + clues onto the current board (kept as-is). With a `palette`
-   *  (the "Vorgaben" templates) only matching clue shapes are used. */
-  onRandom: (palette?: Condition[]) => void
+   *  (the "Vorgaben" templates) only matching clue shapes are used. With `keepPeople`
+   *  the styled cast (names + traits) is kept and only clues + placement are new. */
+  onRandom: (palette?: Condition[], keepPeople?: boolean) => void
   randomizing: boolean
+}
+
+/** Line-art icons for the random dialog (noir style — never emoji in dialogs). */
+function DiceIcon() {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true" width="20" height="20">
+      <rect x="4" y="4" width="16" height="16" rx="3" fill="none" stroke="currentColor" strokeWidth="2" />
+      <circle cx="9" cy="9" r="1.4" fill="currentColor" />
+      <circle cx="15" cy="9" r="1.4" fill="currentColor" />
+      <circle cx="9" cy="15" r="1.4" fill="currentColor" />
+      <circle cx="15" cy="15" r="1.4" fill="currentColor" />
+    </svg>
+  )
+}
+function KeepPeopleIcon() {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true" width="20" height="20">
+      <circle cx="12" cy="8" r="4" fill="none" stroke="currentColor" strokeWidth="2" />
+      <path
+        d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+      />
+    </svg>
+  )
 }
 
 /** Build the editor state into a playable puzzle + a renderer for the active
@@ -69,6 +97,11 @@ export default function SuspectsPanel({
   const { genderColors } = useSettings()
   const [editing, setEditing] = useState<number | 'victim' | null>(null)
   const [showConstraints, setShowConstraints] = useState(false)
+  // The 🎲 pre-dialog: "alles neu" vs "Personen behalten" (share-sheet pattern).
+  const [showRandom, setShowRandom] = useState(false)
+  // The same choice inside the "Vorgaben" dialog — kept like `constraints` so it
+  // survives closing/reopening the dialog within an editing session.
+  const [keepPeople, setKeepPeople] = useState(false)
   // The "Vorgaben" palette: clue-shape templates the generator may use. Kept here so it
   // survives closing/reopening the dialog within an editing session.
   const [constraints, setConstraints] = useState<ClueGroup>(() => emptyClueGroup())
@@ -78,6 +111,7 @@ export default function SuspectsPanel({
   // constraints dialog first — so you return to the editor, not out of it.
   useBackInterceptor(editing !== null, () => setEditing(null))
   useBackInterceptor(showConstraints, () => setShowConstraints(false))
+  useBackInterceptor(showRandom, () => setShowRandom(false))
 
   // Builder context for the constraint templates: the board's rooms/objects, but with a
   // single synthetic "(Generator wählt)" person — the suspects don't exist yet, so a
@@ -119,7 +153,7 @@ export default function SuspectsPanel({
   }
   const runConstraints = () => {
     setShowConstraints(false)
-    onRandom(constraints.conditions)
+    onRandom(constraints.conditions, keepPeople)
   }
 
   // Global (board) rules, rendered exactly like the game's clue panel, so the editor
@@ -237,7 +271,7 @@ export default function SuspectsPanel({
       <button
         type="button"
         className="mk-clue mk-clue--random"
-        onClick={() => onRandom()}
+        onClick={() => setShowRandom(true)}
         disabled={randomizing}
       >
         <span className="mk-token mk-token--random">🎲</span>
@@ -276,12 +310,77 @@ export default function SuspectsPanel({
           onClose={() => setEditing(null)}
         />
       )}
+      {showRandom && (
+        <div className="mk-overlay" onClick={() => setShowRandom(false)}>
+          <div className="mk-dialog mk-savedlg" onClick={(e) => e.stopPropagation()}>
+            <h3>{t('editor.random')}</h3>
+            <div className="mk-savelist">
+              <button
+                type="button"
+                className="mk-saverow"
+                onClick={() => {
+                  setShowRandom(false)
+                  onRandom()
+                }}
+              >
+                <span className="mk-saverow__ic" aria-hidden="true">
+                  <DiceIcon />
+                </span>
+                <span className="mk-saverow__text">
+                  <span className="mk-saverow__title">{t('editor.randomAllNew')}</span>
+                  <span className="mk-saverow__sub">{t('editor.randomAllNewSub')}</span>
+                </span>
+              </button>
+              <button
+                type="button"
+                className="mk-saverow"
+                onClick={() => {
+                  setShowRandom(false)
+                  onRandom(undefined, true)
+                }}
+              >
+                <span className="mk-saverow__ic" aria-hidden="true">
+                  <KeepPeopleIcon />
+                </span>
+                <span className="mk-saverow__text">
+                  <span className="mk-saverow__title">{t('editor.randomKeepPeople')}</span>
+                  <span className="mk-saverow__sub">{t('editor.randomKeepPeopleSub')}</span>
+                </span>
+              </button>
+            </div>
+            <div className="mk-dialog__actions">
+              <button type="button" className="mk-btn mk-btn--ghost" onClick={() => setShowRandom(false)}>
+                {t('generate.cancel')}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       {showConstraints && (
         <div className="mk-overlay" onClick={() => setShowConstraints(false)}>
           <div className="mk-dialog mk-suspedit mk-constraints" onClick={(e) => e.stopPropagation()}>
             <p className="mk-suspedit__label">{t('editor.constraintsTitle')}</p>
             <p className="mk-constraints__intro">{t('editor.constraintsIntro')}</p>
             <ClueBuilder group={constraints} ctx={templateCtx} onChange={setConstraints} templateMode />
+            {/* Same choice as the 🎲 pre-dialog, as a compact chip pair (suspect-editor style). */}
+            <div className="mk-suspedit__traits">
+              <button
+                type="button"
+                className="mk-chip"
+                data-active={!keepPeople}
+                onClick={() => setKeepPeople(false)}
+              >
+                {t('editor.peopleNew')}
+              </button>
+              <button
+                type="button"
+                className="mk-chip"
+                data-active={keepPeople}
+                onClick={() => setKeepPeople(true)}
+              >
+                {t('editor.randomKeepPeople')}
+              </button>
+            </div>
             <button
               type="button"
               className="mk-btn mk-btn--primary mk-btn--block"

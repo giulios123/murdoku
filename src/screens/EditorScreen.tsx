@@ -31,6 +31,7 @@ import {
   presentObjectTypes,
   pruneWallEdges,
   setCell,
+  suspectAttributes,
   toggleWallEdgeAt,
   usedRooms,
   type EditorObject,
@@ -49,7 +50,7 @@ type Mode = 'rooms' | 'ground' | 'top' | 'window' | 'door' | 'global'
 /** The four board layers shown as tabs; windows & doors live inside 'top' (Objekte). */
 const LAYERS: Mode[] = ['rooms', 'ground', 'top', 'global']
 type CheckResult = {
-  kind: 'ok' | 'multi' | 'none' | 'contradiction' | 'aborted' | 'error' | 'saved' | 'exported' | 'loaded' | 'genfail' | 'genfailVorgaben' | 'uploaded' | 'uploadDuplicate' | 'uploadDaily' | 'uploadContent' | 'uploadTooFast' | 'uploadNetwork' | 'uploadFailed'
+  kind: 'ok' | 'multi' | 'none' | 'contradiction' | 'aborted' | 'error' | 'saved' | 'exported' | 'loaded' | 'genfail' | 'genfailVorgaben' | 'genfailKeep' | 'uploaded' | 'uploadDuplicate' | 'uploadDaily' | 'uploadContent' | 'uploadTooFast' | 'uploadNetwork' | 'uploadFailed'
   murderer?: string
   /** For a solvable level: did pure forward deduction crack it ('pure'), or were
    *  proof-by-contradiction steps (forcing/SAT search) required ('contradiction')? */
@@ -264,20 +265,23 @@ export default function EditorScreen({ onBack, onPlay, initialLevel }: Props) {
   /**
    * Keep the board (rooms, floor, objects, windows, doors, global clues) exactly as
    * drawn and let the generator fill the PEOPLE: fresh names, traits and clues so the
-   * case is uniquely solvable at the chosen difficulty. Runs in the worker.
+   * case is uniquely solvable at the chosen difficulty. With `keepPeople` the styled
+   * cast (names + every trait) is kept verbatim and only clues + placement are new.
+   * Runs in the worker.
    */
-  const randomize = (palette?: Condition[]) => {
+  const randomize = (palette?: Condition[], keepPeople?: boolean) => {
     setResult(null)
     setRandomizing(true)
     const boardLevel = buildEditorLevel(
       state,
-      state.suspects.map((s) => ({ id: s.id, name: s.name, attributes: { gender: s.gender }, clues: [] })),
+      // Full attributes always: the plain fill replaces them anyway, the keep-fill needs them.
+      state.suspects.map((s) => ({ id: s.id, name: s.name, attributes: suspectAttributes(s), clues: [] })),
       { name: state.victim.name || '?', attributes: { gender: state.victim.gender } },
       name.trim() || undefined,
       themeOutdoor(theme),
     )
     const constrained = !!palette && palette.length > 0
-    const handle = fillBoardCluesAsync(boardLevel, { difficulty }, constrained ? palette : undefined)
+    const handle = fillBoardCluesAsync(boardLevel, { difficulty, keepPeople }, constrained ? palette : undefined)
     randomHandle.current = handle
     handle.promise
       .then((level) => {
@@ -289,8 +293,9 @@ export default function EditorScreen({ onBack, onPlay, initialLevel }: Props) {
       .catch((err: Error) => {
         randomHandle.current = null
         setRandomizing(false)
-        // Strict constraints can be unsatisfiable on this board → a tailored hint.
-        if (err.message !== 'cancelled') setResult({ kind: constrained ? 'genfailVorgaben' : 'genfail' })
+        // Strict constraints / a fixed cast can be unsatisfiable on this board → tailored hints.
+        if (err.message !== 'cancelled')
+          setResult({ kind: constrained ? 'genfailVorgaben' : keepPeople ? 'genfailKeep' : 'genfail' })
       })
   }
 
