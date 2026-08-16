@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import type { LevelJson } from '../engine/index.ts'
-import { compareUserLevels, USERLEVEL_TAGS, type UserLevelEntry } from './userlevels.ts'
+import type { ClueJson, LevelJson } from '../engine/index.ts'
+import { compareUserLevels, levelHasUnknownClues, USERLEVEL_TAGS, type UserLevelEntry } from './userlevels.ts'
 
 function entry(
   dbId: number,
@@ -44,5 +44,63 @@ describe('compareUserLevels', () => {
     const older = entry(1, { stars: 8, ratings: 2 })
     const newer = entry(2, { stars: 8, ratings: 2 })
     expect([older, newer].sort(compareUserLevels)).toEqual([newer, older])
+  })
+})
+
+/** Schutzsystem: Level einer NEUEREN App-Version (unbekannte Hinweistypen) müssen
+ *  erkannt werden — sie werden versteckt statt zu crashen oder still zu verfälschen. */
+describe('levelHasUnknownClues', () => {
+  const level = (parts: Partial<LevelJson>): LevelJson =>
+    ({ suspects: [], ...parts }) as unknown as LevelJson
+  const withClue = (clue: unknown): LevelJson =>
+    level({ suspects: [{ id: 'A', name: 'A', clues: [clue as ClueJson] }] as LevelJson['suspects'] })
+
+  it('accepts every current clue shape incl. nesting', () => {
+    const known: ClueJson = {
+      type: 'and',
+      clues: [
+        { type: 'offsetFrom', who: { kind: 'near', object: 'plant' }, dir: 'east', distance: 1 },
+        { type: 'not', clue: { type: 'besideSameObject', object: 'table', mate: { kind: 'any' } } },
+      ],
+    }
+    expect(levelHasUnknownClues(withClue(known))).toBe(false)
+  })
+
+  it('flags an unknown suspect clue type — also nested inside AND/NOT', () => {
+    expect(levelHasUnknownClues(withClue({ type: 'teleportsBehind', of: 'B' }))).toBe(true)
+    expect(
+      levelHasUnknownClues(
+        withClue({ type: 'and', clues: [{ type: 'alone' }, { type: 'teleportsBehind' }] }),
+      ),
+    ).toBe(true)
+    expect(levelHasUnknownClues(withClue({ type: 'not', clue: { type: 'teleportsBehind' } }))).toBe(true)
+  })
+
+  it('flags a FUTURE kind inside a known union (would compute silently wrong, not throw)', () => {
+    expect(
+      levelHasUnknownClues(
+        withClue({ type: 'offsetFrom', who: { kind: 'window' }, dir: 'east', distance: 1 }),
+      ),
+    ).toBe(true)
+    expect(
+      levelHasUnknownClues(
+        withClue({ type: 'besideSameObject', object: 'table', mate: { kind: 'ghost' } }),
+      ),
+    ).toBe(true)
+  })
+
+  it('flags unknown global and board clues; legacy board shapes stay KNOWN', () => {
+    expect(levelHasUnknownClues(level({ globalClues: [{ type: 'futureGlobal' } as unknown as ClueJson] }))).toBe(true)
+    expect(
+      levelHasUnknownClues(
+        level({ boardClues: [{ type: 'futureBoardClue' }] as unknown as LevelJson['boardClues'] }),
+      ),
+    ).toBe(true)
+    // everyRoomCount is pre-rename legacy — normalizeBoardClue migrates it, so it is known.
+    expect(
+      levelHasUnknownClues(
+        level({ boardClues: [{ type: 'everyRoomCount', count: 2 }] as unknown as LevelJson['boardClues'] }),
+      ),
+    ).toBe(false)
   })
 })

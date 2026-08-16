@@ -528,6 +528,8 @@
     "cases_other": "{{count}} affaires",
     "custom": "Perso",
     "garandTag": "Classé secret",
+    "ulLocked": "Mise à jour requise",
+    "ulUpdateNeeded": "Veuillez mettre à jour l'application : cette affaire contient des types d'indices que cette version ne connaît pas encore.",
     "garandOn": "Manuel Garand : visible",
     "garandOff": "Manuel Garand : masqué"
   },

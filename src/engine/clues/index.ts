@@ -50,7 +50,7 @@ export {
 } from './socialClues.ts'
 export type { Quantifier } from './socialClues.ts'
 export { NotClue, AndClue, OrClue } from './compositeClues.ts'
-export { createClue } from './ClueFactory.ts'
+export { createClue, KNOWN_CLUE_TYPES } from './ClueFactory.ts'
 export type { ClueJson } from './ClueFactory.ts'
 export { relatedSuspects, usesInsideOutside } from './clueRefs.ts'
 export {

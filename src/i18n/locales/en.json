@@ -528,6 +528,8 @@
     "cases_other": "{{count}} cases",
     "custom": "Custom",
     "garandTag": "Classified",
+    "ulLocked": "Update required",
+    "ulUpdateNeeded": "Please update the app: this case contains clue types this version doesn't know yet.",
     "garandOn": "Manuel Garand: visible",
     "garandOff": "Manuel Garand: hidden"
   },

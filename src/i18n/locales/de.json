@@ -528,6 +528,8 @@
     "cases_other": "{{count}} Fälle",
     "custom": "Eigen",
     "garandTag": "Geheimakte",
+    "ulLocked": "Update nötig",
+    "ulUpdateNeeded": "Bitte aktualisiere die App: Dieser Fall enthält Hinweisarten, die diese Version noch nicht kennt.",
     "garandOn": "Manuel Garand: sichtbar",
     "garandOff": "Manuel Garand: versteckt"
   },

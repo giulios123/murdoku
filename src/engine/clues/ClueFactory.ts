@@ -245,3 +245,61 @@ export function createClue(json: ClueJson): Clue {
       return new OrClue(json.clues.map(createClue))
   }
 }
+
+/**
+ * Every clue type THIS build understands — the format-knowledge probe for data written
+ * by a NEWER build (userlevels: a level with an unknown type is hidden instead of
+ * crashing, see game/userlevels.ts). Kept complete by the compiler in BOTH directions:
+ * `satisfies` rejects entries that aren't real types, and the `never` proof below
+ * fails to compile as soon as a ClueJson member is missing from the list.
+ */
+const CLUE_TYPE_LIST = [
+  'onObject',
+  'nearObject',
+  'nearObjectAny',
+  'nearWindow',
+  'nearDoor',
+  'inside',
+  'outside',
+  'inRoom',
+  'inRoomAdjacentTo',
+  'inRow',
+  'inCol',
+  'corner',
+  'atWall',
+  'uniqueOnObject',
+  'uniqueNearObject',
+  'uniqueNearWindow',
+  'uniqueNearDoor',
+  'uniqueInside',
+  'uniqueOutside',
+  'alone',
+  'notAlone',
+  'neighborRoomEmpty',
+  'neighborRoomCount',
+  'aloneWith',
+  'roomAttribute',
+  'direction',
+  'directionFromAttr',
+  'insideXor',
+  'offset',
+  'offsetFrom',
+  'offsetFromObject',
+  'sameRoom',
+  'adjacentRooms',
+  'sameLineAsObject',
+  'directionFromObject',
+  'sameRoomAsObject',
+  'besideSameObject',
+  'roomCompanion',
+  'roomExists',
+  'not',
+  'and',
+  'or',
+] as const satisfies readonly ClueJson['type'][]
+
+type MissingClueType = Exclude<ClueJson['type'], (typeof CLUE_TYPE_LIST)[number]>
+const missingClueTypeProof: MissingClueType extends never ? true : never = true
+void missingClueTypeProof
+
+export const KNOWN_CLUE_TYPES: ReadonlySet<string> = new Set(CLUE_TYPE_LIST)

@@ -16,11 +16,11 @@
  * JEDER Client selbst beim Sync — lernt die Engine später neue Techniken, verschwindet
  * der Tag mit dem App-Update von allein (deshalb steht er nicht in der DB).
  */
-import type { LevelJson } from '../engine/index.ts'
-import { DeductionEngine, loadLevel } from '../engine/index.ts'
+import type { ClueJson, LevelJson } from '../engine/index.ts'
+import { DeductionEngine, KNOWN_CLUE_TYPES, loadLevel } from '../engine/index.ts'
 import { TECHNIQUE_RANK } from '../engine/solver/DeductionStep.ts'
 import { levelHash } from './levelHash.ts'
-import { normalizeBoardClues } from './editorModel.ts'
+import { normalizeBoardClue, normalizeBoardClues } from './editorModel.ts'
 import { loadDailyLevels, readStorage, writeStorage } from './storage.ts'
 import { LEVELS } from './levels.ts'
 
@@ -87,18 +87,60 @@ export function userLevelId(dbId: number): string {
 
 /** Zählt hoch, wenn eine BESTEHENDE Technik stärker wird (die Techniken-Anzahl das
  *  Schlauerwerden also nicht verrät) — z. B. 08/2026: AndClue reicht forbiddenForOthers
- *  durch, uniqueNearObject & Co. wirken jetzt auch in UND-Hinweisen. */
-const ENGINE_REVISION = 1
+ *  durch, uniqueNearObject & Co. wirken jetzt auch in UND-Hinweisen. 2 (16.08.2026):
+ *  RelationalTechnique kann offsetFrom-Pigeonhole, offsetFromObject misst Instanz-Kanten. */
+const ENGINE_REVISION = 2
 
-/** Signatur des Deduktions-Wissens: ändert sich, wenn Techniken dazukommen oder
- *  stärker werden — dann werden als "nologic"/"unspielbar" markierte Level neu bewertet. */
+/** Signatur des Deduktions- UND Format-Wissens: ändert sich, wenn Techniken dazukommen
+ *  oder stärker werden — und AUTOMATISCH, wenn neue Hinweistypen gelernt werden
+ *  (KNOWN_CLUE_TYPES wächst). Dann werden als "nologic"/"unspielbar" markierte Level
+ *  neu bewertet; ohne den Typen-Anteil bliebe ein wegen unbekanntem Hinweis
+ *  verstecktes Level auch NACH dem App-Update für immer versteckt. */
 function engineSignature(): number {
-  return ENGINE_REVISION * 1000 + Object.keys(TECHNIQUE_RANK).length
+  return ENGINE_REVISION * 1_000_000 + Object.keys(TECHNIQUE_RANK).length * 1000 + KNOWN_CLUE_TYPES.size
+}
+
+/**
+ * Kennt DIESER Build alle Hinweise des Levels? Ein Level einer NEUEREN App-Version darf
+ * nie crashen und nie stillschweigend kastriert werden — es wird versteckt (playable:
+ * false) und nach einem App-Update neu geprüft. Geprüft werden Verdächtigen- und globale
+ * Hinweise (Typen inkl. der inneren Unions, die createClue NICHT zum Werfen bringen
+ * würden) sowie Board-Clues (unbekannt = normalizeBoardClue verwirft sie — genau das
+ *  darf bei einem Userlevel nicht passieren, ein tragender Board-Clue fehlte sonst).
+ */
+export function levelHasUnknownClues(json: LevelJson): boolean {
+  const unknownClue = (c: ClueJson): boolean => {
+    if (!c || typeof c !== 'object' || !KNOWN_CLUE_TYPES.has(c.type)) return true
+    if (c.type === 'and' || c.type === 'or') return !Array.isArray(c.clues) || c.clues.some(unknownClue)
+    if (c.type === 'not') return unknownClue(c.clue)
+    // Innere Unions, bei denen ein neuer kind-Wert NICHT werfen, sondern still falsch
+    // rechnen würde — die müssen explizit als unbekannt gelten.
+    if (c.type === 'offsetFrom') {
+      const kind = (c.who as { kind?: string } | undefined)?.kind
+      return kind !== 'attr' && kind !== 'on' && kind !== 'near'
+    }
+    if (c.type === 'besideSameObject') {
+      const kind = (c.mate as { kind?: string } | undefined)?.kind
+      return kind !== 'any' && kind !== 'person' && kind !== 'attr'
+    }
+    return false
+  }
+  for (const s of json.suspects ?? []) {
+    if ((s.clues ?? []).some(unknownClue)) return true
+  }
+  if ((json.globalClues ?? []).some(unknownClue)) return true
+  for (const bc of json.boardClues ?? []) {
+    if (normalizeBoardClue(bc) === null) return true
+  }
+  return false
 }
 
 /** logic/playable eines Levels frisch bestimmen (Forward-Deduktion, kein Suchlauf —
  *  billig; die teure Eindeutigkeitsprüfung lief bereits beim Upload). */
 function evaluate(json: LevelJson): { logic: boolean; playable: boolean } {
+  // Unbekannte Hinweistypen EXPLIZIT aussortieren (nicht nur auf den createClue-Wurf
+  // verlassen — ein unbekannter Board-Clue oder kind-Wert würde sonst still verfälschen).
+  if (levelHasUnknownClues(json)) return { logic: false, playable: false }
   try {
     const deduction = new DeductionEngine(loadLevel(json)).solve()
     return { logic: deduction.solved, playable: true }
@@ -140,11 +182,21 @@ export function compareUserLevels(a: UserLevelEntry, b: UserLevelEntry): number 
   )
 }
 
-/** Nur die in diesem Build spielbaren Level, sortiert per {@link compareUserLevels}. */
+/** Nur die in diesem Build SPIELBAREN Level, sortiert per {@link compareUserLevels} —
+ *  die Spiel-Pfade (Level-per-id öffnen, Bewertungs-Fluss) dürfen ein gesperrtes Level
+ *  nie zu fassen bekommen. Die Community-LISTE nutzt {@link loadAllUserLevels}. */
 export function loadUserLevels(): UserLevelEntry[] {
   return loadUserLevelCache()
     .levels.filter((e) => e.playable)
     .sort(compareUserLevels)
+}
+
+/** ALLE gecachten Level inkl. der GESPERRTEN (`playable: false` = Hinweisarten einer
+ *  neueren App-Version). Dirks Regel (16.08.2026): solche Level werden in der Liste
+ *  ANGEZEIGT, sind aber nicht öffenbar — beim Antippen kommt der „Bitte App
+ *  aktualisieren"-Hinweis statt des Spiels. */
+export function loadAllUserLevels(): UserLevelEntry[] {
+  return [...loadUserLevelCache().levels].sort(compareUserLevels)
 }
 
 function emptyStats(): UserLevelStats {
@@ -224,7 +276,7 @@ export async function syncUserLevels(): Promise<SyncResult> {
     if (!body.success || !body.data) throw new Error('sync failed')
     payload = body.data
   } catch {
-    return { online: false, levels: loadUserLevels() }
+    return { online: false, levels: loadAllUserLevels() }
   }
 
   const statsById = new Map(payload.ratings.map((row) => [row[0], statsFromRow(row)]))
@@ -237,7 +289,13 @@ export async function syncUserLevels(): Promise<SyncResult> {
     .map((e) => {
       const stats = statsById.get(e.dbId) ?? e.stats
       if ((!e.logic || !e.playable) && e.checkedSig !== sig) {
-        return { ...e, stats, ...evaluate(e.json), checkedSig: sig }
+        // Ein wegen unbekannter Hinweise ROH gecachtes Level bleibt versteckt, solange
+        // dieser Build es nicht kennt; erst DANN läuft die Board-Clue-Migration darüber.
+        if (levelHasUnknownClues(e.json)) {
+          return { ...e, stats, logic: false, playable: false, checkedSig: sig }
+        }
+        const json = { ...e.json, boardClues: normalizeBoardClues(e.json.boardClues) }
+        return { ...e, stats, json, ...evaluate(json), checkedSig: sig }
       }
       return { ...e, stats }
     })
@@ -246,17 +304,24 @@ export async function syncUserLevels(): Promise<SyncResult> {
   // nachgereichte Übersetzung desselben Levels an) und neue kommen dazu.
   for (const fresh of payload.levels) {
     if (!fresh.level || typeof fresh.level !== 'object') continue
-    const json: LevelJson = {
-      ...fresh.level,
-      id: userLevelId(fresh.id),
-      boardClues: normalizeBoardClues(fresh.level.boardClues),
-    }
+    // Level einer NEUEREN App-Version: ROH cachen (normalizeBoardClues würde einen
+    // unbekannten Board-Clue stillschweigend verwerfen — er wäre nach dem App-Update
+    // für immer weg) und verstecken; die Signatur-Prüfung oben holt es nach dem
+    // Update automatisch zurück (engineSignature wächst mit KNOWN_CLUE_TYPES).
+    const unknown = levelHasUnknownClues(fresh.level)
+    const json: LevelJson = unknown
+      ? { ...fresh.level, id: userLevelId(fresh.id) }
+      : {
+          ...fresh.level,
+          id: userLevelId(fresh.id),
+          boardClues: normalizeBoardClues(fresh.level.boardClues),
+        }
     const entry: UserLevelEntry = {
       dbId: fresh.id,
       json,
       created: fresh.created,
       stats: statsById.get(fresh.id) ?? emptyStats(),
-      ...evaluate(json),
+      ...(unknown ? { logic: false, playable: false } : evaluate(json)),
       checkedSig: sig,
     }
     const idx = kept.findIndex((e) => e.dbId === fresh.id)
@@ -265,7 +330,7 @@ export async function syncUserLevels(): Promise<SyncResult> {
   }
 
   writeStorage(CACHE_KEY, { cursor: payload.cursor, levels: kept } satisfies UserLevelCache)
-  return { online: true, levels: loadUserLevels() }
+  return { online: true, levels: loadAllUserLevels() }
 }
 
 /* ---------------------------------- Bewertung ---------------------------------- */

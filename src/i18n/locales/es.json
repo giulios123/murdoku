@@ -532,6 +532,8 @@
     "cases_other": "{{count}} casos",
     "custom": "Propios",
     "garandTag": "Clasificado",
+    "ulLocked": "Actualización necesaria",
+    "ulUpdateNeeded": "Actualiza la aplicación: este caso contiene tipos de pista que esta versión aún no conoce.",
     "garandOn": "Manuel Garand: visible",
     "garandOff": "Manuel Garand: oculto"
   },

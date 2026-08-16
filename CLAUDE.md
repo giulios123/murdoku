@@ -382,7 +382,12 @@ für Personen), `fullLinesIn(room, axis)`, `guaranteedRoomOf(id)`, `roomsOf(id)`
 
 1. `engine/model/Board.ts` — Geometrie-Helfer (memoisiert)
 2. `engine/clues/*.ts` — Clue-Klasse
-3. `engine/clues/index.ts` + `ClueFactory.ts` — Export, `ClueJson`, `createClue`
+3. `engine/clues/index.ts` + `ClueFactory.ts` — Export, `ClueJson`, `createClue` **+
+   `CLUE_TYPE_LIST`** (der never-Beweis daneben erzwingt den Eintrag beim Kompilieren;
+   speist `KNOWN_CLUE_TYPES` → Userlevel-Schutzsystem und `engineSignature`). Bekommt
+   der Typ eine INNERE Union (wie `offsetFrom.who.kind`), zusätzlich
+   `userlevels.levelHasUnknownClues` erweitern — ein neuer kind-Wert wirft nicht,
+   er rechnet still falsch.
 4. `engine/clues/clueRefs.ts` — falls der Hinweis Personen/Merkmale nennt
 5. `engine/solver/` — Technique + `forward.ts` + `Technique`-Name/`TECHNIQUE_RANK`;
    relationale Typen zusätzlich in `SearchSolver.relationalLinks`
@@ -458,6 +463,21 @@ Tabellen in `php/schema.sql`: `murdoku_userlevel` + Drossel `murdoku_upload_ip`)
   deployen — sonst lassen sich offizielle Level als Userlevel hochladen.
 - **ratings-Zeilen sind positionscodiert:** Spaltenreihenfolge `TAG_KEYS` (php/db_config.php)
   == `USERLEVEL_TAGS` (userlevels.ts). Beim Ändern IMMER beide synchron halten.
+- **Schutzsystem für Hinweise NEUERER App-Versionen** (16.08.2026, rein LOKAL — Dirk hat
+  ein Server-Gate ausdrücklich verworfen): `levelHasUnknownClues` prüft beim Sync jeden
+  fremden Hinweis (Typ ∈ `KNOWN_CLUE_TYPES` + innere kind-Unions + Board-Clues via
+  `normalizeBoardClue === null`). Unbekannt ⇒ Level wird **ROH gecacht** (nie durch
+  `normalizeBoardClues` kastrieren — ein verworfener tragender Board-Clue wäre für immer
+  weg!) und `playable: false`: in der Community-Liste **ANGEZEIGT, aber gesperrt**
+  (gedimmte Karte + „Update nötig"-Zeile, Vorschau ohne Hinweise; Antippen zeigt
+  `select.ulUpdateNeeded` — „Bitte App aktualisieren"), **nie ein Crash**. Die
+  Spiel-Pfade nutzen weiter `loadUserLevels()` (nur spielbare); die Liste
+  `loadAllUserLevels()`. `engineSignature` enthält `KNOWN_CLUE_TYPES.size` — neue
+  Hinweistypen schalten gesperrte Level nach dem App-Update AUTOMATISCH frei (ohne das
+  blieb ein Level trotz Update ewig gesperrt). Bekanntes, bewusst akzeptiertes
+  Restrisiko: App-Versionen VOR 16.08.2026 verwerfen unbekannte **Board-Clues** still
+  (kein Crash, aber bei einem künftigen neuen Board-Clue-Typ dort evtl. mehrdeutig
+  spielbar).
 - **Auto-Tag „Ausprobieren"** (`nologic`): Level eindeutig, aber die Default-Deduktions-Pipeline
   scheitert (⇒ Tipp funktioniert dort nicht). Wird NICHT in der DB gespeichert, sondern von jedem
   Client beim Sync selbst berechnet — lernt die Engine Techniken dazu, verschwindet der Tag mit

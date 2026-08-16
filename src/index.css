@@ -1340,6 +1340,18 @@ button {
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
+/* Fall einer NEUEREN App-Version: sichtbar, aber nicht öffenbar — gedimmt, mit
+   „Update nötig"-Zeile; Antippen erklärt es (Dialog im UserLevelScreen). */
+.mk-card[data-locked] {
+  opacity: 0.55;
+}
+.mk-card__locked {
+  font-family: var(--font-type);
+  font-size: 0.8rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--blood, #8c2b2b);
+}
 .mk-card__meta {
   margin-top: auto;
   display: flex;

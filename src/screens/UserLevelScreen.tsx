@@ -13,8 +13,8 @@ import {
   NO_LOGIC_TAG,
   USERLEVEL_TAGS,
   averageStars,
+  loadAllUserLevels,
   loadRatedIds,
-  loadUserLevels,
   matchesStarsFilter,
   matchesTagFilter,
   syncUserLevels,
@@ -48,8 +48,10 @@ interface Row {
 export default function UserLevelScreen({ onPick, onBack }: Props) {
   const { t, i18n } = useTranslation()
   const lang = i18n.resolvedLanguage ?? i18n.language
-  const [entries, setEntries] = useState<UserLevelEntry[]>(() => loadUserLevels())
+  const [entries, setEntries] = useState<UserLevelEntry[]>(() => loadAllUserLevels())
   const [sync, setSync] = useState<'syncing' | 'online' | 'offline'>('syncing')
+  // Ein Fall einer NEUEREN App-Version wurde angetippt → „Bitte App aktualisieren".
+  const [updateHint, setUpdateHint] = useState(false)
   const [filter, setFilter] = useState<UserLevelFilter>(() => ({
     ...DEFAULT_USERLEVEL_FILTER,
     ...readStorage<Partial<UserLevelFilter>>(FILTER_KEY, {}),
@@ -259,6 +261,11 @@ export default function UserLevelScreen({ onPick, onBack }: Props) {
             const isSolved = solved.has(meta.id)
             const avg = averageStars(entry.stats)
             const tags = topTags(entry.stats)
+            // Hinweisarten einer NEUEREN App-Version: anzeigen, aber nicht öffenbar
+            // (Dirks Regel) — Antippen erklärt es. Die Vorschau bekommt das Level OHNE
+            // Hinweise (das Brett ist bekanntes Format; loadLevel über die fremden
+            // Hinweise würde werfen).
+            const locked = !entry.playable
             return (
               <button
                 key={meta.id}
@@ -267,11 +274,23 @@ export default function UserLevelScreen({ onPick, onBack }: Props) {
                 data-solved={isSolved}
                 data-author={meta.author ? 'true' : undefined}
                 data-solo={isSolved && solo ? 'true' : undefined}
-                onClick={() => onPick(meta)}
+                data-locked={locked || undefined}
+                onClick={() => (locked ? setUpdateHint(true) : onPick(meta))}
               >
                 <span className="mk-card__photo">
                   <span className="mk-card__tape" />
-                  <BoardPreview json={meta.json} />
+                  <BoardPreview
+                    json={
+                      locked
+                        ? {
+                            ...meta.json,
+                            suspects: meta.json.suspects.map((s) => ({ ...s, clues: [] })),
+                            globalClues: [],
+                            boardClues: [],
+                          }
+                        : meta.json
+                    }
+                  />
                 </span>
                 {isSolved && <span className="mk-stamp">{t('select.solved')}</span>}
                 <span className="mk-card__body">
@@ -281,6 +300,7 @@ export default function UserLevelScreen({ onPick, onBack }: Props) {
                       <BloodText text={titleOf(meta, lang)} />
                     </span>
                   </span>
+                  {locked && <span className="mk-card__locked">{t('select.ulLocked')}</span>}
                   {meta.author && <span className="mk-card__author">— {meta.author}</span>}
                   <span className="mk-card__meta">
                     <span className="mk-pill" data-d={meta.difficulty}>
@@ -343,7 +363,9 @@ export default function UserLevelScreen({ onPick, onBack }: Props) {
                         {t(`tag.${tag}`)}
                       </span>
                     ))}
-                    {!entry.logic && (
+                    {/* Bei gesperrten Leveln sagt logic:false nur „unbekanntes Format",
+                        nicht „ohne Logik lösbar" — der Tag wäre eine falsche Aussage. */}
+                    {!entry.logic && entry.playable && (
                       <span className="mk-ul-tag" data-nologic="true">
                         {t(`tag.${NO_LOGIC_TAG}`)}
                       </span>
@@ -355,6 +377,19 @@ export default function UserLevelScreen({ onPick, onBack }: Props) {
           })}
         </div>
       </div>
+
+      {updateHint && (
+        <div className="mk-overlay" onClick={() => setUpdateHint(false)}>
+          <div className="mk-dialog" onClick={(e) => e.stopPropagation()}>
+            <p>{t('select.ulUpdateNeeded')}</p>
+            <div className="mk-dialog__actions">
+              <button type="button" className="mk-btn" onClick={() => setUpdateHint(false)}>
+                {t('legend.close')}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

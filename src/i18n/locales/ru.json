@@ -532,6 +532,8 @@
     "cases_other": "{{count}} дел",
     "custom": "Свои",
     "garandTag": "Секретное досье",
+    "ulLocked": "Нужно обновление",
+    "ulUpdateNeeded": "Обновите приложение: это дело содержит типы улик, которые эта версия ещё не знает.",
     "garandOn": "Manuel Garand: показан",
     "garandOff": "Manuel Garand: скрыт"
   },
