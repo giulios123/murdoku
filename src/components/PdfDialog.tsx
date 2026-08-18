@@ -28,8 +28,8 @@ function PrinterIcon() {
 
 /**
  * Kleiner Vorschalt-Dialog des PDF-Exports: Bogen ohne oder mit Auflösung
- * (Blatt 2), darüber der Legende-Schalter (Objekt-Legende als Streifen auf
- * Blatt 1, Standard AUS — Dirk, 18.08.2026). Share-Sheet-Muster wie jeder
+ * (Blatt 2), darüber der Legende-Schalter (Objekt-Legende als Spalte rechts auf
+ * Blatt 1, Standard AN — Dirk, 18.08.2026). Share-Sheet-Muster wie jeder
  * Speichern-Dialog — Icon + Name + Unterzeile, gesperrte Zeile zeigt den GRUND;
  * darunter abgesetzt „Abbrechen". Während des Exports bleibt der Dialog offen
  * und EINGEFROREN (Dialoghöhen-Regel): die gewählte Zeile zeigt Spinner +
@@ -41,7 +41,7 @@ export default function PdfDialog({ json, title, onClose }: Props) {
   // gibt es keinen erklärbaren Weg, die Auflösungs-Zeile sperrt mit Grund.
   const canSolution = useMemo(() => hasSolutionSheet(json), [json])
   const [busy, setBusy] = useState<null | 'plain' | 'solution'>(null)
-  const [legend, setLegend] = useState(false)
+  const [legend, setLegend] = useState(true)
   useBackInterceptor(true, () => {
     if (!busy) onClose()
   })

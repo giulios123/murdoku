@@ -650,7 +650,7 @@
     "loseStamp": "Noch nicht",
     "winTitle": "Glückwunsch, Kommissar!",
     "winBody": "Alle Verdächtigen korrekt platziert.",
-    "winMurderer": "Der Mörder war {{name}} im {{room}}.",
+    "winMurderer": "Der Mörder war {{name}} im Raum {{room}}.",
     "soloHonor": "Im Alleingang gelöst — ohne Tipp.",
     "hintsUsed_one": "Mit {{count}} Tipp gelöst.",
     "hintsUsed_other": "Mit {{count}} Tipps gelöst.",

@@ -516,7 +516,7 @@ Zeile) — ihr Platz kommt von der LINKEN Spalte, nie vom Brett; NUR das Buch
 behält den Streifen unten links (`paintLegendStrip`). Gerendert als 300-dpi-Canvas → PNG in
 jsPDF, KEIN Beschnitt (der gehört nur dem KDP-Buch, `withBleed` in make-book.ts).
 Vorschalt-Dialog `PdfDialog` (Share-Sheet-Muster): Legende-Schalter
-(`game.pdfLegend`, **Standard AUS**, gilt für beide Zeilen) + ohne oder mit
+(`game.pdfLegend`, **Standard AN** — Dirk 18.08.2026, gilt für beide Zeilen) + ohne oder mit
 **Blatt 2 „Auflösung"** (nummeriertes Deduktions-Protokoll + gelöstes Brett +
 Mörder-Karte; nur wenn ein reiner Vorwärts-Weg existiert — `hasSolutionSheet`, sonst
 Zeile gesperrt mit Grund; Blatt 2 behält den breiten `paintHead`). So tragen alle

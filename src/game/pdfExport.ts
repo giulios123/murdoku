@@ -4,7 +4,7 @@
  * eigenen Zettel und der schräge »Der Mörder ist …«-Akten-Zettel. Links: kompakter
  * Kopf (Titel + Meta + kleiner Stempel), die Verdächtigen (ab 7 Personen
  * zweispaltig), Akten-Notizen und die Grundregeln als Fuß. Die Objekt-Legende
- * (Checkbox im PdfDialog, Standard AUS) steht als SENKRECHTE Spalte ganz rechts —
+ * (Checkbox im PdfDialog, Standard AN) steht als SENKRECHTE Spalte ganz rechts —
  * ihr Platz kommt von der linken Spalte, nie vom Brett (das Buch behält den
  * Streifen unten links auf der Fallseite).
  *
@@ -1742,7 +1742,7 @@ export function drawMurderCard(
  * Mörder im Krimson-Ring (exakt die Auflösung im Spiel). `null`, wenn das Level
  * keinen reinen Vorwärts-Lösungsweg hat (der Dialog sperrt die Option vorher).
  */
-async function renderSolutionSheet(
+export async function renderSolutionSheet(
   json: LevelJson,
   i18nInst: I18n,
   title: string,
@@ -1990,7 +1990,7 @@ async function deliverPdf(pdf: ArrayBuffer, filename: string): Promise<void> {
 
 /** Baut das PDF und lädt es herunter (Web) bzw. öffnet das Share-Sheet (Android).
  *  `opts.solution` hängt Blatt 2 (die Auflösung) an, `opts.legend` setzt die
- *  Objekt-Legende als Streifen auf Blatt 1 (Standard AUS). Das Zeichnen der Bogen
+ *  Objekt-Legende als Spalte rechts auf Blatt 1 (Dialog-Standard AN). Das Zeichnen der Bogen
  *  braucht den DOM (Schriften, Bilder) und bleibt im Hauptthread; alles Teure
  *  danach (PNG-Encoding + jsPDF) läuft im Worker, damit die UI nie einfriert. */
 export async function exportLevelPdf(
