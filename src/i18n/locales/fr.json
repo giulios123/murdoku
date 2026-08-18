@@ -598,6 +598,7 @@
     "author": "Une affaire de {{name}}",
     "pdfExport": "Enregistrer l'affaire en PDF",
     "pdfStamp": "Affaire ouverte",
+    "pdfLegend": "Avec la légende des objets",
     "pdfMurderer": "Le meurtrier est …",
     "pdfPlain": "Sans la solution",
     "pdfPlainSub": "Seulement l'affaire ouverte",
@@ -911,6 +912,10 @@
   "legend": {
     "title": "Légende",
     "occupiable": "praticable",
+    "compassN": "N",
+    "compassE": "E",
+    "compassS": "S",
+    "compassW": "O",
     "blocked": "bloqué",
     "wall": "au mur",
     "close": "Fermer"
@@ -2269,14 +2274,22 @@
       "ifHere": "Si {{name}} se trouve ici…",
       "thenNot": "…toute la ligne et toute la colonne sont bloquées.",
       "place": "Il ne reste qu'une case pour {{name}}. Nous y plaçons {{name}} et barrons toute la ligne et la colonne.",
-      "finale": "Il reste exactement une case pour {{name}} — et {{victim}} prend la dernière case libre. {{murderer}} avait pour seule compagnie {{victim}} : l'affaire est résolue !",
+      "axisRow": "ligne",
+      "axisCol": "colonne",
+      "hiddenVictim": "D'après les indices, aucun suspect ne peut se trouver dans la {{axis}} {{line}} – mais chaque ligne et chaque colonne doit contenir exactement une personne. Seule la victime peut donc se trouver dans la {{axis}} {{line}}. Nous barrons toutes les cases libres sans lettre de suspect hors de la {{axis}} {{line}} : personne ne peut s'y trouver.",
+      "hiddenSuspect": "Dans la {{axis}} {{line}}, il ne reste que {{name}} – aucun autre suspect, et pas la victime. {{name}} doit donc se trouver dans la {{axis}} {{line}} : partout ailleurs, nous barrons {{name}}.",
+      "tut2Pair": "{{a}} et {{b}} ne peuvent plus se trouver que dans les lignes 1 et 2 – nulle part ailleurs. Deux personnes, deux lignes : ces lignes leur appartiennent, personne d'autre ne peut s'y trouver. C'est pourquoi {{c}} disparaît des lignes 1 et 2, et toutes les cases où ni {{a}} ni {{b}} ne peuvent se trouver sont barrées. Il ne reste à {{c}} que la case de la ligne 4.",
+      "nameJoin": " et ",
+      "finale": "Il reste exactement une case pour {{names}} — et la victime prend la dernière case libre. {{murderer}} avait pour seule compagnie la victime dans la pièce {{room}} : l'affaire est résolue !",
+      "finaleSet": "Il reste exactement une case pour chacun : {{names}}. Nous les plaçons, et tout le monde est en place. La case de la victime était déjà connue : {{murderer}} avait pour seule compagnie la victime dans la pièce {{room}} — l'affaire est résolue !",
       "part2Head": "La seconde affaire",
       "part2Intro": "Une scène plus grande, davantage de suspects — mais la résolution reste la même. Parcourons aussi cette affaire pas à pas."
     },
     "back": {
       "closed": "Affaire classée",
       "head": "Toutes les affaires résolues ?",
-      "body": "Plus de 140 affaires vous attendent dans l'appli {{brand}}, avec une nouvelle énigme chaque jour, un éditeur de niveaux et les affaires de la communauté — jouable hors ligne, du 4×4 au 12×12.",
+      "body": "Une scène de crime, une poignée de suspects — et rien que leurs déclarations. Combinez les indices, éliminez case après case et découvrez qui se trouvait seul avec la victime : le meurtrier. Dans ce tome : {{count}} affaires, de facile à corsée, une initiation pas à pas et toutes les solutions en fin d'ouvrage.",
+      "more": "Vous voulez plus d'affaires ? Restez à l'affût — d'autres tomes sont déjà à l'instruction.",
       "evidence": "Dernière pièce à conviction — à la prochaine affaire",
       "credit": "© {{year}} {{name}} — imaginé, construit et composé avec beaucoup de café."
     }

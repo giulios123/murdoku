@@ -52,7 +52,7 @@ export type { Quantifier } from './socialClues.ts'
 export { NotClue, AndClue, OrClue } from './compositeClues.ts'
 export { createClue, KNOWN_CLUE_TYPES } from './ClueFactory.ts'
 export type { ClueJson } from './ClueFactory.ts'
-export { relatedSuspects, usesInsideOutside } from './clueRefs.ts'
+export { referencedTraitKinds, relatedSuspects, usesInsideOutside } from './clueRefs.ts'
 export {
   BoardClue,
   CountOnObjectClue,

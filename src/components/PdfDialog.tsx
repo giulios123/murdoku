@@ -28,10 +28,12 @@ function PrinterIcon() {
 
 /**
  * Kleiner Vorschalt-Dialog des PDF-Exports: Bogen ohne oder mit Auflösung
- * (Blatt 2). Share-Sheet-Muster wie jeder Speichern-Dialog — Icon + Name +
- * Unterzeile, gesperrte Zeile zeigt den GRUND; darunter abgesetzt „Abbrechen".
- * Während des Exports bleibt der Dialog offen und EINGEFROREN (Dialoghöhen-Regel):
- * die gewählte Zeile zeigt Spinner + „Wird erstellt …", erst danach schließt er.
+ * (Blatt 2), darüber der Legende-Schalter (Objekt-Legende als Spalte rechts auf
+ * Blatt 1, Standard AN — Dirk, 18.08.2026). Share-Sheet-Muster wie jeder
+ * Speichern-Dialog — Icon + Name + Unterzeile, gesperrte Zeile zeigt den GRUND;
+ * darunter abgesetzt „Abbrechen". Während des Exports bleibt der Dialog offen
+ * und EINGEFROREN (Dialoghöhen-Regel): die gewählte Zeile zeigt Spinner +
+ * „Wird erstellt …", erst danach schließt er.
  */
 export default function PdfDialog({ json, title, onClose }: Props) {
   const { t, i18n } = useTranslation()
@@ -39,6 +41,7 @@ export default function PdfDialog({ json, title, onClose }: Props) {
   // gibt es keinen erklärbaren Weg, die Auflösungs-Zeile sperrt mit Grund.
   const canSolution = useMemo(() => hasSolutionSheet(json), [json])
   const [busy, setBusy] = useState<null | 'plain' | 'solution'>(null)
+  const [legend, setLegend] = useState(true)
   useBackInterceptor(true, () => {
     if (!busy) onClose()
   })
@@ -46,7 +49,7 @@ export default function PdfDialog({ json, title, onClose }: Props) {
   const pick = (solution: boolean): void => {
     if (busy) return
     setBusy(solution ? 'solution' : 'plain')
-    exportLevelPdf(json, i18n, title, { solution })
+    exportLevelPdf(json, i18n, title, { solution, legend })
       .then(onClose)
       .catch(() => setBusy(null))
   }
@@ -55,6 +58,19 @@ export default function PdfDialog({ json, title, onClose }: Props) {
     <div className="mk-overlay" onClick={busy ? undefined : onClose}>
       <div className="mk-dialog mk-savedlg mk-pdfdlg" onClick={(e) => e.stopPropagation()}>
         <h3>{t('game.pdfExport')}</h3>
+        <button
+          type="button"
+          className="mk-pdfdlg__legend"
+          role="switch"
+          aria-checked={legend}
+          disabled={busy !== null}
+          onClick={() => setLegend(!legend)}
+        >
+          <span>{t('game.pdfLegend')}</span>
+          <span className="mk-switch" data-on={legend} aria-hidden="true">
+            <span className="mk-switch__knob" />
+          </span>
+        </button>
         <div className="mk-savelist">
           <button
             type="button"

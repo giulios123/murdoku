@@ -602,6 +602,7 @@
     "author": "Un caso de {{name}}",
     "pdfExport": "Guardar el caso como PDF",
     "pdfStamp": "Caso abierto",
+    "pdfLegend": "Con leyenda de objetos",
     "pdfMurderer": "El asesino es …",
     "pdfPlain": "Sin resolución",
     "pdfPlainSub": "Solo el caso abierto",
@@ -915,6 +916,10 @@
   "legend": {
     "title": "Leyenda",
     "occupiable": "transitable",
+    "compassN": "N",
+    "compassE": "E",
+    "compassS": "S",
+    "compassW": "O",
     "blocked": "bloqueado",
     "wall": "en la pared",
     "close": "Cerrar"
@@ -2183,14 +2188,22 @@
       "ifHere": "Si {{name}} está aquí…",
       "thenNot": "…toda la fila y la columna quedan bloqueadas.",
       "place": "A {{name}} solo le queda una casilla. Colocamos a {{name}} allí y tachamos toda la fila y la columna.",
-      "finale": "A {{name}} le queda exactamente una casilla, y {{victim}} ocupa la última libre. {{murderer}} estuvo a solas con {{victim}}: ¡caso resuelto!",
+      "axisRow": "fila",
+      "axisCol": "columna",
+      "hiddenVictim": "Según las pistas, ningún sospechoso puede estar en la {{axis}} {{line}} – pero en cada fila y columna debe haber exactamente una persona. Por eso, en la {{axis}} {{line}} solo puede estar la víctima. Tachamos todas las casillas libres sin letras de sospechosos fuera de la {{axis}} {{line}}: ahí no puede estar nadie.",
+      "hiddenSuspect": "En la {{axis}} {{line}} ya solo encaja {{name}} – ningún otro sospechoso y tampoco la víctima. Así que {{name}} debe estar en la {{axis}} {{line}}: en el resto del tablero tachamos a {{name}}.",
+      "tut2Pair": "{{a}} y {{b}} solo pueden estar en las filas 1 y 2 – en ningún otro sitio. Dos personas, dos filas: esas filas les pertenecen y nadie más puede estar allí. Por eso {{c}} desaparece de las filas 1 y 2, y se tachan todas las casillas donde no pueden estar ni {{a}} ni {{b}}. A {{c}} solo le queda la casilla de la fila 4.",
+      "nameJoin": " y ",
+      "finale": "A {{names}} le queda exactamente una casilla, y la víctima ocupa la última libre. {{murderer}} estuvo a solas con la víctima en la sala {{room}}: ¡caso resuelto!",
+      "finaleSet": "A {{names}} les queda exactamente una casilla a cada uno — los colocamos y ya están todos. La casilla de la víctima ya estaba clara: {{murderer}} estuvo a solas con la víctima en la sala {{room}}: ¡caso resuelto!",
       "part2Head": "El segundo caso",
       "part2Intro": "Una escena mayor y más sospechosos, pero se resuelve igual. Recorramos también este caso paso a paso."
     },
     "back": {
       "closed": "Caso cerrado",
       "head": "¿Has resuelto todos los casos?",
-      "body": "En la app {{brand}} te esperan más de 140 casos, un nuevo enigma cada día, un editor de niveles y los casos de la comunidad — jugable sin conexión, de 4×4 a 12×12.",
+      "body": "Una escena del crimen, un puñado de sospechosos — y solo sus declaraciones. Combina las pistas, descarta casilla a casilla y descubre quién estuvo a solas con la víctima: el asesino. En este tomo: {{count}} casos de fácil a difícil, una introducción paso a paso y todas las soluciones al final del libro.",
+      "more": "¿Queréis más casos? Estad atentos — ya hay más tomos bajo investigación.",
       "evidence": "Última prueba — hasta el próximo caso",
       "credit": "© {{year}} {{name}} — ideado, construido y compuesto con mucho café."
     }

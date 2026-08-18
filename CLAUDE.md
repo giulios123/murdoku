@@ -504,26 +504,66 @@ Tabellen in `php/schema.sql`: `murdoku_userlevel` + Drossel `murdoku_upload_ip`)
 
 ## PDF-Druckbogen & Autoren-Werkzeuge (08/2026)
 
-`src/game/pdfExport.ts`: A4-Bogen **immer quer** (Kopf: Titel/Autor/Stufe + „Offener
-Fall"-Stempel; links die Verdächtigen, rechts Brett · Objekt-Legende · SW-Skizze ·
-„Der Mörder ist …"-Feld), gerendert als 300-dpi-Canvas → PNG in jsPDF. Vorschalt-Dialog
-`PdfDialog` (Share-Sheet-Muster): ohne oder mit **Blatt 2 „Auflösung"** (nummeriertes
-Deduktions-Protokoll + gelöstes Brett + Mörder-Karte; nur wenn ein reiner Vorwärts-Weg
-existiert — `hasSolutionSheet`, sonst Zeile gesperrt mit Grund). So tragen alle
+`src/game/pdfExport.ts`: A4-Bogen **immer quer**, Umbau 18.08.2026 (Dirk-OK): die
+**rechte Spalte läuft über die VOLLE Seitenhöhe** (oben das Brett, darunter SW-Skizze
+auf ihrem eigenen Zettel `drawSketchSlip` + schräger „Der Mörder ist …"-Akten-Zettel
+`drawMurderSlip` — Doppelrahmen, Büroklammer, Fingerabdruck); links kompakter Kopf
+(`paintSheetHead`: Titel + Meta + kleiner Stempel), Verdächtige, Akten-Notizen
+und die Grundregeln als Fuß — Kopf/Fuß enden an der linken Spalte. Die optionale
+**Objekt-Legende steht im PDF als SENKRECHTE Spalte GANZ rechts**
+(`paintLegendColumn`, Dirks Vorlage 18.08.2026: Gruppentitel + Kachel/Name je
+Zeile) — ihr Platz kommt von der LINKEN Spalte, nie vom Brett; NUR das Buch
+behält den Streifen unten links (`paintLegendStrip`). Gerendert als 300-dpi-Canvas → PNG in
+jsPDF, KEIN Beschnitt (der gehört nur dem KDP-Buch, `withBleed` in make-book.ts).
+Vorschalt-Dialog `PdfDialog` (Share-Sheet-Muster): Legende-Schalter
+(`game.pdfLegend`, **Standard AN** — Dirk 18.08.2026, gilt für beide Zeilen) + ohne oder mit
+**Blatt 2 „Auflösung"** (nummeriertes Deduktions-Protokoll + gelöstes Brett +
+Mörder-Karte; nur wenn ein reiner Vorwärts-Weg existiert — `hasSolutionSheet`, sonst
+Zeile gesperrt mit Grund; Blatt 2 behält den breiten `paintHead`). So tragen alle
 Texte die Spiel-Schriften inkl. Kyrillisch-Fallback ohne TTF-Einbettung. **jsPDF nur
 dynamisch importieren** (~120 KB gehören nicht ins Start-Bundle). Android teilt wie der
 JSON-Export (Filesystem base64 OHNE `encoding` + Share-Sheet); komplett offline-fähig.
 
 - **Brett über das ECHTE `drawBoard`** (voller Pfad — `preview: true` ließe die
-  Bodentexturen weg); vorher `document.fonts.ready` UND `onArtReady` abwarten.
+  Bodentexturen weg); vorher `document.fonts.ready` UND `onArtReady` abwarten
+  (headless dekodiert napi-rs `Image.src` ASYNCHRON — `onload` nie manuell feuern,
+  sonst fehlt der Stuhl im Druck; Details im make-book-Kopf).
   **IMMER das leere Brett**: das Opfer wird mitgerätselt (`autoPlaceVictim`), es gibt
   KEIN Opfer-Token — das Opfer ist die letzte Personen-Karte (☠, „war allein mit dem
-  Mörder"). Verdächtigen-Karten mit Spielfarben-Falz + `avatarDataUri`-Köpfen, ab 7
-  Personen zweispaltig, Schrift-Stufen-Fit 42→18 px (EINE Seite, immer).
-- Papier braucht, was im Spiel Tooltip/Legende ist: Objekt-Legende (`drawObjectIcon`),
-  beide Grundregeln, „Draußen: …" bei `usesInsideOutside`. Hinweistexte = exakt die
-  ClueText-Logik über `renderer.render` (Pronomen-Form, ' · '-Join, Großanfang,
-  Schlusspunkt nur wenn nötig); Akten-Notizen wie `CluePanel.boardNotes`.
+  Mörder"). Verdächtigen-Karten: Rahmen KOMPLETT in der Spielfarbe (Dirks Wahl
+  18.08.2026, ersetzt Hairline + Falz), `avatarDataUri`-Köpfe, ab 7 Personen
+  zweispaltig. **Karten-Layout-Regeln (alle Alternativen wurden gerendert und
+  verworfen):** Lesegröße GEDECKELT (Fit-Start A4 42 px, Buch 44 px ≈ 10,5 pt —
+  riesige Schrift wirkt gequetscht, nicht großzügig), EIN Abstand überall
+  (`gap = 0,7 × fontSize`, vertikal zwischen Karten == horizontal zwischen den
+  Spalten), Karten individuell hoch, Inhalt und Block IMMER oben verankert
+  (Zeilen-Ausrichtung, Einheitshöhe und vertikales Zentrieren: probiert,
+  abgelehnt — „mal mittig, mal oben" wirkte unruhiger als ungleiche Kanten);
+  Rest-Luft bleibt unten. Brett- und Skizzenzelle teilen sich die Spaltenhöhe
+  über EINE Formel (Skizze ≈70 % der Brettzelle). **Zeilen-/Spaltennummern
+  IMMER, für ALLE Brettgrößen** (Dirk 18.08.2026 — eine „ab 7×7"-Schwelle war
+  eigenmächtig und wurde kassiert): `boardLabelReserve`/`drawBoardLabels`
+  (geteilt mit dem Buch), schmale DIM-Ziffernleiste links + oben an Brett,
+  Skizze (dort IM Zettel-Rand — kostet nichts) und den gelösten Brettern von
+  Blatt 2/Lösungsseiten. ACHTUNG Abstand: Fenster/Türen sitzen MITTIG auf der
+  Wand und ragen ~0,1·Zelle über den Brettrand (`sideRect`) — die Ziffern
+  stehen deshalb 0,14·Zelle + 8 px außerhalb, und die Reserve wird aus der
+  GESCHÄTZTEN Zelle berechnet (erst ohne Leiste schätzen, dann final rechnen);
+  mit festen 10 px verdeckten Fenster die Nummern (7×7 gemessen).
+- **Merkmals-Ausprägungen als Text-Chips** („Blond") auf den Karten, wenn irgendein
+  Hinweis des Levels die Merkmals-ART nennt (`referencedTraitKinds` in clueRefs +
+  `valueTraitLabels`; hair/hairstyle/beardStyle/glassesShape/glassesColor — Boolesche
+  bleiben Icons, das Opfer nie — verdeckter Zufall). Test: `clues/referencedTraits.test.ts`.
+  Gilt für Bogen UND Buch (`personCards` in make-book.ts). Die Chip-Zeile bleibt
+  IMMER einzeilig neben dem Namen (Dirks Vorgabe: KEIN Umbruch): passt sie nicht,
+  schrumpfen die CHIPS (`chipRowScale`), und die Fit-Schleifen verwerfen
+  Schriftgrade mit Faktor < `MIN_CHIP_SCALE` — ein Chip ragt NIE über den
+  Kartenrand (Buch-Probe: Fall 57 ist der Stresstest).
+- Papier braucht, was im Spiel Tooltip/Legende ist: beide Grundregeln, „Draußen: …"
+  bei `usesInsideOutside` (IMMER auf dem Blatt — nur die Objekt-Legende ist
+  abwählbar). Hinweistexte = exakt die ClueText-Logik über `renderer.render`
+  (Pronomen-Form, ' · '-Join, Großanfang, Schlusspunkt nur wenn nötig);
+  Akten-Notizen wie `CluePanel.boardNotes`.
 - **SW-Skizze** (Lösefläche im Murdle-Buch-Stil): hell = begehbar, dunkel = blockiert,
   dicke Wände an Raumgrenzen. Begehbare **top**-Objekte massiv umrandet; **ground**-
   Beläge (Teppich/Weg/Straße) GESTRICHELT und dem exakten Zellmengen-Umriss folgend

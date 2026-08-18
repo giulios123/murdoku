@@ -3,16 +3,23 @@
  * 300-dpi-Canvases headless (@napi-rs/canvas) und baut daraus das Innenteil-PDF.
  *
  * Trim-Größe 6,69"×9,61" (16,99×24,41 cm — die KDP-Größe am nächsten an Murdle
- * 17×24), KEIN Beschnitt (weiße Ränder), Bundsteg innen 0,5" (Buch >150 Seiten).
- * Jeder Fall ist eine DOPPELSEITE (Dirks Vorgabe, 13.08.2026): links Fall-Kopf +
- * Verdächtige + Akten-Notizen, rechts Brett · Objekt-Legende · SW-Skizze
- * (Lösefläche) · Mörder-Feld. Die Zeichner kommen aus src/game/pdfExport.ts
- * (geteilt, nie kopiert — Dirk-OK) — das Buch sieht aus wie der Spiel-Druckbogen.
+ * 17×24), Bundsteg innen 0,5" (Buch >150 Seiten); der 0,125"-Beschnitt entsteht
+ * erst in der `withBleed`-Stufe unten (KDP-Einstellung „Beschnittzugabe"), alle
+ * Maße hier messen ab TRIM. Jeder Fall ist eine DOPPELSEITE (Dirks Vorgabe,
+ * 13.08.2026): links Fall-Kopf + Verdächtige + Akten-Notizen + Objekt-Legende
+ * als Streifen unten; rechts Brett · SW-Skizze auf ihrem Zettel (Lösefläche) ·
+ * schräger Mörder-Zettel (Umbau 18.08.2026 — wie der neue A4-Bogen). Die
+ * Zeichner kommen aus src/game/pdfExport.ts (geteilt, nie kopiert — Dirk-OK) —
+ * das Buch sieht aus wie der Spiel-Druckbogen.
  *
  * Headless-Kniffe (siehe scripts/object-sheet.ts): .png-Importe werden gestubbt,
  * `document.createElement('canvas')` bekommt einen napi-rs-Polyfill (boardRender
- * cached seine Layer über DOM-Canvases), und auf `onArtReady` darf man NICHT
- * warten (ohne DOM-Image feuert es nie — die Zeichen-Fallbacks greifen).
+ * cached seine Layer über DOM-Canvases). ACHTUNG Decode-Rennen (18.08.2026):
+ * napi-rs dekodiert `Image.src = Buffer` ASYNCHRON — `onload` darf deshalb NICHT
+ * im src-Setter gefeuert werden (vor dem Decode malt drawImage NICHTS, nicht
+ * einmal den Fallback, weil `complete` schon lügt). Die Basisklasse feuert
+ * `onload` selbst nach dem Decode; unten wird deshalb EINMAL auf `onArtReady`
+ * gewartet, bevor die erste Seite entsteht.
  * Native Addons (@napi-rs/canvas, sharp) MÜSSEN statisch importiert werden:
  * für .node-Dateien liefert die Hook-Kette keine Source (Crash).
  *
@@ -58,8 +65,11 @@ type SkCanvas = ReturnType<typeof createCanvas>
   },
 }
 
-/** DOM-Image-Polyfill für objectArt: lädt Pfade SYNCHRON als Buffer und liefert
- *  die Browser-Felder (`complete`/`naturalWidth`), die die Art-Guards prüfen. */
+/** DOM-Image-Polyfill für objectArt: liest Pfade als Buffer und liefert die
+ *  Browser-Felder (`complete`/`naturalWidth`), die die Art-Guards prüfen.
+ *  `onload` feuert die BASISKLASSE nach ihrem asynchronen Decode — hier manuell
+ *  zu feuern hieße: der Stuhl verliert das Rennen gegen die erste Seite und
+ *  drawImage malt still nichts (gemessen 18.08.2026). */
 class HeadlessImage extends SkImage {
   declare onload: (() => void) | null
   get complete(): boolean {
@@ -71,7 +81,6 @@ class HeadlessImage extends SkImage {
   // Die Basisklasse nimmt Buffer — Pfad-Strings (aus dem .png-Stub) lesen wir selbst.
   override set src(v: string | Buffer) {
     super.src = typeof v === 'string' ? readFileSync(v) : v
-    this.onload?.()
   }
   override get src(): Buffer {
     return super.src as Buffer
@@ -89,13 +98,17 @@ GlobalFonts.registerFromPath(fontFile('@fontsource-variable/fraunces', 'fraunces
 GlobalFonts.registerFromPath(fontFile('@fontsource-variable/spline-sans', 'spline-sans-latin-wght-normal.woff2'), 'Spline Sans Variable')
 GlobalFonts.registerFromPath(fontFile('@fontsource/special-elite', 'special-elite-latin-400-normal.woff2'), 'Special Elite')
 
-const { loadLevel, DeductionEngine, findMurderer, VICTIM_ID } = await import('../src/engine/index.ts')
+const { loadLevel, DeductionEngine, findMurderer, referencedTraitKinds, VICTIM_ID } = await import('../src/engine/index.ts')
 const { drawBoard } = await import('../src/game/boardRender.ts')
 const { Renderer } = await import('../src/i18n/Renderer.ts')
 const { avatarSvg } = await import('../src/game/avatar.ts')
 const { suspectColor } = await import('../src/game/palette.ts')
 // Die geteilten Druck-Zeichner + Palette des Spiel-Druckbogens.
 const art = await import('../src/game/pdfExport.ts')
+// EINMAL auf die Brett-Bitmaps warten (armchair.png dekodiert asynchron, s. o.) —
+// erst danach darf die erste Seite entstehen, sonst fehlt der Stuhl im Druck.
+const { onArtReady } = await import('../src/game/objectArt.ts')
+await new Promise<void>((resolve) => onArtReady(resolve))
 import type { LevelJson, Puzzle } from '../src/engine/index.ts'
 import type { PersonCard, TraitKey } from '../src/game/pdfExport.ts'
 
@@ -104,11 +117,14 @@ import type { PersonCard, TraitKey } from '../src/game/pdfExport.ts'
 /** 300 dpi; Trim 6,69"×9,61" (KDP), keine Beschnittzugabe. */
 const PAGE_W = Math.round(6.69 * 300) // 2007
 const PAGE_H = Math.round(9.61 * 300) // 2883
-/** Bundsteg (innen) 0,5" — Pflicht bei 151–300 Seiten; außen/oben/unten großzügig. */
+/** Bundsteg (innen) 0,5" — Pflicht bei 151–300 Seiten. Außen/oben 0,3" ab
+ *  Schnittkante (KDP-Minimum mit Beschnitt: 0,25" — Dirk 18.08.2026: „Platz
+ *  ausnutzen, aber druckbar"). Unten etwas mehr: dort wohnt die Seitenzahl,
+ *  und die braucht ihre eigenen 0,4" von der Schnittkante (siehe paintPageNo). */
 const GUTTER = Math.round(0.5 * 300)
-const OUTER = Math.round(0.45 * 300)
-const TOP = Math.round(0.5 * 300)
-const BOTTOM = Math.round(0.55 * 300)
+const OUTER = Math.round(0.3 * 300)
+const TOP = Math.round(0.3 * 300)
+const BOTTOM = Math.round(0.52 * 300)
 
 type Ctx = CanvasRenderingContext2D
 
@@ -134,14 +150,17 @@ function newPage(side: 'left' | 'right'): Page {
 
 /** Seitenzahl in der äußeren unteren Ecke (Buchkonvention, wie im Referenzfoto).
  *  Mindestens 0,4" von der Schnittkante — näher dran riskiert die KDP-Randprüfung
- *  und bei Schneide-Toleranz (±0,125") ein angeschnittenes Blatt. */
+ *  und bei Schneide-Toleranz (±0,125") ein angeschnittenes Blatt. Seit die
+ *  Außenränder enger sind als 0,4" (OUTER = 0,3"), hat die Zahl ihren EIGENEN
+ *  Abstand und hängt nicht mehr an x0/x1. */
 function paintPageNo(page: Page, no: number): void {
   const { ctx } = page
+  const inset = Math.round(0.4 * 300)
   ctx.fillStyle = art.DIM
   ctx.font = `30px ${art.TYPE}`
   ctx.textBaseline = 'alphabetic'
   ctx.textAlign = page.side === 'left' ? 'left' : 'right'
-  ctx.fillText(String(no), page.side === 'left' ? page.x0 : page.x1, PAGE_H - Math.round(0.4 * 300))
+  ctx.fillText(String(no), page.side === 'left' ? inset : PAGE_W - inset, PAGE_H - inset)
   ctx.textAlign = 'left'
 }
 
@@ -187,8 +206,11 @@ const SKULL_SVG =
   '</svg>'
 
 /** Personen-Karten wie im Spiel-Druckbogen: Verdächtige in Spielreihenfolge,
- *  das Opfer als letzte Karte (☠ — es wird mitgerätselt, nie auf dem Brett). */
+ *  das Opfer als letzte Karte (☠ — es wird mitgerätselt, nie auf dem Brett).
+ *  Genannte Merkmals-Ausprägungen (Haarfarbe & Co.) als Text-Chips — wie der
+ *  A4-Bogen; das Opfer nie (verdeckter Zufall). */
 async function personCards(puzzle: Puzzle, renderer: InstanceType<typeof Renderer>): Promise<PersonCard[]> {
+  const traitKinds = referencedTraitKinds(puzzle)
   const cards: PersonCard[] = await Promise.all(
     puzzle.suspects.map(async (s, i) => ({
       name: s.name,
@@ -197,6 +219,7 @@ async function personCards(puzzle: Puzzle, renderer: InstanceType<typeof Rendere
       img: await svgImage(avatarSvg(s.attributes, suspectColor(i), s.id), 260),
       gender: s.attributes.gender === 'm' ? ('m' as const) : s.attributes.gender === 'f' ? ('f' as const) : undefined,
       traits: (['beard', 'glasses', 'bald'] as const).filter((k) => s.attributes[k] === true),
+      valueTraits: art.valueTraitLabels(s.attributes, traitKinds, t),
     })),
   )
   cards.push({
@@ -285,30 +308,37 @@ function paintMiniHead(page: Page, text: string): number {
 // --------------------------------------------------- Verdächtigen-Seite links
 
 /** Verdächtigen-Karten + Akten-Notizen in die Fläche einpassen (Schrift-Stufen-Fit
- *  wie der A4-Bogen: erst 2 Spalten ab 7 Karten, Schrift 42→18). */
+ *  wie der A4-Bogen: erst 2 Spalten ab 7 Karten, Schrift gedeckelt). `forceCols`
+ *  erzwingt eine Spaltenzahl (Tutorial-Teil-2-Seite: 2 Spalten, damit unter den
+ *  Karten Platz fürs Brett bleibt). Liefert die UNTERKANTE des Gezeichneten. */
 function paintSuspectPane(
   ctx: Ctx,
   cards: PersonCard[],
   notes: string[],
   area: { x: number; w: number; top: number; bottom: number },
-): void {
-  const colGap = 22
-  const cols = cards.length > 6 ? 2 : 1
-  const colW = Math.floor((area.w - (cols - 1) * colGap) / cols)
+  forceCols?: number,
+): number {
+  const cols = forceCols ?? (cards.length > 6 ? 2 : 1)
   const contentH = area.bottom - area.top
 
   interface NoteBox {
     lines: string[]
     h: number
   }
-  // Größer als der A4-Start (42): die Buchseite gehört den Karten allein — sie
-  // dürfen die Seite füllen. Bei vollen Besetzungen schrumpft der Fit wie gehabt.
-  let fontSize = 52
-  let layout: { cardH: number[]; lineH: number; avatar: number; pad: number; noteBoxes: NoteBox[] } | null = null
+  // Die LESEgröße ist gedeckelt (Schleifen-Start = Deckel, ≈10,5 pt): riesige
+  // Schrift wirkt gequetscht, nicht großzügig. EIN Abstand überall — zwischen
+  // den Karten UND zwischen den Spalten derselbe Wert, Karten individuell hoch,
+  // Inhalt immer oben, Block startet OBEN (Dirks Wahl, 18.08.2026: „einheitlich";
+  // Zeilen-Ausrichtung, Einheitshöhe und vertikales Zentrieren wurden probiert
+  // und verworfen). Übrige Höhe bleibt als ruhiger Rand unten.
+  let fontSize = 44
+  let layout: { cardH: number[]; colW: number; gap: number; lineH: number; avatar: number; pad: number; noteBoxes: NoteBox[] } | null = null
   for (; fontSize >= 18; fontSize -= 2) {
-    const pad = Math.round(fontSize * 0.6)
+    const pad = Math.round(fontSize * 0.7)
     const avatar = Math.round(fontSize * 3.4)
-    const lineH = Math.round(fontSize * 1.42)
+    const lineH = Math.round(fontSize * 1.5)
+    const gap = Math.round(fontSize * 0.7)
+    const colW = Math.floor((area.w - (cols - 1) * gap) / cols)
     const textW = colW - pad * 2 - avatar - 16
     const cardH = cards.map((card) => {
       ctx.font = `${fontSize}px ${art.TYPE}`
@@ -316,10 +346,13 @@ function paintSuspectPane(
       const textH = Math.round(fontSize * 1.35) + 8 + lines.length * lineH
       return Math.max(avatar + pad * 2, textH + pad * 2)
     })
+    // Chip-Zeile bleibt EINZEILIG hinter dem Namen (Chips schrumpfen höchstens
+    // auf MIN_CHIP_SCALE) — sonst den nächstkleineren Schriftgrad probieren.
+    const chipsOk = cards.every((card) => art.chipRowScale(ctx, card, colW, { fontSize, pad, avatar }) >= art.MIN_CHIP_SCALE)
     const rows = Math.ceil(cards.length / cols)
     let maxCol = 0
     for (let c0 = 0; c0 < cols; c0++) {
-      const colH = cardH.slice(c0 * rows, (c0 + 1) * rows).reduce((sum, h) => sum + h + 16, 0)
+      const colH = cardH.slice(c0 * rows, (c0 + 1) * rows).reduce((sum, h) => sum + h + gap, 0)
       maxCol = Math.max(maxCol, colH)
     }
     ctx.font = `${fontSize}px ${art.TYPE}`
@@ -330,66 +363,60 @@ function paintSuspectPane(
       return { lines, h: Math.max(lines.length * lineH, lens) + notePad * 2 }
     })
     const noteH = notes.length > 0 ? noteBoxes.reduce((sum, b) => sum + b.h + 12, 0) + 8 : 0
-    if (maxCol + noteH <= contentH || fontSize === 18) {
-      layout = { cardH, lineH, avatar, pad, noteBoxes }
+    if ((maxCol + noteH <= contentH && chipsOk) || fontSize === 18) {
+      layout = { cardH, colW, gap, lineH, avatar, pad, noteBoxes }
       break
     }
   }
-  const { cardH, lineH, avatar, pad, noteBoxes } = layout!
+  const { cardH, colW, gap, lineH, avatar, pad, noteBoxes } = layout!
   const rows = Math.ceil(cards.length / cols)
 
   let noteY = area.top
   cards.forEach((card, i) => {
     const col = Math.floor(i / rows)
-    const x = area.x + col * (colW + colGap)
+    const x = area.x + col * (colW + gap)
     let cy = area.top
-    for (let k = col * rows; k < i; k++) cy += cardH[k] + 16
+    for (let k = col * rows; k < i; k++) cy += cardH[k] + gap
     art.drawPersonCard(ctx, card, x, cy, colW, cardH[i], { fontSize, pad, avatar, lineH, traitImgs })
     noteY = Math.max(noteY, cy + cardH[i])
   })
 
-  let ny = noteY + 20
+  let ny = noteY + gap
   noteBoxes.forEach((box) => {
     art.drawNoteBox(ctx, box, area.x, ny, area.w, { fontSize, lineH })
     ny += box.h + 12
   })
+  return noteBoxes.length > 0 ? ny - 12 : noteY
 }
 
 // --------------------------------------------------------- Brett-Seite rechts
 
-/** Rechte Fallseite: Brett · Objekt-Legende · SW-Skizze (Lösefläche) · Mörder-Feld,
- *  gemeinsam in die Seitenhöhe eingepasst (dieselbe Logik wie der A4-Bogen). */
+/** Rechte Fallseite: Brett · SW-Skizze auf ihrem Zettel (Lösefläche) · schräger
+ *  Mörder-Zettel — die Legende wohnt seit 18.08.2026 unten auf der LINKEN Seite,
+ *  Brett + Skizze füllen die Höhe über EINE Formel (wie der neue A4-Bogen). */
 function paintBoardPage(page: Page, puzzle: Puzzle, contentTop: number): void {
   const { ctx } = page
   const innerW = page.x1 - page.x0
   const contentBottom = PAGE_H - BOTTOM
-  const contentH = contentBottom - contentTop
   const W = puzzle.board.width
   const H = puzzle.board.height
 
-  const items = art.legendItems(puzzle, t)
-  const legendH = art.paintLegend(ctx, items, t, page.x0, 0, innerW, false)
-  const LEGEND_GAP = 54
-  const SKETCH_GAP = 48
-  const FIELD_W = 430
-  const FIELD_H = 150
-  const FIELD_GAP = 24
-  // Brett- und Skizzenzellen gemeinsam einpassen (Skizze = Lösefläche, nie zu klein).
-  let cell = Math.floor(innerW / Math.max(W, H))
-  let sketchCell = 50
-  let fieldBeside = true
-  for (; cell >= 40; cell--) {
-    sketchCell = Math.max(50, Math.round(cell * 0.62))
-    if (sketchCell * W > innerW) continue
-    fieldBeside = innerW - sketchCell * W >= FIELD_W + FIELD_GAP
-    const total =
-      cell * H + LEGEND_GAP + legendH + SKETCH_GAP + sketchCell * H + (fieldBeside ? 0 : FIELD_GAP + FIELD_H)
-    if (total <= contentH) break
-  }
+  const GAP = 48
+  const SKETCH_RATIO = 0.7
+  const SLIP_H = 260
+  const SLIP_GAP = 56
+  const availH0 = contentBottom - contentTop - GAP
+  const cellEst = Math.floor(Math.min(availH0 / (H * (1 + SKETCH_RATIO)), innerW / W))
+  const labels = art.boardLabelReserve(cellEst)
+  const slipReserve = art.sketchSlipReserve(Math.round(cellEst * SKETCH_RATIO))
+  const cell = Math.floor(
+    Math.min((availH0 - labels - 2 * slipReserve) / (H * (1 + SKETCH_RATIO)), (innerW - labels) / W),
+  )
+  const sketchCell = Math.round(cell * SKETCH_RATIO)
   const bw = cell * W
   const bh = cell * H
-  const boardX = page.x0 + Math.round((innerW - bw) / 2)
-  const boardY = contentTop
+  const boardX = page.x0 + labels + Math.round((innerW - labels - bw) / 2)
+  const boardY = contentTop + labels
   drawBoard(ctx, {
     puzzle,
     cell,
@@ -402,21 +429,24 @@ function paintBoardPage(page: Page, puzzle: Puzzle, contentTop: number): void {
     highlight: null,
     reveal: null,
   })
-  art.paintLegend(ctx, items, t, page.x0, boardY + bh + LEGEND_GAP, innerW, true)
+  art.drawBoardLabels(ctx, W, H, boardX, boardY, cell)
 
-  const sketchY = boardY + bh + LEGEND_GAP + legendH + SKETCH_GAP
+  // Skizzen-Zettel + Mörder-Zettel nebeneinander, als Gruppe zentriert; der
+  // Mörder-Zettel unten bündig mit der Skizze (wie im Murdle-Buch).
   const sketchW = sketchCell * W
-  if (fieldBeside) {
-    const groupW = sketchW + FIELD_GAP + FIELD_W
-    const sketchX = page.x0 + Math.max(0, Math.round((innerW - groupW) / 2))
-    art.drawSketch(ctx, puzzle, sketchX, sketchY, sketchCell)
-    art.drawMurderField(ctx, t, sketchX + sketchW + FIELD_GAP, sketchY + sketchCell * H - FIELD_H, FIELD_W, FIELD_H)
-  } else {
-    const sketchX = page.x0 + Math.max(0, Math.round((innerW - sketchW) / 2))
-    const fw = Math.min(FIELD_W, innerW)
-    art.drawSketch(ctx, puzzle, sketchX, sketchY, sketchCell)
-    art.drawMurderField(ctx, t, page.x0 + Math.round((innerW - fw) / 2), sketchY + sketchCell * H + FIELD_GAP, fw, FIELD_H)
-  }
+  const sketchH = sketchCell * H
+  const slipPad = art.sketchSlipPad(sketchCell)
+  const slipW = Math.min(660, innerW - 2 * slipPad - sketchW - SLIP_GAP)
+  const groupW = 2 * slipPad + sketchW + SLIP_GAP + slipW
+  const sketchX = page.x0 + slipPad + Math.max(0, Math.round((innerW - groupW) / 2))
+  const sketchY = boardY + bh + GAP + slipReserve
+  art.drawSketchSlip(ctx, puzzle, sketchX, sketchY, sketchCell)
+  const slipCx = sketchX + sketchW + slipPad + SLIP_GAP + slipW / 2
+  const slipTop = sketchY + sketchH - SLIP_H - 30
+  art.drawMurderSlip(ctx, t('game.pdfMurderer'), slipCx, slipTop + SLIP_H / 2, slipW, SLIP_H)
+  // Kompass im freien Raum ÜBER dem Zettel — „südlich von …" braucht ein Nord.
+  const compassR = Math.min(84, Math.floor((slipTop - sketchY) / 2) - 46)
+  if (compassR >= 30) art.drawCompass(ctx, t, slipCx, sketchY + (slipTop - sketchY) / 2, compassR)
 }
 
 // ------------------------------------------------------------- Fall-Doppelseite
@@ -435,16 +465,31 @@ async function caseSpread(file: string, caseNo: number, pageNo: number): Promise
   const author = (json.author ?? '').trim()
   const metaLine = `${puzzle.board.width}×${puzzle.board.height} · ${diff}${author ? ` · ${t('game.author', { name: author })}` : ''}`
 
-  // Linke Seite: Kopf + Verdächtige + Akten-Notizen.
+  // Linke Seite: Kopf + Verdächtige + Akten-Notizen; ganz unten die Objekt-
+  // Legende als Streifen (von der Brettseite hierher gezogen, Dirk 18.08.2026 —
+  // die rechte Seite gehört Brett + Skizze).
   const left = newPage('left')
   const cardsTop = paintCaseHead(left, caseNo, title, metaLine)
   const cards = await personCards(puzzle, renderer)
   const notes = art.boardNotes(puzzle, renderer, t)
+  const innerW = left.x1 - left.x0
+  const items = art.legendItems(puzzle, t)
+  const stripH = art.paintLegendStrip(left.ctx, items, t, left.x0, 0, innerW, false)
+  const stripTop = PAGE_H - BOTTOM - stripH
+  art.paintLegendStrip(left.ctx, items, t, left.x0, stripTop, innerW, true)
+  left.ctx.strokeStyle = art.LINE
+  left.ctx.lineWidth = 2
+  left.ctx.setLineDash([10, 12])
+  left.ctx.beginPath()
+  left.ctx.moveTo(left.x0, stripTop - 22)
+  left.ctx.lineTo(left.x1, stripTop - 22)
+  left.ctx.stroke()
+  left.ctx.setLineDash([])
   paintSuspectPane(left.ctx, cards, notes, {
     x: left.x0,
-    w: left.x1 - left.x0,
+    w: innerW,
     top: cardsTop,
-    bottom: PAGE_H - BOTTOM,
+    bottom: stripTop - 44,
   })
   paintPageNo(left, pageNo)
 
@@ -490,12 +535,15 @@ async function paintSolutionHalf(
   // Gelöstes Brett rechts: Kreuz auf jedem begehbaren Feld ohne Person.
   const W = puzzle.board.width
   const H = puzzle.board.height
-  const boardMax = Math.min(Math.round(innerW * 0.4), area.bottom - contentTop)
+  const labels = art.boardLabelReserve(
+    Math.floor(Math.min(Math.round(innerW * 0.4), area.bottom - contentTop) / Math.max(W, H)),
+  )
+  const boardMax = Math.min(Math.round(innerW * 0.4), area.bottom - contentTop - labels)
   const cell = Math.floor(boardMax / Math.max(W, H))
   const bw = cell * W
   const bh = cell * H
   const boardX = page.x1 - bw
-  const boardY = contentTop + Math.max(0, Math.round((area.bottom - contentTop - bh) / 2))
+  const boardY = contentTop + labels + Math.max(0, Math.round((area.bottom - contentTop - labels - bh) / 2))
   const suspectIndex = new Map(puzzle.suspects.map((s, i) => [s.id, i] as const))
   const avatars = await avatarImages(puzzle)
   const placements = new Map(solution.entries())
@@ -519,6 +567,7 @@ async function paintSolutionHalf(
     avatars,
     objectBadges: true,
   })
+  art.drawBoardLabels(ctx, W, H, boardX, boardY, cell)
 
   // Protokoll links: Schrift-/Spalten-Fit wie das A4-Auflösungsblatt.
   // Der ☠-Chip des Opfers entfällt im Buch: headless liefert kein Font-Fallback
@@ -526,7 +575,7 @@ async function paintSolutionHalf(
   const { steps: rawSteps, verdictText } = art.buildStepLines(result.steps, renderer)
   const steps = rawSteps.map((s) => (s.person === VICTIM_ID ? { ...s, person: undefined } : s))
   const verdict = { text: verdictText, person: m.suspectId ?? undefined }
-  const stepArea = { x: page.x0, w: innerW - bw - 44, top: contentTop, bottom: area.bottom }
+  const stepArea = { x: page.x0, w: innerW - bw - 44 - labels, top: contentTop, bottom: area.bottom }
   let chosen: { font: number; cols: number } | null = null
   for (let font = 26; font >= 16 && !chosen; font -= 2) {
     for (const cols of [2, 3]) {
@@ -833,6 +882,9 @@ interface Snap {
   crosses: Set<number>
   marks: Map<number, Set<string>>
   reveal: { victimCell: number; murdererId: string | null } | null
+  /** Explanation-Key des Engine-Schritts — erlaubt handgeschriebene Tutorial-
+   *  Texte für EINZELNE Schritte (tut2Pair in tutorialSpread34). */
+  stepKey?: string
 }
 
 /** Kandidaten-Brett + Schnappschüsse eines Falls — die Engine wird EXAKT
@@ -923,32 +975,60 @@ function walkthrough(puzzle: Puzzle, renderer: InstanceType<typeof Renderer>): {
     if (key === lastKey) continue // ohne sichtbare Änderung kein eigener Schritt
     lastKey = key
     if (placing && step.personId === VICTIM_ID) continue // das Opfer gehört ins Finale
+    // Die Engine-Texte der hiddenSingle-Schritte sind fürs SPIEL gedacht (dort
+    // leuchten die betroffenen Felder). Auf Papier brauchen sie die ganze
+    // Begründung samt sichtbarer Folge — sonst sind die Schritte für Menschen
+    // unverständlich (Dirks Feedback, 18.08.2026, Tutorial Teil 2 Schritt 3/4).
+    const bookCaption = (): string => {
+      const ex = step.explanation as { key?: string; params?: Record<string, unknown> }
+      const m = /^step\.hiddenSingle(Row|Col)(Victim)?$/.exec(ex.key ?? '')
+      if (m) {
+        const axis = t(m[1] === 'Row' ? 'book.tut.axisRow' : 'book.tut.axisCol')
+        const line = String(ex.params?.line ?? '')
+        return m[2]
+          ? t('book.tut.hiddenVictim', { axis, line })
+          : t('book.tut.hiddenSuspect', { axis, line, name: puzzle.nameOf(step.personId!) })
+      }
+      return art.polish(renderer.render(step.explanation))
+    }
     snaps.push({
       caption: placing && step.technique === 'nakedSingle'
         ? t('book.tut.place', { name: puzzle.nameOf(step.personId!) })
-        : art.polish(renderer.render(step.explanation)),
+        : bookCaption(),
+      stepKey: (step.explanation as { key?: string }).key,
       ...v,
       reveal: null,
     })
   }
 
   // Finale: ab dem Moment, in dem der letzte Verdächtige steht, wird alles EIN
-  // Schnappschuss — gelöstes Brett mit Opfer und Mörder-Ring.
+  // Schnappschuss — gelöstes Brett mit Opfer und Mörder-Ring. Der Text nennt
+  // ALLE erst hier gesetzten Personen, sagt, ob das Opfer-Feld schon vorher
+  // feststand, und nennt den Mordraum (Dirks Feedback, 18.08.2026: beim
+  // 6×6-Tutorial wurden Armin UND Bella gesetzt, das Opfer stand längst).
   const doneIdx = snaps.findIndex((s) => s.placements.size >= puzzle.suspects.length)
   if (doneIdx >= 0) snaps = snaps.slice(0, doneIdx)
+  const before = snaps[snaps.length - 1]?.placements ?? new Map<string, number>()
+  const finaleNames = puzzle.suspects.filter((s) => !before.has(s.id)).map((s) => s.name)
+  const names =
+    finaleNames.length <= 1
+      ? (finaleNames[0] ?? puzzle.suspects[0].name)
+      : `${finaleNames.slice(0, -1).join(', ')}${t('book.tut.nameJoin')}${finaleNames[finaleNames.length - 1]}`
   const solution = result.solution
   const victimCell = solution.cellOf(VICTIM_ID)
   const m = findMurderer(puzzle, solution)
-  const lastSuspect = [...placed.keys()].filter((id) => id !== VICTIM_ID).pop() ?? puzzle.suspects[0].id
+  const murderRoom = puzzle.board.rooms.get(m.roomId)
   placed.set(VICTIM_ID, victimCell)
   const taken = new Set(placed.values())
   const allCrosses = new Set<number>()
   for (const c of occupiable) if (!taken.has(c)) allCrosses.add(c)
   snaps.push({
-    caption: t('book.tut.finale', {
-      name: puzzle.nameOf(lastSuspect),
-      victim: puzzle.victim.name,
+    // Das Opfer bleibt im Text generisch „das Opfer" — im 6×6-Tutorial HEISST
+    // es wörtlich „Opfer", mit Namen läse sich „allein mit Opfer" kaputt.
+    caption: t(before.has(VICTIM_ID) ? 'book.tut.finaleSet' : 'book.tut.finale', {
+      names,
       murderer: m.suspectId ? puzzle.nameOf(m.suspectId) : '?',
+      room: murderRoom ? t(murderRoom.nameKey) : m.roomId,
     }),
     placements: new Map(placed),
     crosses: allCrosses,
@@ -1235,6 +1315,20 @@ async function tutorialSpread34(firstPageNo: number): Promise<Page[]> {
   const suspectIndex = new Map(puzzle.suspects.map((s, i) => [s.id, i] as const))
   const avatars = await avatarImages(puzzle)
   const { cand, snaps } = walkthrough(puzzle, renderer)
+  // Der „Caro fliegt aus Zeile 1/2"-Schritt: Die Engine begründet ihn über
+  // Zeile 4 (hiddenSingle) — für Menschen ist der PAAR-Blick verständlicher
+  // (Dirks Text, 18.08.2026): Armin und Bella besetzen Zeile 1 und 2, also
+  // verschwindet Caro dort und die A/B-losen Felder werden ausgekreuzt.
+  // Handgeschrieben NUR für diesen einen Schritt dieses festen Levels (der
+  // erste nicht-Opfer-hiddenSingleRow ist genau er; die Probe zeigt die Seite).
+  const pairSnap = snaps.find((s) => s.stepKey === 'step.hiddenSingleRow')
+  if (pairSnap) {
+    pairSnap.caption = t('book.tut.tut2Pair', {
+      a: puzzle.nameOf('A'),
+      b: puzzle.nameOf('B'),
+      c: puzzle.nameOf('C'),
+    })
+  }
 
   const p1 = newPage('left')
   const innerW = p1.x1 - p1.x0
@@ -1245,7 +1339,39 @@ async function tutorialSpread34(firstPageNo: number): Promise<Page[]> {
   }) + 36
   const cards = await personCards(puzzle, renderer)
   const notes = art.boardNotes(puzzle, renderer, t)
-  paintSuspectPane(p1.ctx, cards, notes, { x: p1.x0, w: innerW, top: y, bottom: PAGE_H - BOTTOM })
+  // Karten ZWEISPALTIG (obwohl nur 6) — darunter muss das UNGELÖSTE Brett auf
+  // dieselbe Seite: Auf der Vorstellungsseite fehlte das Level, man sah nur die
+  // Hinweise (Dirks Feedback, 18.08.2026).
+  const usedBottom = paintSuspectPane(
+    p1.ctx,
+    cards,
+    notes,
+    { x: p1.x0, w: innerW, top: y, bottom: PAGE_H - BOTTOM },
+    2,
+  )
+  const W = puzzle.board.width
+  const H = puzzle.board.height
+  const areaTop = usedBottom + 44
+  const areaH = PAGE_H - BOTTOM - areaTop
+  const cellEst = Math.floor(Math.min(innerW / W, areaH / H))
+  const labels = art.boardLabelReserve(cellEst)
+  const cell = Math.floor(Math.min((innerW - labels) / W, (areaH - labels) / H))
+  const bw = cell * W
+  const boardX = p1.x0 + labels + Math.round((innerW - labels - bw) / 2)
+  const boardY = areaTop + labels
+  drawBoard(p1.ctx, {
+    puzzle,
+    cell,
+    origin: { x: boardX, y: boardY },
+    roomName: (key) => t(key),
+    suspectIndex: new Map(),
+    placements: new Map(), // leer: das UNGELÖSTE Brett — gelöst wird ab der Folgeseite
+    marks: new Map(),
+    crosses: new Set(),
+    highlight: null,
+    reveal: null,
+  })
+  art.drawBoardLabels(p1.ctx, W, H, boardX, boardY, cell)
   paintPageNo(p1, firstPageNo)
 
   return [p1, ...flowSnapPages(puzzle, [cand, ...snaps], 1, firstPageNo + 1, { cellMax: 150, suspectIndex, avatars })]
@@ -1415,8 +1541,10 @@ async function paintClosing(
   ctx.fillStyle = BONE
   ctx.font = `700 96px ${art.DISPLAY}`
   ctx.fillText(t('book.back.head'), cx, oy + 480)
+  // Rückseiten-Pitch: beschreibt das BUCH selbst (kein App-Verweis — Dirks
+  // Vorgabe 18.08.2026: die Rückseite liest man zuerst), Fallzahl aus BOOK_CASES.
   ctx.font = `38px ${art.TYPE}`
-  const body = art.wrapText(ctx, t('book.back.body', { brand: t('book.brand') }), Math.round(PAGE_W * 0.82))
+  const body = art.wrapText(ctx, t('book.back.body', { count: BOOK_CASES.length }), Math.round(PAGE_W * 0.82))
   body.forEach((l, i) => ctx.fillText(l, cx, oy + 590 + i * 56))
 
   // Abschieds-Beweisstück: ein echtes Level (Die Seerose), headless gerendert,
@@ -1459,6 +1587,13 @@ async function paintClosing(
   ctx.font = `34px ${art.TYPE}`
   ctx.fillText(t('book.back.evidence').toUpperCase(), 0, cardH / 2 - 36)
   ctx.restore()
+
+  // Fortsetzungs-Teaser unter dem Polaroid („Ihr wollt mehr Fälle? …").
+  ctx.textAlign = 'center'
+  ctx.fillStyle = CRIM
+  ctx.font = `40px ${art.TYPE}`
+  const more = art.wrapText(ctx, t('book.back.more'), Math.round(PAGE_W * 0.82))
+  more.forEach((l, i) => ctx.fillText(l, cx, oy + 900 + cardH + 110 + i * 52))
 
   // Unterer Block: mit Barcode-Fläche rückt er nach links, sonst mittig.
   const bx2 = barcodeSafe ? ox + Math.round(PAGE_W * 0.34) : cx
@@ -1649,9 +1784,15 @@ if (MODE === 'probe') {
   parts.push(await coverPage(), newPage('left'), thanksPage())
   parts.push(...(await tutorialSpread1(4)))
   parts.push(...(await tutorialSpread2(6)))
+  // Teil 2 (Tutorial_Wohnung) gehört in die Probe: Dirk liest die Walkthrough-
+  // Texte gegen (Schritt 3/4 waren einmal unverständlich, 18.08.2026).
+  parts.push(...(await tutorialSpread34(9)))
   const [l1, r1] = await caseSpread('Schulstart.json', 1, 14)
   const [l2, r2] = await caseSpread('Der_schwere_Brettspielmord.json', 54, 120)
-  parts.push(l1, r1, l2, r2)
+  // Chip-Stresstest: Fall 57 trägt Haarfarben-Chips auf fast jeder Karte —
+  // hier fiel der Überlauf über den Kartenrand auf (Dirk, 18.08.2026).
+  const [l3, r3] = await caseSpread('Der_Einkauf_des_Todes.json', 57, 126)
+  parts.push(l1, r1, l2, r2, l3, r3)
   parts.push(await solutionPage([{ file: 'Schulstart.json', caseNo: 1 }, { file: 'Der_schwere_Brettspielmord.json', caseNo: 54 }], 'left', 138))
   parts.push(await backPage())
   parts.forEach((pg, i) => {
