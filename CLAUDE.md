@@ -508,10 +508,12 @@ Tabellen in `php/schema.sql`: `murdoku_userlevel` + Drossel `murdoku_upload_ip`)
 **rechte Spalte läuft über die VOLLE Seitenhöhe** (oben das Brett, darunter SW-Skizze
 auf ihrem eigenen Zettel `drawSketchSlip` + schräger „Der Mörder ist …"-Akten-Zettel
 `drawMurderSlip` — Doppelrahmen, Büroklammer, Fingerabdruck); links kompakter Kopf
-(`paintSheetHead`: Titel + Meta + kleiner Stempel), Verdächtige, Akten-Notizen,
-optional die **Objekt-Legende als Streifen** (`paintLegendStrip`: Icon oben, Name
-darunter; EINE Zeile angestrebt, Umbruch statt Schrumpfen) und die Grundregeln als
-Fuß — Kopf/Fuß enden an der linken Spalte. Gerendert als 300-dpi-Canvas → PNG in
+(`paintSheetHead`: Titel + Meta + kleiner Stempel), Verdächtige, Akten-Notizen
+und die Grundregeln als Fuß — Kopf/Fuß enden an der linken Spalte. Die optionale
+**Objekt-Legende steht im PDF als SENKRECHTE Spalte GANZ rechts**
+(`paintLegendColumn`, Dirks Vorlage 18.08.2026: Gruppentitel + Kachel/Name je
+Zeile) — ihr Platz kommt von der LINKEN Spalte, nie vom Brett; NUR das Buch
+behält den Streifen unten links (`paintLegendStrip`). Gerendert als 300-dpi-Canvas → PNG in
 jsPDF, KEIN Beschnitt (der gehört nur dem KDP-Buch, `withBleed` in make-book.ts).
 Vorschalt-Dialog `PdfDialog` (Share-Sheet-Muster): Legende-Schalter
 (`game.pdfLegend`, **Standard AUS**, gilt für beide Zeilen) + ohne oder mit

@@ -3,8 +3,10 @@
  * die VOLLE Seitenhöhe — oben das UNGELÖSTE Brett, darunter die SW-Skizze auf ihrem
  * eigenen Zettel und der schräge »Der Mörder ist …«-Akten-Zettel. Links: kompakter
  * Kopf (Titel + Meta + kleiner Stempel), die Verdächtigen (ab 7 Personen
- * zweispaltig), Akten-Notizen, optional die Objekt-Legende als Streifen (Checkbox
- * im PdfDialog, Standard AUS) und die Grundregeln als Fuß.
+ * zweispaltig), Akten-Notizen und die Grundregeln als Fuß. Die Objekt-Legende
+ * (Checkbox im PdfDialog, Standard AUS) steht als SENKRECHTE Spalte ganz rechts —
+ * ihr Platz kommt von der linken Spalte, nie vom Brett (das Buch behält den
+ * Streifen unten links auf der Fallseite).
  *
  * Das Brett rendert über das echte `drawBoard` des Spiels (voller Pfad: Bodentexturen,
  * Möbel, weiße Objekt-Karten, Namens-Pillen) — keine nachgebaute Grafik, damit der
@@ -711,6 +713,77 @@ export function drawMurderSlip(
   ctx.restore()
 }
 
+/** Objekt-Legende als SENKRECHTE Spalte (NUR A4-PDF, ganz rechts — Dirks
+ *  Vorlage 18.08.2026): kleine Gruppen-Titel („betretbar:" …), darunter je
+ *  Zeile Kachel + Name. Misst (draw=false) bzw. zeichnet und liefert
+ *  Breite/Höhe; wird die Spalte höher als `maxH`, schrumpfen die Kacheln.
+ *  Der Platz kommt von der LINKEN Spalte, nie vom Brett; das Buch behält
+ *  den Streifen unten links (paintLegendStrip). */
+function paintLegendColumn(
+  ctx: CanvasRenderingContext2D,
+  items: ReturnType<typeof legendItems>,
+  t: (k: string) => string,
+  x: number,
+  y0: number,
+  maxH: number,
+  draw: boolean,
+): { w: number; h: number } {
+  let tile = 48
+  const heightAt = (tl: number): number => {
+    const rowH = tl + 12
+    const headH = Math.round(tl * 0.75) + 10
+    let h = 0
+    let lastStatus = ''
+    for (const it of items) {
+      if (it.status !== lastStatus) {
+        h += (h > 0 ? 16 : 0) + headH
+        lastStatus = it.status
+      }
+      h += rowH
+    }
+    return h
+  }
+  while (tile > 32 && heightAt(tile) > maxH) tile -= 4
+  const font = Math.round(tile * 0.5)
+  const rowH = tile + 12
+  const headH = Math.round(tile * 0.75) + 10
+  ctx.save()
+  ctx.font = `${font}px ${TYPE}`
+  let maxName = 0
+  for (const it of items) maxName = Math.max(maxName, ctx.measureText(it.name).width)
+  ctx.font = `700 ${font}px ${TYPE}`
+  let maxHead = 0
+  for (const st of ['occupiable', 'blocked', 'wall']) {
+    maxHead = Math.max(maxHead, ctx.measureText(`${t(`legend.${st}`)}:`).width)
+  }
+  const w = Math.ceil(Math.max(tile + 12 + maxName, maxHead))
+  if (draw) {
+    ctx.textAlign = 'left'
+    ctx.textBaseline = 'alphabetic'
+    let y = y0
+    let lastStatus = ''
+    for (const it of items) {
+      if (it.status !== lastStatus) {
+        if (lastStatus !== '') y += 16
+        ctx.fillStyle = DIM
+        ctx.font = `700 ${font}px ${TYPE}`
+        ctx.fillText(`${t(`legend.${it.status}`)}:`, x, y + Math.round(tile * 0.55))
+        y += headH
+        lastStatus = it.status
+      }
+      drawLegendTile(ctx, it.type, x, y, tile, it.status === 'occupiable')
+      ctx.fillStyle = INK
+      ctx.font = `${font}px ${TYPE}`
+      ctx.textBaseline = 'middle'
+      ctx.fillText(it.name, x + tile + 12, y + tile / 2 + 1)
+      ctx.textBaseline = 'alphabetic'
+      y += rowH
+    }
+  }
+  ctx.restore()
+  return { w, h: heightAt(tile) }
+}
+
 /** Kompassrose in Linien-Art (Druck-Palette): Kreis mit 45°-Zwischenstrichen,
  *  Nadel mit Krimson-Nordspitze, lokalisierte Himmelsrichtungs-Buchstaben
  *  (legend.compassN/E/S/W — de N/O/S/W, en N/E/S/W, ru С/В/Ю/З …). Sitzt im
@@ -1183,8 +1256,15 @@ export async function renderSheet(
   // Höhe über EINE Formel (Skizze ≈70 % der Brettzelle — Lösefläche, beschreibbar).
   const W = puzzle.board.width
   const H = puzzle.board.height
+  // Legende (optional) als senkrechte Spalte GANZ rechts — ihr Platz kommt von
+  // der LINKEN Spalte: die Brett-Spalte behält ihre Breite und rückt nur mit.
+  const legendItemsList = opts.legend ? legendItems(puzzle, t) : []
+  const legendCol =
+    legendItemsList.length > 0
+      ? paintLegendColumn(ctx, legendItemsList, t, 0, 0, PAGE_H - 2 * MARGIN, false)
+      : null
   const rightW = Math.round(innerW * 0.52)
-  const rightX = PAGE_W - MARGIN - rightW
+  const rightX = PAGE_W - MARGIN - (legendCol ? legendCol.w + 40 : 0) - rightW
   const GAP = 48
   const SKETCH_RATIO = 0.7
   const SLIP_H = 260
@@ -1231,6 +1311,9 @@ export async function renderSheet(
   // Kompass im freien Raum ÜBER dem Zettel — „südlich von …" braucht ein Nord.
   const compassR = Math.min(84, Math.floor((slipTop - sketchY) / 2) - 46)
   if (compassR >= 30) drawCompass(ctx, t, slipCx, sketchY + (slipTop - sketchY) / 2, compassR)
+  if (legendCol) {
+    paintLegendColumn(ctx, legendItemsList, t, PAGE_W - MARGIN - legendCol.w, MARGIN, PAGE_H - 2 * MARGIN, true)
+  }
 
   // ------------------------- Linke Spalte: Kopf + Fuß -------------------------
   const paneX = MARGIN
@@ -1264,16 +1347,7 @@ export async function renderSheet(
   ctx.fillText('murdoku · apo-games.de', paneX + paneW, PAGE_H - MARGIN)
   ctx.textAlign = 'left'
 
-  // Objekt-Legende als Streifen direkt über dem Fuß — nur auf Wunsch (Checkbox
-  // im PdfDialog, Standard AUS). Die Akten-Notizen unten bleiben davon unberührt.
-  let legendTop = footTop - 20
-  if (opts.legend) {
-    const items = legendItems(puzzle, t)
-    const lh = paintLegendStrip(ctx, items, t, paneX, 0, paneW, false)
-    legendTop = footTop - 20 - 24 - lh
-    paintLegendStrip(ctx, items, t, paneX, legendTop, paneW, true)
-  }
-  const contentBottom = legendTop - 28
+  const contentBottom = footTop - 48
   const contentH = contentBottom - contentTop - 30
 
   // ------------------------------- Verdächtige -------------------------------
