@@ -1,17 +1,25 @@
 /**
- * Druckbogen-Export: EIN A4-Querformat-PDF pro Level — Titel & Autor oben, die
- * Verdächtigen links (ab 7 Personen zweispaltig), das UNGELÖSTE Brett rechts.
+ * Druckbogen-Export: EIN A4-Querformat-PDF pro Level. Die rechte Spalte läuft über
+ * die VOLLE Seitenhöhe — oben das UNGELÖSTE Brett, darunter die SW-Skizze auf ihrem
+ * eigenen Zettel und der schräge »Der Mörder ist …«-Akten-Zettel. Links: kompakter
+ * Kopf (Titel + Meta + kleiner Stempel), die Verdächtigen (ab 7 Personen
+ * zweispaltig), Akten-Notizen, optional die Objekt-Legende als Streifen (Checkbox
+ * im PdfDialog, Standard AUS) und die Grundregeln als Fuß.
  *
  * Das Brett rendert über das echte `drawBoard` des Spiels (voller Pfad: Bodentexturen,
  * Möbel, weiße Objekt-Karten, Namens-Pillen) — keine nachgebaute Grafik, damit der
  * Bogen immer exakt so aussieht wie das Spiel. Avatare kommen aus `avatarDataUri`,
- * die Objekt-Legende aus `drawObjectIcon` (dieselben Zeichner wie Legende/Editor).
+ * die Legenden-Kacheln aus `drawObjectIcon` (dieselben Zeichner wie Legende/Editor).
  * Nur der Grund ist Papier statt Nacht: gedeckte Druck-Palette, kaum Flächen.
+ * Nennt irgendein Hinweis eine Merkmals-AUSPRÄGUNG (Haarfarbe, Frisur, Bartform,
+ * Brillenform/-farbe), steht sie als Text-Chip auf den Karten — „Blond" vs „Weiß"
+ * ist auf Papier sonst Raterei (`referencedTraitKinds` + `valueTraitLabels`).
  *
  * Die Seite entsteht als ein 300-dpi-Canvas und wandert als Bild in jsPDF — so
  * tragen alle Texte die Spiel-Schriften (inkl. kyrillischem Fallback) ohne
  * TTF-Einbettung. Web lädt direkt herunter, Android teilt über das Share-Sheet
- * (dasselbe Muster wie der JSON-Export).
+ * (dasselbe Muster wie der JSON-Export). KEIN Beschnitt — der gehört nur dem
+ * KDP-Buch (scripts/make-book.ts legt ihn in seiner withBleed-Stufe an).
  */
 import { Capacitor } from '@capacitor/core'
 import {
@@ -22,7 +30,9 @@ import {
   findMurderer,
   isWaterRoom,
   loadLevel,
+  referencedTraitKinds,
   usesInsideOutside,
+  type AttributeValue,
   type Clue,
   type DeductionStep,
   type LevelJson,
@@ -120,6 +130,34 @@ export function boardNotes(puzzle: Puzzle, renderer: Renderer, t: (k: string) =>
   return notes.filter((n) => n.trim() !== '')
 }
 
+/** Ausprägungs-Merkmale, die als TEXT-Chip auf die Karten kommen, mit ihrem
+ *  Locale-Katalog (`hair` heißt im Locale `hairColor`). Boolesche Merkmale
+ *  (Bart/Brille/Glatze) bleiben Icons, `gender` bleibt das ♂/♀-Zeichen. */
+const VALUE_TRAIT_CATALOG: Record<string, string> = {
+  hair: 'hairColor',
+  hairstyle: 'hairstyle',
+  beardStyle: 'beardStyle',
+  glassesShape: 'glassesShape',
+  glassesColor: 'glassesColor',
+}
+
+/** Die Text-Chips einer Person: jede getragene Ausprägung, deren Merkmals-ART
+ *  irgendein Hinweis des Levels nennt (`referencedTraitKinds`) — „Blond" und
+ *  „Weiß" sind auf Papier sonst nicht zu unterscheiden. Nur Verdächtige: das
+ *  Opfer zeigt außer dem Geschlecht nichts (verdeckter Zufall). */
+export function valueTraitLabels(
+  attributes: Readonly<Record<string, AttributeValue>>,
+  kinds: ReadonlySet<string>,
+  t: (k: string) => string,
+): string[] {
+  const out: string[] = []
+  for (const [kind, catalog] of Object.entries(VALUE_TRAIT_CATALOG)) {
+    const v = attributes[kind]
+    if (kinds.has(kind) && typeof v === 'string') out.push(t(`${catalog}.${v}`))
+  }
+  return out
+}
+
 /** Legenden-Einträge wie Legend.tsx: begehbar zuerst, dann blockiert, dann Wandstücke. */
 export function legendItems(
   puzzle: Puzzle,
@@ -174,9 +212,49 @@ export function drawLegendTile(ctx: CanvasRenderingContext2D, type: string, x: n
   ctx.restore()
 }
 
-/** Objekt-Legende zeichnen ODER nur ihre Höhe messen (draw=false) — die Höhe wird
- *  gebraucht, BEVOR Brett- und Skizzengröße eingepasst werden können. */
-export function paintLegend(
+/** Ein Element des Legende-Streifens: Gruppenwort oder Objekt mit fertiger Breite. */
+interface LegendStripToken {
+  kind: 'label' | 'item'
+  text: string
+  w: number
+  item?: ReturnType<typeof legendItems>[number]
+}
+
+const STRIP_TILE = 52
+const STRIP_ITEM_GAP = 18
+
+function legendStripTokens(
+  ctx: CanvasRenderingContext2D,
+  items: ReturnType<typeof legendItems>,
+  t: (k: string) => string,
+  nameFont: number,
+): LegendStripToken[] {
+  const tokens: LegendStripToken[] = []
+  let lastStatus = ''
+  for (const it of items) {
+    if (it.status !== lastStatus) {
+      lastStatus = it.status
+      const text = t(`legend.${it.status}`).toUpperCase()
+      ctx.font = `700 ${Math.round(nameFont * 0.92)}px ${TYPE}`
+      tokens.push({ kind: 'label', text, w: ctx.measureText(text).width + 26 })
+    }
+    ctx.font = `${nameFont}px ${TYPE}`
+    tokens.push({
+      kind: 'item',
+      text: it.name,
+      w: Math.max(STRIP_TILE, ctx.measureText(it.name).width) + STRIP_ITEM_GAP,
+      item: it,
+    })
+  }
+  return tokens
+}
+
+/** Objekt-Legende als kompakter STREIFEN (Icon oben, Name darunter, Gruppenwörter
+ *  dazwischen) zeichnen ODER nur die Höhe messen (draw=false). Angestrebt ist EINE
+ *  Zeile (Schrift 22 → 18); passt sie nie, bricht der Streifen bei Schrift 20 um,
+ *  statt unleserlich zu schrumpfen (Dirks OK, 18.08.2026). Ersetzt die alte
+ *  mehrzeilige Block-Legende — Bogen und Buch tragen denselben Streifen. */
+export function paintLegendStrip(
   ctx: CanvasRenderingContext2D,
   items: ReturnType<typeof legendItems>,
   t: (k: string) => string,
@@ -186,51 +264,57 @@ export function paintLegend(
   draw: boolean,
 ): number {
   if (items.length === 0) return 0
-  const tile = 56
-  const rowH = tile + 14
-  const font = `26px ${TYPE}`
-  const groupFont = `700 26px ${TYPE}` // Gruppen-Wörter fett (Dirks Vorgabe)
-  ctx.save()
-  ctx.textAlign = 'left'
-  ctx.textBaseline = 'middle'
-  let lx = x0
-  let rows = 1
-  let lastStatus = ''
-  for (const it of items) {
-    const groupLabel = it.status !== lastStatus ? `${t(`legend.${it.status}`)}: ` : ''
-    ctx.font = groupFont
-    const groupW = groupLabel ? ctx.measureText(groupLabel).width + 6 : 0
-    ctx.font = font
-    const nameW = ctx.measureText(it.name).width
-    // Jede Gruppe (betretbar / blockiert / an der Wand) beginnt auf ihrer EIGENEN
-    // Zeile — sonst verschwimmt die Legende zu einem Band (Dirks Feedback).
-    // Innerhalb der Gruppe bricht weiterhin die Breite um.
-    if ((groupLabel || lx + groupW + tile + 10 + nameW + 30 > x0 + width) && lx > x0) {
-      lx = x0
-      rows++
-    }
-    const ly = y0 + (rows - 1) * rowH
-    if (groupLabel) {
-      lastStatus = it.status
-      if (draw) {
-        ctx.fillStyle = DIM
-        ctx.font = groupFont
-        ctx.fillText(groupLabel, lx, ly + tile / 2)
-        ctx.font = font
+  const layout = (f: number): LegendStripToken[][] => {
+    const rows: LegendStripToken[][] = [[]]
+    let lx = 0
+    for (const tok of legendStripTokens(ctx, items, t, f)) {
+      if (lx + tok.w > width && rows[rows.length - 1].length > 0) {
+        rows.push([])
+        lx = 0
       }
-      lx += groupW
+      rows[rows.length - 1].push(tok)
+      lx += tok.w
     }
-    if (draw) drawLegendTile(ctx, it.type, lx, ly, tile, it.status === 'occupiable')
-    lx += tile + 10
-    if (draw) {
-      ctx.fillStyle = INK
-      ctx.font = font
-      ctx.fillText(it.name, lx, ly + tile / 2)
-    }
-    lx += nameW + 30
+    return rows
   }
+  let nameFont = 20
+  let rows: LegendStripToken[][] | null = null
+  for (let f = 22; f >= 18; f -= 2) {
+    const r = layout(f)
+    if (r.length === 1) {
+      nameFont = f
+      rows = r
+      break
+    }
+  }
+  rows ??= layout(nameFont)
+  const rowH = STRIP_TILE + 8 + nameFont + 14
+  if (!draw) return rows.length * rowH
+  ctx.save()
+  ctx.textBaseline = 'alphabetic'
+  rows.forEach((row, ri) => {
+    let lx = x0
+    const ty = y0 + ri * rowH
+    for (const tok of row) {
+      if (tok.kind === 'label') {
+        ctx.fillStyle = DIM
+        ctx.font = `700 ${Math.round(nameFont * 0.92)}px ${TYPE}`
+        ctx.textAlign = 'left'
+        ctx.fillText(tok.text, lx, ty + STRIP_TILE / 2 + nameFont * 0.35)
+      } else {
+        const cx = lx + (tok.w - STRIP_ITEM_GAP) / 2
+        drawLegendTile(ctx, tok.item!.type, cx - STRIP_TILE / 2, ty, STRIP_TILE, tok.item!.status === 'occupiable')
+        ctx.fillStyle = INK
+        ctx.font = `${nameFont}px ${TYPE}`
+        ctx.textAlign = 'center'
+        ctx.fillText(tok.text, cx, ty + STRIP_TILE + 8 + nameFont * 0.82)
+      }
+      lx += tok.w
+    }
+  })
+  ctx.textAlign = 'left'
   ctx.restore()
-  return rows * rowH
+  return rows.length * rowH
 }
 
 // Skizzen-Palette: Graustufen auf Papier — dunkel = nicht begehbar (Dirks Vorgabe).
@@ -407,33 +491,287 @@ export function drawSketch(ctx: CanvasRenderingContext2D, puzzle: Puzzle, x: num
   ctx.restore()
 }
 
-/** Das »Der Mörder ist …«-Feld zum Selbst-Eintragen: helle Karte mit Schreiblinie. */
-export function drawMurderField(
+/** Der helle Zettel-Grund der Skizzen- und Mörder-Zettel (heller als das Papier). */
+const SLIP_BG = '#fdfaf0'
+
+/** Ziffern-Schriftgrad der Zeilen-/Spaltennummern (skaliert mit der Zelle). */
+function boardLabelFont(cell: number): number {
+  return Math.max(16, Math.min(26, Math.round(cell * 0.22)))
+}
+
+/** Abstand der Ziffern vom Brettrand: Fenster/Türen sitzen MITTIG auf der Wand
+ *  und ragen bis zu ~0,10·Zelle + Strich darüber hinaus (sideRect in
+ *  boardRender) — 0,14·Zelle + 8 px räumt das bei JEDER Zellgröße frei
+ *  (Dirk, 18.08.2026: Fenster verdeckten die Nummern). */
+function boardLabelGap(cell: number): number {
+  return Math.round(cell * 0.14) + 8
+}
+
+/** Platz, den die Ziffernleiste links + oben braucht — aus der (geschätzten)
+ *  Zellgröße berechnet: Aufrufer schätzen die Zelle erst OHNE Leiste, holen
+ *  hiermit die Reserve und rechnen dann final (die echte Zelle ist ≤ der
+ *  Schätzung, die Reserve reicht also immer). IMMER, für alle Brettgrößen. */
+export function boardLabelReserve(cell: number): number {
+  return boardLabelGap(cell) + boardLabelFont(cell) + 4
+}
+
+/** Die Ziffernleiste selbst: Spaltennummern über, Zeilennummern links vom Brett —
+ *  gedimmte Typewriter-Ziffern, Abstand räumt den Fenster-/Tür-Überhang frei.
+ *  Geteilt mit make-book. */
+export function drawBoardLabels(
   ctx: CanvasRenderingContext2D,
-  t: (k: string) => string,
+  W: number,
+  H: number,
   x: number,
   y: number,
-  w: number,
-  h: number,
+  cell: number,
 ): void {
+  const font = boardLabelFont(cell)
+  const gap = boardLabelGap(cell)
   ctx.save()
-  ctx.fillStyle = 'rgba(255, 255, 255, 0.55)'
-  ctx.strokeStyle = LINE
+  ctx.fillStyle = DIM
+  ctx.font = `${font}px ${TYPE}`
+  ctx.textAlign = 'center'
+  ctx.textBaseline = 'alphabetic'
+  for (let c = 0; c < W; c++) ctx.fillText(String(c + 1), x + c * cell + cell / 2, y - gap)
+  ctx.textAlign = 'right'
+  ctx.textBaseline = 'middle'
+  for (let r = 0; r < H; r++) ctx.fillText(String(r + 1), x - gap, y + r * cell + cell / 2 + 1)
+  ctx.restore()
+}
+
+/** Zettel-Rand der Skizze — skaliert MIT der Zelle: Er trägt die Zeilen-/
+ *  Spaltennummern, und die dicken Skizzen-Wände (lineWidth ≈ 0,1·Zelle, mittig
+ *  auf der Kante) ragen ~0,05·Zelle über die Skizzenfläche hinaus. Feste 34 px
+ *  ließen bei 4×4 (Riesenzellen) die Ziffern in die Wand rutschen
+ *  (Dirks Screenshot, 18.08.2026). */
+export function sketchSlipPad(cell: number): number {
+  return Math.max(36, Math.round(cell * 0.3))
+}
+
+/** Reserve, die Aufrufer um die reine Skizzenfläche einplanen (Rand + Schatten) —
+ *  aus der GESCHÄTZTEN Skizzenzelle berechnen (Schätzung ≥ final ⇒ reicht immer). */
+export function sketchSlipReserve(cell: number): number {
+  return sketchSlipPad(cell) + 14
+}
+
+/** Die SW-Skizze auf ihrem eigenen Zettel (weicher Schatten) — „als ob sie auf
+ *  einen Zettel gezeichnet wurde", nicht aufs Blatt geklatscht. BEWUSST GERADE:
+ *  In die Zellen wird geschrieben, gerade schreibt sich das besser — die leichte
+ *  Drehung von früher wurde auf Dirks Wunsch entfernt (18.08.2026; der
+ *  Mörder-Zettel bleibt schräg). (x,y) bleibt die SKIZZEN-Ecke wie `drawSketch`. */
+export function drawSketchSlip(
+  ctx: CanvasRenderingContext2D,
+  puzzle: Puzzle,
+  x: number,
+  y: number,
+  cell: number,
+): void {
+  const sw = cell * puzzle.board.width
+  const sh = cell * puzzle.board.height
+  const pad = sketchSlipPad(cell)
+  const sx = x - pad
+  const sy = y - pad
+  const w = sw + 2 * pad
+  const h = sh + 2 * pad
+  ctx.save()
+  ctx.save()
+  ctx.shadowColor = 'rgba(46, 41, 54, 0.3)'
+  ctx.shadowBlur = 20
+  ctx.shadowOffsetX = 5
+  ctx.shadowOffsetY = 10
+  ctx.fillStyle = SLIP_BG
+  ctx.beginPath()
+  ctx.roundRect(sx, sy, w, h, 6)
+  ctx.fill()
+  ctx.restore()
+  ctx.strokeStyle = 'rgba(46, 41, 54, 0.1)'
   ctx.lineWidth = 2
   ctx.beginPath()
-  ctx.roundRect(x, y, w, h, 10)
-  ctx.fill()
+  ctx.roundRect(sx, sy, w, h, 6)
   ctx.stroke()
-  ctx.fillStyle = TEXT
-  ctx.font = `30px ${TYPE}`
+  drawSketch(ctx, puzzle, x, y, cell)
+  // Zeilen-/Spaltennummern IM Zettel-Rand (immer) — die Lösefläche ist der Ort,
+  // an dem gezählt wird; der Rand existiert schon, es kostet also keinen Platz.
+  // Abstand räumt die dicke Skizzen-Wand frei (ragt ~0,05·Zelle über die Kante).
+  const gap = Math.round(cell * 0.05) + 8
+  const font = Math.max(14, Math.min(26, Math.round(cell * 0.26)))
+  ctx.fillStyle = DIM
+  ctx.font = `${font}px ${TYPE}`
+  ctx.textAlign = 'center'
+  ctx.textBaseline = 'alphabetic'
+  for (let c = 0; c < puzzle.board.width; c++) {
+    ctx.fillText(String(c + 1), x + c * cell + cell / 2, y - gap)
+  }
+  ctx.textAlign = 'right'
+  ctx.textBaseline = 'middle'
+  for (let r = 0; r < puzzle.board.height; r++) {
+    ctx.fillText(String(r + 1), x - gap, y + r * cell + cell / 2 + 1)
+  }
+  ctx.restore()
+}
+
+/** Der »Der Mörder ist …«-Akten-Zettel: schräg mit Schatten, Krimson-Doppelrahmen
+ *  in der Stempel-Sprache des Bogens, Büroklammer über der Kante, Tinten-
+ *  Fingerabdruck, große gestrichelte Schreiblinie. (cx,cy) = Zettel-MITTE. */
+export function drawMurderSlip(
+  ctx: CanvasRenderingContext2D,
+  label: string,
+  cx: number,
+  cy: number,
+  w: number,
+  h: number,
+  angleDeg = -2.5,
+): void {
+  ctx.save()
+  ctx.translate(cx, cy)
+  ctx.rotate((angleDeg * Math.PI) / 180)
+
+  ctx.save()
+  ctx.shadowColor = 'rgba(46, 41, 54, 0.35)'
+  ctx.shadowBlur = 22
+  ctx.shadowOffsetX = 6
+  ctx.shadowOffsetY = 12
+  ctx.fillStyle = SLIP_BG
+  ctx.beginPath()
+  ctx.roundRect(-w / 2, -h / 2, w, h, 6)
+  ctx.fill()
+  ctx.restore()
+
+  ctx.strokeStyle = CRIMSON
+  ctx.globalAlpha = 0.9
+  ctx.lineWidth = 5
+  ctx.beginPath()
+  ctx.roundRect(-w / 2 + 8, -h / 2 + 8, w - 16, h - 16, 6)
+  ctx.stroke()
+  ctx.lineWidth = 2
+  ctx.beginPath()
+  ctx.roundRect(-w / 2 + 17, -h / 2 + 17, w - 34, h - 34, 4)
+  ctx.stroke()
+  ctx.globalAlpha = 1
+
+  // Kopfzeile in Typewriter-Großbuchstaben, rechts neben der Büroklammer.
+  ctx.fillStyle = CRIMSON
+  ctx.font = `34px ${TYPE}`
   ctx.textAlign = 'left'
   ctx.textBaseline = 'alphabetic'
-  ctx.fillText(t('game.pdfMurderer'), x + 26, y + 54)
-  ctx.strokeStyle = SKETCH_OUTLINE
+  ctx.fillText(label.toUpperCase(), -w / 2 + 130, -h / 2 + 68)
+
+  // Große Schreiblinie — endet vor dem Fingerabdruck.
+  ctx.strokeStyle = INK
+  ctx.lineWidth = 3
+  ctx.setLineDash([16, 12])
   ctx.beginPath()
-  ctx.moveTo(x + 26, y + h - 36)
-  ctx.lineTo(x + w - 26, y + h - 36)
+  ctx.moveTo(-w / 2 + 40, h / 2 - 48)
+  ctx.lineTo(w / 2 - 200, h / 2 - 48)
   ctx.stroke()
+  ctx.setLineDash([])
+
+  // Tinten-Fingerabdruck unten rechts (feste Bogen-Lücken, keine Zufallsquelle).
+  ctx.save()
+  ctx.translate(w / 2 - 92, h / 2 - 84)
+  ctx.rotate(-0.35)
+  ctx.strokeStyle = CRIMSON
+  ctx.globalAlpha = 0.32
+  ctx.lineWidth = 3.2
+  ctx.lineCap = 'round'
+  const gaps = [
+    [0.4, 1.1], [2.2, 2.9], [4.1, 4.7], [1.0, 1.7], [3.3, 3.9], [5.2, 5.8],
+    [0.2, 0.8], [2.6, 3.2], [4.5, 5.1], [1.4, 2.0], [3.7, 4.3],
+  ]
+  for (let i = 0; i < 11; i++) {
+    const r = 9 + i * 6.2
+    const [g0, g1] = gaps[i]
+    ctx.beginPath()
+    ctx.ellipse(0, 0, r, r * 0.76, 0.2 + i * 0.06, g1, g0 + Math.PI * 2)
+    ctx.stroke()
+  }
+  ctx.restore()
+
+  // Büroklammer oben links — klassische Trombone-Form, hängt über die Zettelkante.
+  ctx.save()
+  ctx.translate(-w / 2 + 70, -h / 2 + 14)
+  ctx.rotate(0.12)
+  ctx.strokeStyle = '#8b8494'
+  ctx.lineWidth = 6.5
+  ctx.lineCap = 'round'
+  ctx.lineJoin = 'round'
+  ctx.beginPath()
+  ctx.moveTo(-16, -36)
+  ctx.lineTo(-16, 46)
+  ctx.arc(0, 46, 16, Math.PI, 0, true)
+  ctx.lineTo(16, -26)
+  ctx.arc(0, -26, 16, 0, Math.PI, true)
+  ctx.lineTo(-8, 30)
+  ctx.arc(0, 30, 8, Math.PI, 0, true)
+  ctx.lineTo(8, -14)
+  ctx.stroke()
+  ctx.restore()
+
+  ctx.restore()
+}
+
+/** Kompassrose in Linien-Art (Druck-Palette): Kreis mit 45°-Zwischenstrichen,
+ *  Nadel mit Krimson-Nordspitze, lokalisierte Himmelsrichtungs-Buchstaben
+ *  (legend.compassN/E/S/W — de N/O/S/W, en N/E/S/W, ru С/В/Ю/З …). Sitzt im
+ *  freien Raum ÜBER dem Mörder-Zettel: „südlich von …" braucht ein sichtbares
+ *  Nord (Dirk, 18.08.2026). Buchstaben ragen ~0,45·r über den Kreis hinaus. */
+export function drawCompass(
+  ctx: CanvasRenderingContext2D,
+  t: (k: string) => string,
+  cx: number,
+  cy: number,
+  r: number,
+): void {
+  ctx.save()
+  ctx.strokeStyle = INK
+  ctx.lineWidth = Math.max(2.5, r * 0.045)
+  ctx.beginPath()
+  ctx.arc(cx, cy, r, 0, Math.PI * 2)
+  ctx.stroke()
+  ctx.lineWidth = Math.max(1.5, r * 0.03)
+  for (let i = 0; i < 4; i++) {
+    const a = Math.PI / 4 + (i * Math.PI) / 2
+    ctx.beginPath()
+    ctx.moveTo(cx + Math.cos(a) * r * 0.8, cy + Math.sin(a) * r * 0.8)
+    ctx.lineTo(cx + Math.cos(a) * r * 0.92, cy + Math.sin(a) * r * 0.92)
+    ctx.stroke()
+  }
+  // Nadel: Nordspitze gefüllt in Krimson, Südspitze nur Umriss, Querstrich O–W.
+  const nLen = r * 0.72
+  const nW = r * 0.16
+  ctx.beginPath()
+  ctx.moveTo(cx, cy - nLen)
+  ctx.lineTo(cx + nW, cy)
+  ctx.lineTo(cx - nW, cy)
+  ctx.closePath()
+  ctx.fillStyle = CRIMSON
+  ctx.fill()
+  ctx.beginPath()
+  ctx.moveTo(cx, cy + nLen)
+  ctx.lineTo(cx + nW, cy)
+  ctx.lineTo(cx - nW, cy)
+  ctx.closePath()
+  ctx.stroke()
+  ctx.beginPath()
+  ctx.moveTo(cx - r * 0.55, cy)
+  ctx.lineTo(cx + r * 0.55, cy)
+  ctx.stroke()
+  ctx.beginPath()
+  ctx.arc(cx, cy, Math.max(3, r * 0.06), 0, Math.PI * 2)
+  ctx.fillStyle = INK
+  ctx.fill()
+  const lf = Math.max(18, Math.round(r * 0.42))
+  ctx.font = `${lf}px ${TYPE}`
+  ctx.textAlign = 'center'
+  ctx.textBaseline = 'middle'
+  const off = r + lf * 0.75
+  ctx.fillStyle = CRIMSON
+  ctx.fillText(t('legend.compassN'), cx, cy - off)
+  ctx.fillStyle = DIM
+  ctx.fillText(t('legend.compassE'), cx + off, cy)
+  ctx.fillText(t('legend.compassS'), cx, cy + off)
+  ctx.fillText(t('legend.compassW'), cx - off, cy)
   ctx.restore()
 }
 
@@ -547,11 +885,75 @@ export interface PersonCard {
   gender?: 'm' | 'f'
   /** Sichtbare Merkmale für die Chip-Zeile hinter dem Namen (wie AttrIcons). */
   traits?: TraitKey[]
+  /** Ausprägungs-Chips als TEXT („Blond") — nur gesetzt, wenn ein Hinweis des
+   *  Levels die Merkmals-Art nennt (`valueTraitLabels`); fehlt = kein Chip. */
+  valueTraits?: string[]
 }
 
-/** Eine Dossier-Karte: Hairline-Kasten mit Spielfarben-Falz, Geschlechts-Hauch,
- *  Avatar bzw. ☠-Marke des Opfers, Name + Merkmal-Chips, Hinweistext — geteilt
- *  zwischen A4-Druckbogen und Buch-Skript (scripts/make-book.ts). */
+/** Ein Chip der Namenszeile mit fertiger Breite (bei gegebenem Schrumpf-Faktor). */
+interface CardChip {
+  kind: 'gender' | 'trait' | 'value'
+  pw: number
+  trait?: TraitKey
+  text?: string
+}
+
+/** Alle Chips einer Karte beim Schrumpf-Faktor `scale` vermessen. */
+function measureChips(
+  ctx: CanvasRenderingContext2D,
+  card: PersonCard,
+  fontSize: number,
+  scale: number,
+): { chips: CardChip[]; total: number; chipH: number; gap: number } {
+  const chipH = Math.round(fontSize * 1.08 * scale)
+  const gap = Math.max(4, Math.round(8 * scale))
+  const chips: CardChip[] = []
+  if (card.gender) {
+    const text = card.gender === 'm' ? '♂' : '♀'
+    ctx.font = `${Math.round(fontSize * 0.8 * scale)}px ${TYPE}`
+    chips.push({ kind: 'gender', text, pw: ctx.measureText(text).width + chipH * 0.7 })
+  }
+  for (const trait of card.traits ?? []) chips.push({ kind: 'trait', trait, pw: chipH * 1.35 })
+  for (const text of card.valueTraits ?? []) {
+    ctx.font = `${Math.round(fontSize * 0.72 * scale)}px ${TYPE}`
+    chips.push({ kind: 'value', text, pw: ctx.measureText(text).width + chipH * 0.8 })
+  }
+  const total = chips.reduce((sum, c) => sum + c.pw, 0) + Math.max(0, chips.length - 1) * gap
+  return { chips, total, chipH, gap }
+}
+
+/** Unter diesen Faktor dürfen die Chips nicht schrumpfen — die Fit-Schleifen
+ *  verwerfen solche Schriftgrade und probieren den nächstkleineren. */
+export const MIN_CHIP_SCALE = 0.7
+
+/** Der Schrumpf-Faktor, mit dem die Chip-Zeile hinter dem Namen in EINE Zeile
+ *  passt (1 = volle Größe; KEIN Umbruch — Dirks Vorgabe, 18.08.2026). Bogen- und
+ *  Buch-Fit prüfen damit jede Karte, drawPersonCard rechnet identisch. */
+export function chipRowScale(
+  ctx: CanvasRenderingContext2D,
+  card: PersonCard,
+  w: number,
+  o: { fontSize: number; pad: number; avatar: number },
+): number {
+  ctx.font = `700 ${Math.round(o.fontSize * 1.15)}px ${DISPLAY}`
+  const nameW = ctx.measureText(card.name).width
+  const avail = w - o.pad - (o.pad + 4 + o.avatar + 16) - nameW - 14
+  let s = 1
+  let m = measureChips(ctx, card, o.fontSize, s)
+  for (let i = 0; i < 2 && m.total > avail; i++) {
+    s = Math.max(0.4, (avail / m.total) * s * 0.99)
+    m = measureChips(ctx, card, o.fontSize, s)
+  }
+  return m.total <= avail ? s : 0.39
+}
+
+/** Eine Dossier-Karte: Rahmen KOMPLETT in der Spielfarbe der Person (Dirks Wahl
+ *  18.08.2026 — ersetzt Hairline + Farb-Falz links; so unterscheiden sich die
+ *  Karten auf einen Blick), Geschlechts-Hauch, Avatar bzw. ☠-Marke des Opfers,
+ *  Name + Merkmal-Chips, Hinweistext — geteilt zwischen A4-Druckbogen und
+ *  Buch-Skript (scripts/make-book.ts). Inhalt IMMER oben verankert — vertikales
+ *  Zentrieren in gestreckten Karten wurde probiert und verworfen (mal mittig,
+ *  mal oben wirkt unruhig). */
 export function drawPersonCard(
   ctx: CanvasRenderingContext2D,
   card: PersonCard,
@@ -567,8 +969,6 @@ export function drawPersonCard(
   // HAUCH über der hellen Karte (α 0.35, Dirks Feedback: voll deckend lenkt
   // vom Text ab).
   ctx.fillStyle = CARD_BG
-  ctx.strokeStyle = LINE
-  ctx.lineWidth = 2
   ctx.beginPath()
   ctx.roundRect(x, cy, w, h, 10)
   ctx.fill()
@@ -582,11 +982,11 @@ export function drawPersonCard(
     ctx.fill()
     ctx.restore()
   }
-  ctx.stroke()
-  ctx.fillStyle = card.accent
+  ctx.strokeStyle = card.accent
+  ctx.lineWidth = 3.5
   ctx.beginPath()
-  ctx.roundRect(x, cy, 9, h, [10, 0, 0, 10])
-  ctx.fill()
+  ctx.roundRect(x, cy, w, h, 10)
+  ctx.stroke()
   // Avatar (Spiel-SVG) oder ☠-Marke des Opfers.
   const ax = x + pad + 4
   const ay = cy + pad
@@ -603,7 +1003,10 @@ export function drawPersonCard(
     ctx.font = `${Math.round(avatar * 0.52)}px ${DISPLAY}`
     ctx.fillText('☠', ax + avatar / 2, ay + avatar / 2 + avatar * 0.03)
   }
-  // Name + Merkmal-Chips (♂/♀, Bart, Brille, Glatze — wie AttrIcons im Spiel).
+  // Name + Merkmal-Chips (♂/♀, Bart, Brille, Glatze, Wert-Texte — wie AttrIcons).
+  // Die Zeile bleibt IMMER einzeilig (Dirks Vorgabe, 18.08.2026): passt sie nicht,
+  // schrumpfen die CHIPS (nie der Name), und die Fit-Schleifen haben Schriftgrade
+  // mit Faktor < MIN_CHIP_SCALE vorher verworfen — ein Chip ragt NIE über den Rand.
   const tx = ax + avatar + 16
   ctx.textAlign = 'left'
   ctx.textBaseline = 'alphabetic'
@@ -611,37 +1014,42 @@ export function drawPersonCard(
   ctx.font = `700 ${Math.round(fontSize * 1.15)}px ${DISPLAY}`
   const nameBase = cy + pad + Math.round(fontSize * 1.05)
   ctx.fillText(card.name, tx, nameBase)
-  let chipX = tx + ctx.measureText(card.name).width + 14
-  const chipH = Math.round(fontSize * 1.08)
-  const chipTop = nameBase - chipH + Math.round(fontSize * 0.14)
-  const pill = (pw: number): void => {
+  const nameW = ctx.measureText(card.name).width
+  const availChips = x + w - pad - (tx + nameW + 14)
+  let s = 1
+  let m = measureChips(ctx, card, fontSize, s)
+  for (let i = 0; i < 2 && m.total > availChips; i++) {
+    s = Math.max(0.4, (availChips / m.total) * s * 0.99)
+    m = measureChips(ctx, card, fontSize, s)
+  }
+  const { chips, chipH, gap } = m
+  const chipTop = Math.round(nameBase - fontSize * 0.4 - chipH / 2)
+  let chipX = tx + nameW + 14
+  for (const chip of chips) {
+    if (chipX + chip.pw > x + w - pad + 0.5) break // Notbremse: nie über den Rand
     ctx.fillStyle = 'rgba(42, 35, 23, 0.1)'
     ctx.strokeStyle = 'rgba(42, 35, 23, 0.22)'
     ctx.lineWidth = 1.5
     ctx.beginPath()
-    ctx.roundRect(chipX, chipTop, pw, chipH, chipH / 2)
+    ctx.roundRect(chipX, chipTop, chip.pw, chipH, chipH / 2)
     ctx.fill()
     ctx.stroke()
-  }
-  if (card.gender) {
-    const glyph = card.gender === 'm' ? '♂' : '♀'
-    ctx.font = `${Math.round(fontSize * 0.8)}px ${TYPE}`
-    const pw = ctx.measureText(glyph).width + chipH * 0.7
-    pill(pw)
-    ctx.fillStyle = INK
-    ctx.textAlign = 'center'
-    ctx.textBaseline = 'middle'
-    ctx.fillText(glyph, chipX + pw / 2, chipTop + chipH * 0.56)
-    ctx.textAlign = 'left'
-    ctx.textBaseline = 'alphabetic'
-    chipX += pw + 8
-  }
-  for (const trait of card.traits ?? []) {
-    const pw = chipH * 1.35
-    pill(pw)
-    const icon = chipH * 0.74
-    ctx.drawImage(traitImgs.get(trait)!, chipX + (pw - icon) / 2, chipTop + (chipH - icon) / 2, icon, icon)
-    chipX += pw + 8
+    if (chip.kind === 'trait') {
+      const icon = chipH * 0.74
+      ctx.drawImage(traitImgs.get(chip.trait!)!, chipX + (chip.pw - icon) / 2, chipTop + (chipH - icon) / 2, icon, icon)
+    } else {
+      ctx.fillStyle = INK
+      ctx.textAlign = 'center'
+      ctx.textBaseline = 'middle'
+      ctx.font =
+        chip.kind === 'gender'
+          ? `${Math.round(fontSize * 0.8 * s)}px ${TYPE}`
+          : `${Math.round(fontSize * 0.72 * s)}px ${TYPE}`
+      ctx.fillText(chip.text!, chipX + chip.pw / 2, chipTop + chipH * (chip.kind === 'gender' ? 0.56 : 0.58))
+      ctx.textAlign = 'left'
+      ctx.textBaseline = 'alphabetic'
+    }
+    chipX += chip.pw + gap
   }
   ctx.fillStyle = TEXT
   ctx.font = `${fontSize}px ${TYPE}`
@@ -650,8 +1058,78 @@ export function drawPersonCard(
   })
 }
 
-/** Baut den fertigen Druckbogen als Canvas (300 dpi, A4 quer). */
-async function renderSheet(json: LevelJson, i18nInst: I18n, title: string): Promise<HTMLCanvasElement> {
+/** Kompakter Bogen-Kopf NUR über der linken Spalte: eingepasster Titel, Meta-Zeile,
+ *  kleiner gedrehter Doppelrand-Stempel rechts, gestrichelte Trennlinie. Liefert
+ *  die Oberkante des Karten-Bereichs. (Blatt 2 behält den breiten `paintHead` —
+ *  dort gibt es keine volle rechte Spalte zu schützen.) */
+function paintSheetHead(
+  ctx: CanvasRenderingContext2D,
+  title: string,
+  metaLine: string,
+  stampText: string,
+  x: number,
+  w: number,
+): number {
+  const stamp = stampText.toUpperCase()
+  ctx.font = `28px ${TYPE}`
+  const stampW = ctx.measureText(stamp).width + 56
+  ctx.textAlign = 'left'
+  ctx.textBaseline = 'alphabetic'
+  let titleSize = 64
+  ctx.font = `700 ${titleSize}px ${DISPLAY}`
+  while (titleSize > 36 && ctx.measureText(title).width > w - stampW - 60) {
+    titleSize -= 4
+    ctx.font = `700 ${titleSize}px ${DISPLAY}`
+  }
+  const titleBase = MARGIN + 56
+  ctx.fillStyle = INK
+  ctx.fillText(title, x, titleBase)
+  ctx.fillStyle = DIM
+  ctx.font = `28px ${TYPE}`
+  ctx.fillText(metaLine, x, titleBase + 44)
+
+  ctx.save()
+  ctx.translate(x + w - stampW / 2 - 8, MARGIN + 44)
+  ctx.rotate((4 * Math.PI) / 180)
+  ctx.globalAlpha = 0.75
+  ctx.strokeStyle = CRIMSON
+  ctx.lineWidth = 3.5
+  ctx.beginPath()
+  ctx.roundRect(-stampW / 2, -34, stampW, 68, 12)
+  ctx.stroke()
+  ctx.lineWidth = 2
+  ctx.beginPath()
+  ctx.roundRect(-stampW / 2 + 8, -26, stampW - 16, 52, 8)
+  ctx.stroke()
+  ctx.fillStyle = CRIMSON
+  ctx.font = `28px ${TYPE}`
+  ctx.textAlign = 'center'
+  ctx.textBaseline = 'middle'
+  ctx.fillText(stamp, 0, 2)
+  ctx.restore()
+  ctx.textAlign = 'left'
+  ctx.textBaseline = 'alphabetic'
+
+  const divY = titleBase + 70
+  ctx.strokeStyle = LINE
+  ctx.lineWidth = 2
+  ctx.setLineDash([10, 12])
+  ctx.beginPath()
+  ctx.moveTo(x, divY)
+  ctx.lineTo(x + w, divY)
+  ctx.stroke()
+  ctx.setLineDash([])
+  return divY + 34
+}
+
+/** Baut den fertigen Druckbogen als Canvas (300 dpi, A4 quer). Exportiert für
+ *  headless Werkzeuge (Vorschau-/Probe-Renderings, Muster wie make-book.ts). */
+export async function renderSheet(
+  json: LevelJson,
+  i18nInst: I18n,
+  title: string,
+  opts: { legend?: boolean } = {},
+): Promise<HTMLCanvasElement> {
   const t = (key: string, params?: Record<string, unknown>): string => i18nInst.t(key, params) as string
   const lang = i18nInst.resolvedLanguage ?? i18nInst.language
   const puzzle = loadLevel(json)
@@ -662,7 +1140,9 @@ async function renderSheet(json: LevelJson, i18nInst: I18n, title: string): Prom
   await new Promise<void>((resolve) => onArtReady(resolve))
 
   // Personen-Karten: Verdächtige in Spielreihenfolge, das Opfer als letzte Karte
-  // (wie im CluePanel). Avatare über die unveränderte Spiel-Zeichnung.
+  // (wie im CluePanel). Avatare über die unveränderte Spiel-Zeichnung; genannte
+  // Merkmals-Ausprägungen als Text-Chips (das Opfer nie — verdeckter Zufall).
+  const traitKinds = referencedTraitKinds(puzzle)
   const cards: PersonCard[] = await Promise.all(
     puzzle.suspects.map(async (s, i) => ({
       name: s.name,
@@ -671,6 +1151,7 @@ async function renderSheet(json: LevelJson, i18nInst: I18n, title: string): Prom
       img: await loadImage(avatarDataUri(s.attributes, suspectColor(i), s.id)),
       gender: s.attributes.gender === 'm' ? ('m' as const) : s.attributes.gender === 'f' ? ('f' as const) : undefined,
       traits: (['beard', 'glasses', 'bald'] as const).filter((k) => s.attributes[k] === true),
+      valueTraits: valueTraitLabels(s.attributes, traitKinds, t),
     })),
   )
   const victimGender: 'm' | 'f' = puzzle.victim.attributes.gender === 'f' ? 'f' : 'm'
@@ -696,69 +1177,30 @@ async function renderSheet(json: LevelJson, i18nInst: I18n, title: string): Prom
   ctx.fillRect(0, 0, PAGE_W, PAGE_H)
   const innerW = PAGE_W - 2 * MARGIN
 
-  // ---------------------------------- Kopf ----------------------------------
-  const diff = t(`difficulty.${json.difficulty ?? 'medium'}`)
-  const author = (json.author ?? '').trim()
-  const metaLine = `${puzzle.board.width}×${puzzle.board.height} · ${diff}${author ? ` · ${t('game.author', { name: author })}` : ''}`
-  const contentTop = paintHead(ctx, title, metaLine, t('game.pdfStamp'))
-
-  // ---------------------------------- Fuß ----------------------------------
-  // Die zwei Grundregeln links, Absender rechts — beides in der Typewriter-Type.
-  ctx.textAlign = 'left'
-  ctx.textBaseline = 'alphabetic'
-  ctx.font = `27px ${TYPE}`
-  const ruleMaxW = innerW * 0.72
-  const ruleLines = [
-    ...wrapText(ctx, `① ${t('rule.oneEachLine')}`, ruleMaxW),
-    ...wrapText(ctx, `② ${t('rule.aloneWithVictim')}`, ruleMaxW),
-  ]
-  const footLineH = 36
-  const footTop = PAGE_H - MARGIN - ruleLines.length * footLineH
-  ctx.strokeStyle = LINE
-  ctx.setLineDash([10, 12])
-  ctx.beginPath()
-  ctx.moveTo(MARGIN, footTop - 22)
-  ctx.lineTo(PAGE_W - MARGIN, footTop - 22)
-  ctx.stroke()
-  ctx.setLineDash([])
-  ctx.fillStyle = DIM
-  ruleLines.forEach((line, i) => ctx.fillText(line, MARGIN, footTop + 28 + i * footLineH))
-  ctx.textAlign = 'right'
-  ctx.fillText('murdoku · apo-games.de', PAGE_W - MARGIN, PAGE_H - MARGIN)
-  const contentBottom = footTop - 50
-  const contentH = contentBottom - contentTop
-
-  // ----------- Rechte Spalte: Brett · Legende · Skizze · Mörder-Feld -----------
+  // ------- Rechte Spalte: VOLLE Seitenhöhe — Brett · Skizzen-Zettel · Mörder-Zettel
+  // Kopf und Fuß gehören nur der linken Spalte (Dirk, 18.08.2026): das Brett und
+  // die Skizze sind der Fokus des Bogens. Brett- und Skizzenzelle teilen sich die
+  // Höhe über EINE Formel (Skizze ≈70 % der Brettzelle — Lösefläche, beschreibbar).
   const W = puzzle.board.width
   const H = puzzle.board.height
-  const rightW = Math.round(innerW * 0.46)
+  const rightW = Math.round(innerW * 0.52)
   const rightX = PAGE_W - MARGIN - rightW
-  const items = legendItems(puzzle, t)
-  // Höhe der Legende vorab messen — sie hängt nur von der Spaltenbreite ab.
-  const legendH = paintLegend(ctx, items, t, rightX, 0, rightW, false)
-  const LEGEND_GAP = 60 // Dirks Feedback: die Legende klebte am Brett
-  const SKETCH_GAP = 48
-  const FIELD_W = 430
-  const FIELD_H = 150
-  const FIELD_GAP = 24
-  // Brett- und Skizzenzellen gemeinsam einpassen. Die Skizze ist die Lösefläche:
-  // ihre Zellen bleiben beschreibbar (≈62 % der Brettzelle, nie unter ~4 mm).
-  let cell = Math.floor(rightW / Math.max(W, H))
-  let sketchCell = 50
-  let fieldBeside = true
-  for (; cell >= 40; cell--) {
-    sketchCell = Math.max(50, Math.round(cell * 0.62))
-    if (sketchCell * W > rightW) continue
-    fieldBeside = rightW - sketchCell * W >= FIELD_W + FIELD_GAP
-    const total =
-      cell * H + LEGEND_GAP + legendH + SKETCH_GAP + sketchCell * H +
-      (fieldBeside ? 0 : FIELD_GAP + FIELD_H)
-    if (total <= contentH) break
-  }
+  const GAP = 48
+  const SKETCH_RATIO = 0.7
+  const SLIP_H = 260
+  const SLIP_GAP = 56
+  const availH0 = PAGE_H - 2 * MARGIN - GAP
+  const cellEst = Math.floor(Math.min(availH0 / (H * (1 + SKETCH_RATIO)), rightW / W))
+  const labels = boardLabelReserve(cellEst)
+  const slipReserve = sketchSlipReserve(Math.round(cellEst * SKETCH_RATIO))
+  const cell = Math.floor(
+    Math.min((availH0 - labels - 2 * slipReserve) / (H * (1 + SKETCH_RATIO)), (rightW - labels) / W),
+  )
+  const sketchCell = Math.round(cell * SKETCH_RATIO)
   const bw = cell * W
   const bh = cell * H
-  const boardX = rightX + Math.round((rightW - bw) / 2)
-  const boardY = contentTop
+  const boardX = rightX + labels + Math.round((rightW - labels - bw) / 2)
+  const boardY = MARGIN + labels
   drawBoard(ctx, {
     puzzle,
     cell,
@@ -771,45 +1213,92 @@ async function renderSheet(json: LevelJson, i18nInst: I18n, title: string): Prom
     highlight: null,
     reveal: null,
   })
-  paintLegend(ctx, items, t, rightX, boardY + bh + LEGEND_GAP, rightW, true)
+  drawBoardLabels(ctx, W, H, boardX, boardY, cell)
 
-  // Skizzen-Brett zum Lösen auf Papier + »Der Mörder ist …« daneben (unten bündig,
-  // wie im Murdle-Buch). Die Gruppe sitzt MITTIG in der Spalte (Dirks Feedback:
-  // nicht links kleben); passt das Feld nicht daneben, rutscht es darunter.
-  const sketchY = boardY + bh + LEGEND_GAP + legendH + SKETCH_GAP
+  // Skizzen-Zettel + Mörder-Zettel nebeneinander, als Gruppe zentriert; der
+  // Mörder-Zettel sitzt unten bündig mit der Skizze (wie im Murdle-Buch).
   const sketchW = sketchCell * W
-  if (fieldBeside) {
-    const groupW = sketchW + FIELD_GAP + FIELD_W
-    const sketchX = rightX + Math.max(0, Math.round((rightW - groupW) / 2))
-    drawSketch(ctx, puzzle, sketchX, sketchY, sketchCell)
-    drawMurderField(ctx, t, sketchX + sketchW + FIELD_GAP, sketchY + sketchCell * H - FIELD_H, FIELD_W, FIELD_H)
-  } else {
-    const sketchX = rightX + Math.max(0, Math.round((rightW - sketchW) / 2))
-    const fw = Math.min(FIELD_W, rightW)
-    drawSketch(ctx, puzzle, sketchX, sketchY, sketchCell)
-    drawMurderField(ctx, t, rightX + Math.round((rightW - fw) / 2), sketchY + sketchCell * H + FIELD_GAP, fw, FIELD_H)
+  const sketchH = sketchCell * H
+  const slipPad = sketchSlipPad(sketchCell)
+  const slipW = Math.min(660, rightW - 2 * slipPad - sketchW - SLIP_GAP)
+  const groupW = 2 * slipPad + sketchW + SLIP_GAP + slipW
+  const sketchX = rightX + slipPad + Math.max(0, Math.round((rightW - groupW) / 2))
+  const sketchY = boardY + bh + GAP + slipReserve
+  drawSketchSlip(ctx, puzzle, sketchX, sketchY, sketchCell)
+  const slipCx = sketchX + sketchW + slipPad + SLIP_GAP + slipW / 2
+  const slipTop = sketchY + sketchH - SLIP_H - 30
+  drawMurderSlip(ctx, t('game.pdfMurderer'), slipCx, slipTop + SLIP_H / 2, slipW, SLIP_H)
+  // Kompass im freien Raum ÜBER dem Zettel — „südlich von …" braucht ein Nord.
+  const compassR = Math.min(84, Math.floor((slipTop - sketchY) / 2) - 46)
+  if (compassR >= 30) drawCompass(ctx, t, slipCx, sketchY + (slipTop - sketchY) / 2, compassR)
+
+  // ------------------------- Linke Spalte: Kopf + Fuß -------------------------
+  const paneX = MARGIN
+  const paneW = rightX - 56 - paneX
+  const diff = t(`difficulty.${json.difficulty ?? 'medium'}`)
+  const author = (json.author ?? '').trim()
+  const metaLine = `${W}×${H} · ${diff}${author ? ` · ${t('game.author', { name: author })}` : ''}`
+  const contentTop = paintSheetHead(ctx, title, metaLine, t('game.pdfStamp'), paneX, paneW)
+
+  // Fuß: die zwei Grundregeln + Absender — nur in der linken Spalte.
+  ctx.textAlign = 'left'
+  ctx.textBaseline = 'alphabetic'
+  ctx.font = `26px ${TYPE}`
+  const ruleLines = [
+    ...wrapText(ctx, `① ${t('rule.oneEachLine')}`, paneW),
+    ...wrapText(ctx, `② ${t('rule.aloneWithVictim')}`, paneW),
+  ]
+  const footLineH = 34
+  const footTop = PAGE_H - MARGIN - ruleLines.length * footLineH - 30
+  ctx.strokeStyle = LINE
+  ctx.lineWidth = 2
+  ctx.setLineDash([10, 12])
+  ctx.beginPath()
+  ctx.moveTo(paneX, footTop - 20)
+  ctx.lineTo(paneX + paneW, footTop - 20)
+  ctx.stroke()
+  ctx.setLineDash([])
+  ctx.fillStyle = DIM
+  ruleLines.forEach((line, i) => ctx.fillText(line, paneX, footTop + 20 + i * footLineH))
+  ctx.textAlign = 'right'
+  ctx.fillText('murdoku · apo-games.de', paneX + paneW, PAGE_H - MARGIN)
+  ctx.textAlign = 'left'
+
+  // Objekt-Legende als Streifen direkt über dem Fuß — nur auf Wunsch (Checkbox
+  // im PdfDialog, Standard AUS). Die Akten-Notizen unten bleiben davon unberührt.
+  let legendTop = footTop - 20
+  if (opts.legend) {
+    const items = legendItems(puzzle, t)
+    const lh = paintLegendStrip(ctx, items, t, paneX, 0, paneW, false)
+    legendTop = footTop - 20 - 24 - lh
+    paintLegendStrip(ctx, items, t, paneX, legendTop, paneW, true)
   }
+  const contentBottom = legendTop - 28
+  const contentH = contentBottom - contentTop - 30
 
   // ------------------------------- Verdächtige -------------------------------
-  const paneX = MARGIN
-  const paneW = rightX - 44 - paneX
   const cols = cards.length > 6 ? 2 : 1
-  const colGap = 22
-  const colW = Math.floor((paneW - (cols - 1) * colGap) / cols)
   const notes = boardNotes(puzzle, renderer, t)
 
-  // Schrift so groß wie möglich, aber ALLES muss in die Inhaltshöhe passen — bei
-  // wenigen Verdächtigen wachsen die Karten und nutzen den freien Platz.
+  // Die LESEgröße ist gedeckelt (Schleifen-Start = Deckel): riesige Schrift wirkt
+  // gequetscht, nicht großzügig. EIN Abstand überall — zwischen den Karten UND
+  // zwischen den Spalten derselbe Wert, Karten individuell hoch, Inhalt immer
+  // oben (Dirks Wahl, 18.08.2026: „einheitlich" — Zeilen-Ausrichtung und
+  // Einheitshöhe wurden probiert und verworfen, das Zentrier-Gehopse der Avatare
+  // wirkte unruhiger als ungleiche Kanten). Der Block startet OBEN — auch das
+  // vertikale Zentrieren flog wieder raus; Rest-Luft bleibt als ruhiger Rand unten.
   interface NoteBox {
     lines: string[]
     h: number
   }
   let fontSize = 42
-  let layout: { cardH: number[]; lineH: number; avatar: number; pad: number; noteBoxes: NoteBox[]; noteH: number } | null = null
+  let layout: { cardH: number[]; colW: number; gap: number; lineH: number; avatar: number; pad: number; noteBoxes: NoteBox[]; noteH: number } | null = null
   for (; fontSize >= 18; fontSize -= 2) {
-    const pad = Math.round(fontSize * 0.6)
+    const pad = Math.round(fontSize * 0.7)
     const avatar = Math.round(fontSize * 3.4)
-    const lineH = Math.round(fontSize * 1.42)
+    const lineH = Math.round(fontSize * 1.5)
+    const gap = Math.round(fontSize * 0.7)
+    const colW = Math.floor((paneW - (cols - 1) * gap) / cols)
     const textW = colW - pad * 2 - avatar - 16
     const cardH = cards.map((card) => {
       ctx.font = `${fontSize}px ${TYPE}`
@@ -817,13 +1306,16 @@ async function renderSheet(json: LevelJson, i18nInst: I18n, title: string): Prom
       const textH = Math.round(fontSize * 1.35) + 8 + lines.length * lineH
       return Math.max(avatar + pad * 2, textH + pad * 2)
     })
+    // Jede Chip-Zeile muss EINZEILIG hinter den Namen passen (Chips schrumpfen
+    // höchstens auf MIN_CHIP_SCALE) — sonst den nächstkleineren Schriftgrad.
+    const chipsOk = cards.every((card) => chipRowScale(ctx, card, colW, { fontSize, pad, avatar }) >= MIN_CHIP_SCALE)
     // Spaltenweise füllen (erst Spalte 1 voll, dann Spalte 2) — höchste Spalte zählt.
     const rows = Math.ceil(cards.length / cols)
     let maxCol = 0
     for (let c0 = 0; c0 < cols; c0++) {
       const colH = cardH
         .slice(c0 * rows, (c0 + 1) * rows)
-        .reduce((sum, h) => sum + h + 16, 0)
+        .reduce((sum, h) => sum + h + gap, 0)
       maxCol = Math.max(maxCol, colH)
     }
     // Jede Akten-Notiz als EIGENE Box (wie die mk-boardclue-Kacheln im Spiel) —
@@ -836,12 +1328,12 @@ async function renderSheet(json: LevelJson, i18nInst: I18n, title: string): Prom
       return { lines, h: Math.max(lines.length * lineH, lens) + notePad * 2 }
     })
     const noteH = notes.length > 0 ? noteBoxes.reduce((sum, b) => sum + b.h + 12, 0) + 8 : 0
-    if (maxCol + noteH <= contentH || fontSize === 18) {
-      layout = { cardH, lineH, avatar, pad, noteBoxes, noteH }
+    if ((maxCol + noteH <= contentH && chipsOk) || fontSize === 18) {
+      layout = { cardH, colW, gap, lineH, avatar, pad, noteBoxes, noteH }
       break
     }
   }
-  const { cardH, lineH, avatar, pad, noteBoxes } = layout!
+  const { cardH, colW, gap, lineH, avatar, pad, noteBoxes } = layout!
   const rows = Math.ceil(cards.length / cols)
 
   // Überschrift »Verdächtige« als kleine Zeile über den Karten.
@@ -856,9 +1348,9 @@ async function renderSheet(json: LevelJson, i18nInst: I18n, title: string): Prom
   cards.forEach((card, i) => {
     const col = Math.floor(i / rows)
     const inCol = i % rows
-    const x = paneX + col * (colW + colGap)
+    const x = paneX + col * (colW + gap)
     let cy = cardsTop
-    for (let k = col * rows; k < i; k++) cy += cardH[k] + 16
+    for (let k = col * rows; k < i; k++) cy += cardH[k] + gap
     const h = cardH[i]
     drawPersonCard(ctx, card, x, cy, colW, h, { fontSize, pad, avatar, lineH, traitImgs })
     if (inCol === rows - 1 || i === cards.length - 1) {
@@ -869,7 +1361,7 @@ async function renderSheet(json: LevelJson, i18nInst: I18n, title: string): Prom
   // Akten-Notizen (Draußen-Legende, Wasser-Regel, globale Hinweise) unter den
   // Karten — jede in ihrer eigenen blau getönten Box mit Lupe, wie im Spiel.
   if (noteBoxes.length > 0) {
-    let ny = noteY + 20
+    let ny = noteY + gap
     noteBoxes.forEach((box) => {
       drawNoteBox(ctx, box, paneX, ny, paneW, { fontSize, lineH })
       ny += box.h + 12
@@ -1244,12 +1736,13 @@ async function renderSolutionSheet(
   const LABEL_H = 38
   const CARD_GAP = 44
   const CARD_H = 230
-  let cell = Math.floor(rightW / Math.max(W, H))
-  while (cell > 40 && LABEL_H + cell * H + CARD_GAP + CARD_H > contentH) cell--
+  const labels = boardLabelReserve(Math.floor(rightW / Math.max(W, H)))
+  let cell = Math.floor((rightW - labels) / Math.max(W, H))
+  while (cell > 40 && LABEL_H + labels + cell * H + CARD_GAP + CARD_H > contentH) cell--
   const bw = cell * W
   const bh = cell * H
-  const boardX = rightX + Math.round((rightW - bw) / 2)
-  const boardY = contentTop + LABEL_H
+  const boardX = rightX + labels + Math.round((rightW - labels - bw) / 2)
+  const boardY = contentTop + LABEL_H + labels
 
   ctx.textAlign = 'left'
   ctx.textBaseline = 'alphabetic'
@@ -1279,6 +1772,7 @@ async function renderSolutionSheet(
     avatars,
     objectBadges: true,
   })
+  drawBoardLabels(ctx, W, H, boardX, boardY, cell)
 
   if (m.suspectId) {
     const room = puzzle.board.rooms.get(m.roomId)
@@ -1421,17 +1915,18 @@ async function deliverPdf(pdf: ArrayBuffer, filename: string): Promise<void> {
 }
 
 /** Baut das PDF und lädt es herunter (Web) bzw. öffnet das Share-Sheet (Android).
- *  `opts.solution` hängt Blatt 2 (die Auflösung) an. Das Zeichnen der Bogen braucht
- *  den DOM (Schriften, Bilder) und bleibt im Hauptthread; alles Teure danach
- *  (PNG-Encoding + jsPDF) läuft im Worker, damit die UI nie einfriert. */
+ *  `opts.solution` hängt Blatt 2 (die Auflösung) an, `opts.legend` setzt die
+ *  Objekt-Legende als Streifen auf Blatt 1 (Standard AUS). Das Zeichnen der Bogen
+ *  braucht den DOM (Schriften, Bilder) und bleibt im Hauptthread; alles Teure
+ *  danach (PNG-Encoding + jsPDF) läuft im Worker, damit die UI nie einfriert. */
 export async function exportLevelPdf(
   json: LevelJson,
   i18nInst: I18n,
   title: string,
-  opts: { solution?: boolean } = {},
+  opts: { solution?: boolean; legend?: boolean } = {},
 ): Promise<void> {
   await nextPaint()
-  const pages = [await renderSheet(json, i18nInst, title)]
+  const pages = [await renderSheet(json, i18nInst, title, { legend: opts.legend })]
   if (opts.solution) {
     await nextPaint()
     const solutionCanvas = await renderSolutionSheet(json, i18nInst, title)

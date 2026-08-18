@@ -597,6 +597,7 @@
     "author": "Um caso de {{name}}",
     "pdfExport": "Guardar o caso como PDF",
     "pdfStamp": "Caso aberto",
+    "pdfLegend": "Com legenda de objetos",
     "pdfMurderer": "O assassino é …",
     "pdfPlain": "Sem resolução",
     "pdfPlainSub": "Só o caso aberto",
@@ -910,6 +911,10 @@
   "legend": {
     "title": "Legenda",
     "occupiable": "transitável",
+    "compassN": "N",
+    "compassE": "E",
+    "compassS": "S",
+    "compassW": "O",
     "blocked": "bloqueado",
     "wall": "na parede",
     "close": "Fechar"
@@ -2175,14 +2180,22 @@
       "ifHere": "Se {{name}} estiver aqui…",
       "thenNot": "…toda a linha e a coluna ficam bloqueadas.",
       "place": "Para {{name}} só resta uma casa. Colocamos {{name}} aí e riscamos toda a linha e a coluna.",
-      "finale": "Para {{name}} resta exatamente uma casa — e {{victim}} fica com a última livre. {{murderer}} esteve a sós com {{victim}}: caso resolvido!",
+      "axisRow": "linha",
+      "axisCol": "coluna",
+      "hiddenVictim": "Segundo as pistas, nenhum suspeito pode estar na {{axis}} {{line}} – mas em cada linha e coluna tem de haver exatamente uma pessoa. Por isso, na {{axis}} {{line}} só pode estar a vítima. Riscamos todas as casas livres sem letras de suspeitos fora da {{axis}} {{line}}: ali não pode estar ninguém.",
+      "hiddenSuspect": "Na {{axis}} {{line}} já só cabe {{name}} – nenhum outro suspeito e também não a vítima. Portanto {{name}} tem de estar na {{axis}} {{line}}: em todo o resto do tabuleiro riscamos {{name}}.",
+      "tut2Pair": "{{a}} e {{b}} só podem estar nas linhas 1 e 2 – em mais lado nenhum. Duas pessoas, duas linhas: essas linhas pertencem-lhes e mais ninguém pode lá estar. Por isso {{c}} desaparece das linhas 1 e 2, e riscam-se todas as casas onde não podem estar nem {{a}} nem {{b}}. A {{c}} resta apenas a casa da linha 4.",
+      "nameJoin": " e ",
+      "finale": "Para {{names}} resta exatamente uma casa — e a vítima fica com a última livre. {{murderer}} esteve a sós com a vítima na divisão {{room}}: caso resolvido!",
+      "finaleSet": "Para {{names}} resta exatamente uma casa a cada um — colocamo-los e ficam todos no lugar. A casa da vítima já era conhecida: {{murderer}} esteve a sós com a vítima na divisão {{room}} — caso resolvido!",
       "part2Head": "O segundo caso",
       "part2Intro": "Uma cena maior, mais suspeitos — mas resolve-se da mesma forma. Vamos percorrer também este caso passo a passo."
     },
     "back": {
       "closed": "Caso encerrado",
       "head": "Resolveste todos os casos?",
-      "body": "Na app {{brand}} esperam-te mais de 140 casos, um novo enigma todos os dias, um editor de níveis e os casos da comunidade — jogável offline, de 4×4 a 12×12.",
+      "body": "Uma cena do crime, uma mão-cheia de suspeitos — e apenas as suas declarações. Combina as pistas, risca casa a casa e descobre quem esteve a sós com a vítima: o assassino. Neste volume: {{count}} casos do fácil ao difícil, uma introdução passo a passo e todas as soluções no final do livro.",
+      "more": "Querem mais casos? Fiquem atentos — há mais volumes já sob investigação.",
       "evidence": "Última prova — até ao próximo caso",
       "credit": "© {{year}} {{name}} — idealizado, construído e composto com muito café."
     }

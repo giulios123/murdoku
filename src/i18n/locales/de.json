@@ -597,6 +597,7 @@
     "author": "Ein Fall von {{name}}",
     "pdfExport": "Fall als PDF sichern",
     "pdfStamp": "Offener Fall",
+    "pdfLegend": "Mit Objekt-Legende",
     "pdfMurderer": "Der Mörder ist …",
     "pdfPlain": "Ohne Auflösung",
     "pdfPlainSub": "Nur der offene Fall",
@@ -987,6 +988,10 @@
   "legend": {
     "title": "Legende",
     "occupiable": "betretbar",
+    "compassN": "N",
+    "compassE": "O",
+    "compassS": "S",
+    "compassW": "W",
     "blocked": "blockiert",
     "wall": "an der Wand",
     "close": "Schließen"
@@ -2236,14 +2241,22 @@
       "ifHere": "Wenn {{name}} hier steht …",
       "thenNot": "… ist die ganze Zeile und Spalte gesperrt.",
       "place": "Für {{name}} bleibt nur noch ein Feld. Wir setzen {{name}} dorthin und streichen die ganze Zeile und Spalte.",
-      "finale": "Für {{name}} bleibt genau ein Feld — und {{victim}} bekommt das letzte freie. {{murderer}} war allein mit {{victim}}: Der Fall ist gelöst!",
+      "axisRow": "Zeile",
+      "axisCol": "Spalte",
+      "hiddenVictim": "In {{axis}} {{line}} kann mit den Hinweisen keine verdächtige Person stehen – aber in jeder Zeile und Spalte muss genau eine Person sein. Dadurch kann in {{axis}} {{line}} nur das Opfer stehen. Alle freien Felder ohne Verdächtigen-Buchstaben außerhalb von {{axis}} {{line}} kreuzen wir aus: Dort kann niemand stehen.",
+      "hiddenSuspect": "In {{axis}} {{line}} passt nur noch {{name}} – kein anderer Verdächtiger und nicht das Opfer. Also muss {{name}} in {{axis}} {{line}} stehen: Überall sonst wird {{name}} gestrichen.",
+      "tut2Pair": "{{a}} und {{b}} können nur noch in Zeile 1 und 2 stehen – nirgendwo sonst. Zwei Personen, zwei Zeilen: Die beiden Zeilen gehören ihnen, niemand anderes kann dort stehen. Deshalb verschwindet {{c}} aus Zeile 1 und 2, und alle Felder, auf die weder {{a}} noch {{b}} können, werden ausgekreuzt. Für {{c}} bleibt nur noch das Feld in Zeile 4.",
+      "nameJoin": " und ",
+      "finale": "Für {{names}} bleibt genau ein Feld — und das Opfer bekommt das letzte freie. {{murderer}} war allein mit ihm im Raum {{room}}: Der Fall ist gelöst!",
+      "finaleSet": "Für {{names}} bleibt jeweils genau ein Feld — wir setzen sie, und damit stehen alle. Das Opfer stand schon fest: {{murderer}} war allein mit ihm im Raum {{room}} — der Fall ist gelöst!",
       "part2Head": "Der zweite Fall",
       "part2Intro": "Ein größerer Tatort, mehr Verdächtige — gelöst wird aber genauso. Gehen wir auch diesen Fall gemeinsam Schritt für Schritt durch."
     },
     "back": {
       "closed": "Akte geschlossen",
       "head": "Alle Fälle gelöst?",
-      "body": "In der {{brand}}-App warten über 140 weitere Fälle, jeden Tag ein neues Rätsel des Tages, ein Level-Editor und die Fälle der Community — offline spielbar, von 4×4 bis 12×12.",
+      "body": "Ein Tatort, eine Handvoll Verdächtige — und nur ihre Aussagen. Wer logisch kombiniert und Feld für Feld ausschließt, findet heraus, wer allein beim Opfer war: der Mörder. In diesem Band: {{count}} Fälle von leicht bis knifflig, ein Einstieg Schritt für Schritt und alle Lösungswege hinten im Buch.",
+      "more": "Ihr wollt mehr Fälle? Dann seid gespannt — weitere Bände sind schon in Ermittlung.",
       "evidence": "Letztes Beweisstück — bis zum nächsten Fall",
       "credit": "© {{year}} {{name}} — erdacht, gebaut und gesetzt mit viel Kaffee."
     }

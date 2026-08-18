@@ -97,6 +97,24 @@ function collect(clue: Clue, into: ClueRefs): void {
 }
 
 /**
+ * Every attribute KEY any clue of this puzzle points at — a suspect's own clues, the global
+ * clues, and the board clues (`CountWithAttrClue` names a trait). Drives the print sheets:
+ * a value trait whose kind is referenced (hair, hairstyle, beardStyle, glassesShape,
+ * glassesColor) is spelled out as TEXT next to the card icons, because "blond" vs "white"
+ * vs "grey" is hard to tell apart on paper. Boolean kinds stay icons.
+ */
+export function referencedTraitKinds(puzzle: Puzzle): Set<string> {
+  const refs: ClueRefs = { traits: [], persons: [] }
+  for (const s of puzzle.suspects) for (const c of s.clues) collect(c, refs)
+  for (const c of puzzle.globalClues) collect(c, refs)
+  const kinds = new Set(refs.traits.map((t) => t.attribute))
+  for (const c of puzzle.boardClues) {
+    if (c instanceof CountWithAttrClue) kinds.add(c.attribute)
+  }
+  return kinds
+}
+
+/**
  * The OTHER suspects a suspect's clues refer to: every (other) suspect sharing a trait the
  * clues mention, plus any named suspect. Excludes the suspect themselves and the victim.
  * Drives the "select a suspect → matching cards pulse" highlight.

@@ -6077,6 +6077,30 @@ button {
   color: var(--brass);
   border-color: var(--brass-dim);
 }
+
+/* Legende-Schalter des PDF-Dialogs über den Export-Zeilen: volle Zeile mit
+   großem Tap-Ziel (mobil!), der mk-switch aus dem Settings-Dialog. */
+.mk-pdfdlg__legend {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.8rem;
+  width: 100%;
+  min-height: 48px;
+  padding: 0.55rem 0.35rem;
+  border-bottom: 1px dashed var(--line-strong);
+  font: inherit;
+  color: var(--bone);
+  text-align: left;
+}
+.mk-pdfdlg__legend:disabled {
+  cursor: default;
+  opacity: 0.55;
+}
 .mk-spinner--row {
   width: 20px;
   height: 20px;

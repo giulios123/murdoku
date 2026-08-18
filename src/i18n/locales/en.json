@@ -597,6 +597,7 @@
     "author": "A case by {{name}}",
     "pdfExport": "Save case as PDF",
     "pdfStamp": "Open case",
+    "pdfLegend": "With object legend",
     "pdfMurderer": "The murderer is …",
     "pdfPlain": "Without solution",
     "pdfPlainSub": "Just the open case",
@@ -833,6 +834,10 @@
   "legend": {
     "title": "Legend",
     "occupiable": "walkable",
+    "compassN": "N",
+    "compassE": "E",
+    "compassS": "S",
+    "compassW": "W",
     "blocked": "blocked",
     "wall": "on the wall",
     "close": "Close"
@@ -2073,14 +2078,22 @@
       "ifHere": "If {{name}} is here …",
       "thenNot": "… the whole row and column are blocked.",
       "place": "Only one cell is left for {{name}}. We place {{name}} there and cross out the whole row and column.",
-      "finale": "Exactly one cell remains for {{name}} — and {{victim}} takes the last free one. {{murderer}} was alone with {{victim}}: case closed!",
+      "axisRow": "row",
+      "axisCol": "column",
+      "hiddenVictim": "According to the clues, no suspect can be in {{axis}} {{line}} – but every row and column must hold exactly one person. So only the victim can be in {{axis}} {{line}}. We cross out every free cell without a suspect letter outside {{axis}} {{line}}: nobody can stand there.",
+      "hiddenSuspect": "In {{axis}} {{line}}, only {{name}} still fits – no other suspect and not the victim. So {{name}} must be in {{axis}} {{line}}: everywhere else, {{name}} is crossed off.",
+      "tut2Pair": "{{a}} and {{b}} can only be in rows 1 and 2 – nowhere else. Two people, two rows: those rows belong to them, and nobody else can stand there. That is why {{c}} disappears from rows 1 and 2, and every cell that neither {{a}} nor {{b}} can use is crossed out. Only the cell in row 4 remains for {{c}}.",
+      "nameJoin": " and ",
+      "finale": "Exactly one cell remains for {{names}} — and the victim takes the last free one. {{murderer}} was alone with the victim in the {{room}}: case closed!",
+      "finaleSet": "Exactly one cell remains for each of {{names}} — we place them, and everyone is set. The victim was already in place: {{murderer}} was alone with the victim in the {{room}} — case closed!",
       "part2Head": "The second case",
       "part2Intro": "A bigger crime scene, more suspects — but it is solved just the same. Let's walk through this case together, step by step."
     },
     "back": {
       "closed": "Case closed",
       "head": "Solved every case?",
-      "body": "The {{brand}} app has over 140 more cases waiting, a new daily mystery every day, a level editor and the community's cases — playable offline, from 4×4 to 12×12.",
+      "body": "A crime scene, a handful of suspects — and nothing but their statements. Combine the clues, rule out cell after cell, and find out who was alone with the victim: the murderer. In this volume: {{count}} cases from easy to tricky, a step-by-step introduction, and every solution path at the back of the book.",
+      "more": "Want more cases? Stay tuned — more volumes are already under investigation.",
       "evidence": "Final exhibit — until the next case",
       "credit": "© {{year}} {{name}} — devised, built and typeset with plenty of coffee."
     }
