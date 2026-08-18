@@ -2,7 +2,7 @@
   "schema": 1,
   "id": "editor-skiungl-ck",
   "title": "Endstation Bergstation",
-  "titles": { "de": "Endstation Bergstation", "en": "Last Stop: Summit Station", "es": "Última parada: estación de cumbre", "pt": "Última Paragem: o Cume", "fr": "Terminus au sommet", "ru": "Конечная: верхняя станция" },
+  "titles": { "de": "Endstation Bergstation", "en": "Last Stop: Summit Station", "es": "Última parada: estación de cumbre", "pt": "Última Paragem: o Cume", "fr": "Terminus au sommet", "ru": "Конечная: верхняя станция" , "it": "La luce del pianerottolo"},
   "size": {
     "width": 8,
     "height": 8

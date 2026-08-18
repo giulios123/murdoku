@@ -2,7 +2,7 @@
   "schema": 1,
   "id": "editor-in-den-eigenen-vier-w-nden",
   "title": "In den eigenen vier Wänden",
-  "titles": { "de": "In den eigenen vier Wänden", "en": "Behind Closed Doors", "es": "A puerta cerrada", "pt": "Entre Quatro Paredes", "fr": "Huis clos", "ru": "За закрытыми дверями" },
+  "titles": { "de": "In den eigenen vier Wänden", "en": "Behind Closed Doors", "es": "A puerta cerrada", "pt": "Entre Quatro Paredes", "fr": "Huis clos", "ru": "За закрытыми дверями" , "it": "Un delitto minuscolo"},
   "size": {
     "width": 7,
     "height": 7

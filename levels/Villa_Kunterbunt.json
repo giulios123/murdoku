@@ -2,7 +2,7 @@
   "schema": 1,
   "id": "editor-villa-kunterbunt",
   "title": "Villa Kunterbunt",
-  "titles": { "de": "Villa Kunterbunt", "en": "The Topsy-Turvy Villa", "es": "La villa patas arriba", "pt": "A Mansão às Avessas", "fr": "La Villa sens dessus dessous", "ru": "Вилла вверх дном" },
+  "titles": { "de": "Villa Kunterbunt", "en": "The Topsy-Turvy Villa", "es": "La villa patas arriba", "pt": "A Mansão às Avessas", "fr": "La Villa sens dessus dessous", "ru": "Вилла вверх дном" , "it": "Il vicolo del silenzio"},
   "author": "Mika Aporius",
   "size": {
     "width": 10,

@@ -2,7 +2,7 @@
   "schema": 1,
   "id": "editor-der-schwere-brettspielmord-teil-3",
   "title": "Spiel auf Leben und Tod III",
-  "titles": { "de": "Spiel auf Leben und Tod III", "en": "A Game of Life and Death III", "es": "Un juego a vida o muerte III", "pt": "Jogo de Vida ou Morte III", "fr": "Un jeu de vie ou de mort III", "ru": "Игра на жизнь и смерть III" },
+  "titles": { "de": "Spiel auf Leben und Tod III", "en": "A Game of Life and Death III", "es": "Un juego a vida o muerte III", "pt": "Jogo de Vida ou Morte III", "fr": "Un jeu de vie ou de mort III", "ru": "Игра на жизнь и смерть III" , "it": "Il castello non dorme"},
   "size": {
     "width": 9,
     "height": 9

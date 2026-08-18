@@ -2,7 +2,7 @@
   "schema": 1,
   "id": "editor-alleine-mit-m-rdern",
   "title": "Geladene Gäste",
-  "titles": { "de": "Geladene Gäste", "en": "The Guest List", "es": "La lista de invitados", "pt": "A Lista de Convidados", "fr": "La Liste des invités", "ru": "Список гостей" },
+  "titles": { "de": "Geladene Gäste", "en": "The Guest List", "es": "La lista de invitados", "pt": "A Lista de Convidados", "fr": "La Liste des invités", "ru": "Список гостей" , "it": "Il silenzio delle tende"},
   "size": {
     "width": 9,
     "height": 9

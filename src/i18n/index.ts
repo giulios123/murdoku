@@ -1,6 +1,7 @@
 import i18n from 'i18next'
 import { initReactI18next } from 'react-i18next'
 import de from './locales/de.json'
+import it from './locales/it.json'
 import en from './locales/en.json'
 import es from './locales/es.json'
 import pt from './locales/pt.json'
@@ -16,7 +17,7 @@ const LANG_KEY = 'murdoku.lang.v1'
  * browser detection all derive from this list — adding a locale is just an entry
  * here plus its JSON in `resources` and a `language.<code>` label in each file.
  */
-export const SUPPORTED_LANGS = ['de', 'en', 'es', 'pt', 'fr', 'ru'] as const
+export const SUPPORTED_LANGS = ['de', 'it', 'en', 'es', 'pt', 'fr', 'ru'] as const
 export type Lang = (typeof SUPPORTED_LANGS)[number]
 
 /**
@@ -27,6 +28,7 @@ export type Lang = (typeof SUPPORTED_LANGS)[number]
  */
 export const LANGUAGE_NAMES: Record<Lang, string> = {
   de: 'Deutsch',
+  it: 'Italiano',
   en: 'English',
   es: 'Español',
   pt: 'Português',
@@ -36,6 +38,7 @@ export const LANGUAGE_NAMES: Record<Lang, string> = {
 
 const resources = {
   de: { translation: de },
+  it: { translation: it },
   en: { translation: en },
   es: { translation: es },
   pt: { translation: pt },

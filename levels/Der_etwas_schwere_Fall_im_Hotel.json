@@ -2,7 +2,7 @@
   "schema": 1,
   "id": "editor-der-etwas-schwere-fall-im-hotel",
   "title": "Bitte nicht stören",
-  "titles": { "de": "Bitte nicht stören", "en": "Do Not Disturb", "es": "No molestar", "pt": "Não Incomodar", "fr": "Ne pas déranger", "ru": "Просьба не беспокоить" },
+  "titles": { "de": "Bitte nicht stören", "en": "Do Not Disturb", "es": "No molestar", "pt": "Não Incomodar", "fr": "Ne pas déranger", "ru": "Просьба не беспокоить" , "it": "La fattoria tace"},
   "size": {
     "width": 9,
     "height": 9

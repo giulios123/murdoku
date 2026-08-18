@@ -2,7 +2,7 @@
   "schema": 1,
   "id": "editor-futter-f-r-die-tiere",
   "title": "Fütterung um fünf",
-  "titles": { "de": "Fütterung um fünf", "en": "Feeding Time at Five", "es": "La última ración", "pt": "A Hora da Ração", "fr": "L'Heure des fauves", "ru": "Кормление в пять" },
+  "titles": { "de": "Fütterung um fünf", "en": "Feeding Time at Five", "es": "La última ración", "pt": "A Hora da Ração", "fr": "L'Heure des fauves", "ru": "Кормление в пять" , "it": "Corsia di notte"},
   "size": {
     "width": 7,
     "height": 7

@@ -2,7 +2,7 @@
   "schema": 1,
   "id": "editor-der-schwierige-bauernhof",
   "title": "Blut, Schweiß und Heu",
-  "titles": { "de": "Blut, Schweiß und Heu", "en": "Blood, Sweat and Hay", "es": "Sangre, sudor y heno", "pt": "Sangue, Suor e Feno", "fr": "Du sang, de la sueur et du foin", "ru": "Кровь, пот и сено" },
+  "titles": { "de": "Blut, Schweiß und Heu", "en": "Blood, Sweat and Hay", "es": "Sangre, sudor y heno", "pt": "Sangue, Suor e Feno", "fr": "Du sang, de la sueur et du foin", "ru": "Кровь, пот и сено" , "it": "Il padrone del campo"},
   "size": {
     "width": 6,
     "height": 6

@@ -2,7 +2,7 @@
   "schema": 1,
   "id": "editor-mord-unter-freunden",
   "title": "Unter alten Freunden",
-  "titles": { "de": "Unter alten Freunden", "en": "Among Old Friends", "es": "Entre viejos amigos", "pt": "Entre Velhos Amigos", "fr": "Entre vieux amis", "ru": "В кругу старых друзей" },
+  "titles": { "de": "Unter alten Freunden", "en": "Among Old Friends", "es": "Entre viejos amigos", "pt": "Entre Velhos Amigos", "fr": "Entre vieux amis", "ru": "В кругу старых друзей" , "it": "Il seminterrato vuoto"},
   "size": {
     "width": 8,
     "height": 8

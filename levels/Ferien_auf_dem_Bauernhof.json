@@ -2,7 +2,7 @@
   "schema": 1,
   "id": "editor-ferien-auf-dem-bauernhof",
   "title": "Tödliche Landluft",
-  "titles": { "de": "Tödliche Landluft", "en": "Deadly Country Air", "es": "Aire de campo mortal", "pt": "Ares do Campo Fatais", "fr": "Le Bon Air de la campagne", "ru": "Убийственный деревенский воздух" },
+  "titles": { "de": "Tödliche Landluft", "en": "Deadly Country Air", "es": "Aire de campo mortal", "pt": "Ares do Campo Fatais", "fr": "Le Bon Air de la campagne", "ru": "Убийственный деревенский воздух" , "it": "La radura deserta"},
   "size": {
     "width": 8,
     "height": 8

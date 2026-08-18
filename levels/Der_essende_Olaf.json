@@ -2,7 +2,7 @@
   "schema": 1,
   "id": "editor-der-essende-olaf",
   "title": "Der essende Olaf",
-  "titles": { "de": "Der essende Olaf", "en": "Hungry Olaf", "es": "Olaf el comilón", "pt": "Um Apetite Suspeito", "fr": "Un appétit suspect", "ru": "Голодный гость" },
+  "titles": { "de": "Der essende Olaf", "en": "Hungry Olaf", "es": "Olaf el comilón", "pt": "Um Apetite Suspeito", "fr": "Un appétit suspect", "ru": "Голодный гость" , "it": "Un ospite di troppo"},
   "size": {
     "width": 8,
     "height": 8

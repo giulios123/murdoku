@@ -2,7 +2,7 @@
   "schema": 1,
   "id": "editor-mord-in-eisiger-k-lte",
   "title": "Der Schneemann schweigt",
-  "titles": { "de": "Der Schneemann schweigt", "en": "The Snowman Tells No Tales", "es": "El muñeco de nieve no habla", "pt": "O Boneco de Neve Não Fala", "fr": "Le Bonhomme de neige se tait", "ru": "Снеговик молчит" },
+  "titles": { "de": "Der Schneemann schweigt", "en": "The Snowman Tells No Tales", "es": "El muñeco de nieve no habla", "pt": "O Boneco de Neve Não Fala", "fr": "Le Bonhomme de neige se tait", "ru": "Снеговик молчит" , "it": "Il giardino proibito"},
   "size": {
     "width": 8,
     "height": 8

@@ -2,7 +2,7 @@
   "schema": 1,
   "id": "editor-die-s-en-tiere",
   "title": "Füttern verboten",
-  "titles": { "de": "Füttern verboten", "en": "Please Don't Feed the Killer", "es": "Prohibido alimentar al asesino", "pt": "É Proibido Alimentar", "fr": "Défense de nourrir", "ru": "Убийцу не кормить" },
+  "titles": { "de": "Füttern verboten", "en": "Please Don't Feed the Killer", "es": "Prohibido alimentar al asesino", "pt": "É Proibido Alimentar", "fr": "Défense de nourrir", "ru": "Убийцу не кормить" , "it": "Tre tende al crepuscolo"},
   "size": {
     "width": 8,
     "height": 8

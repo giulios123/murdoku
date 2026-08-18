@@ -2,7 +2,7 @@
   "schema": 1,
   "id": "editor-la-familia",
   "title": "La Familia",
-  "titles": { "de": "La Familia", "en": "La Familia", "es": "La Familia", "pt": "La Familia", "fr": "La Familia", "ru": "La Familia" },
+  "titles": { "de": "La Familia", "en": "La Familia", "es": "La Familia", "pt": "La Familia", "fr": "La Familia", "ru": "La Familia" , "it": "Un piatto pericoloso"},
   "size": {
     "width": 9,
     "height": 9

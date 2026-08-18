@@ -2,7 +2,7 @@
   "schema": 1,
   "id": "editor-die-seerose",
   "title": "Die Seerose",
-  "titles": { "de": "Die Seerose", "en": "The Water Lily", "es": "El nenúfar", "pt": "O Nenúfar", "fr": "Le Nénuphar", "ru": "Кувшинка" },
+  "titles": { "de": "Die Seerose", "en": "The Water Lily", "es": "El nenúfar", "pt": "O Nenúfar", "fr": "Le Nénuphar", "ru": "Кувшинка" , "it": "Il recinto proibito"},
   "size": {
     "width": 8,
     "height": 8

@@ -2,7 +2,7 @@
   "schema": 1,
   "id": "editor-der-bauernhofsmord",
   "title": "Blut im Stall",
-  "titles": { "de": "Blut im Stall", "en": "Blood in the Barn", "es": "Sangre en el establo", "pt": "Sangue no Estábulo", "fr": "Du sang dans l'étable", "ru": "Кровь в амбаре" },
+  "titles": { "de": "Blut im Stall", "en": "Blood in the Barn", "es": "Sangre en el establo", "pt": "Sangue no Estábulo", "fr": "Du sang dans l'étable", "ru": "Кровь в амбаре" , "it": "Fieno e menzogne"},
   "size": {
     "width": 9,
     "height": 9

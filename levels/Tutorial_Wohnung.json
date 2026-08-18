@@ -2,7 +2,7 @@
   "schema": 1,
   "id": "editor-tutorial-wohnung",
   "title": "Tutorial Wohnung",
-  "titles": { "de": "Tutorial Wohnung", "en": "Tutorial Apartment", "es": "Tutorial: el piso", "pt": "Tutorial: o Apartamento", "fr": "Tutoriel : l'appartement", "ru": "Обучение: квартира" },
+  "titles": { "de": "Tutorial Wohnung", "en": "Tutorial Apartment", "es": "Tutorial: el piso", "pt": "Tutorial: o Apartamento", "fr": "Tutoriel : l'appartement", "ru": "Обучение: квартира" , "it": "La stanza delle mappe"},
   "size": {
     "width": 6,
     "height": 6

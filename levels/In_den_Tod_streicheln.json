@@ -2,7 +2,7 @@
   "schema": 1,
   "id": "editor-in-den-tod-streicheln",
   "title": "Mord im Streichelzoo",
-  "titles": { "de": "Mord im Streichelzoo", "en": "Murder at the Petting Zoo", "es": "Muerte en el zoo de caricias", "pt": "Morte na Quinta Pedagógica", "fr": "Meurtre à la ferme pédagogique", "ru": "Убийство в контактном зоопарке" },
+  "titles": { "de": "Mord im Streichelzoo", "en": "Murder at the Petting Zoo", "es": "Muerte en el zoo de caricias", "pt": "Morte na Quinta Pedagógica", "fr": "Meurtre à la ferme pédagogique", "ru": "Убийство в контактном зоопарке" , "it": "La sfida dei campeggiatori"},
   "size": {
     "width": 7,
     "height": 7

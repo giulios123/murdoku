@@ -2,7 +2,7 @@
   "schema": 1,
   "id": "editor-der-kiosk-am-see",
   "title": "Der Kiosk am See",
-  "titles": { "es": "El quiosco del lago", "pt": "O Quiosque do Lago", "fr": "Le Kiosque du lac", "ru": "Киоск у озера" },
+  "titles": { "es": "El quiosco del lago", "pt": "O Quiosque do Lago", "fr": "Le Kiosque du lac", "ru": "Киоск у озера" , "it": "Casa con segreti"},
   "size": {
     "width": 8,
     "height": 8

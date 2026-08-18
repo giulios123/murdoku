@@ -2,7 +2,7 @@
   "schema": 1,
   "id": "editor-der-kleine-bauernhof",
   "title": "Kleiner Hof, großer Mord",
-  "titles": { "de": "Kleiner Hof, großer Mord", "en": "Small Farm, Big Murder", "es": "Granja pequeña, gran crimen", "pt": "Quinta Pequena, Crime Grande", "fr": "Petite ferme, grand crime", "ru": "Маленькая ферма, большое убийство" },
+  "titles": { "de": "Kleiner Hof, großer Mord", "en": "Small Farm, Big Murder", "es": "Granja pequeña, gran crimen", "pt": "Quinta Pequena, Crime Grande", "fr": "Petite ferme, grand crime", "ru": "Маленькая ферма, большое убийство" , "it": "Sotto il cielo grigio"},
   "size": {
     "width": 6,
     "height": 6

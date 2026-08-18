@@ -2,7 +2,7 @@
   "schema": 1,
   "id": "editor-mord-im-op",
   "title": "Mord im OP",
-  "titles": { "de": "Mord im OP", "en": "Murder in the OR", "es": "Asesinato en el quirófano", "pt": "Morte no Bloco Operatório", "fr": "Meurtre au bloc", "ru": "Убийство в операционной" },
+  "titles": { "de": "Mord im OP", "en": "Murder in the OR", "es": "Asesinato en el quirófano", "pt": "Morte no Bloco Operatório", "fr": "Meurtre au bloc", "ru": "Убийство в операционной" , "it": "Vetro appannato"},
   "size": {
     "width": 7,
     "height": 7

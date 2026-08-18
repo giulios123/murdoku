@@ -2,7 +2,7 @@
   "schema": 1,
   "id": "editor-leckeres-essen",
   "title": "Das Henkersmahl",
-  "titles": { "de": "Das Henkersmahl", "en": "The Last Supper", "es": "La última cena", "pt": "A Última Ceia", "fr": "Le Repas du condamné", "ru": "Последняя трапеза" },
+  "titles": { "de": "Das Henkersmahl", "en": "The Last Supper", "es": "La última cena", "pt": "A Última Ceia", "fr": "Le Repas du condamné", "ru": "Последняя трапеза" , "it": "Colpevoli in cerchio"},
   "size": {
     "width": 9,
     "height": 9

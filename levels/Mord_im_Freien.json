@@ -2,7 +2,7 @@
   "schema": 1,
   "id": "editor-mord-im-freien",
   "title": "Das Böse unter freiem Himmel",
-  "titles": { "de": "Das Böse unter freiem Himmel", "en": "Evil Under the Open Sky", "es": "La maldad a cielo abierto", "pt": "O Mal a Céu Aberto", "fr": "Le Mal à ciel ouvert", "ru": "Зло под открытым небом" },
+  "titles": { "de": "Das Böse unter freiem Himmel", "en": "Evil Under the Open Sky", "es": "La maldad a cielo abierto", "pt": "O Mal a Céu Aberto", "fr": "Le Mal à ciel ouvert", "ru": "Зло под открытым небом" , "it": "Il rumore del ghiaccio"},
   "size": {
     "width": 8,
     "height": 8

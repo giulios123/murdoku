@@ -2,7 +2,7 @@
   "schema": 1,
   "id": "editor-lecker-mord",
   "title": "Lecker Mord",
-  "titles": { "de": "Lecker Mord", "en": "Murder à la Carte", "es": "Asesinato a la carta", "pt": "Homicídio à la Carte", "fr": "Meurtre à la carte", "ru": "Убийство от шеф-повара" },
+  "titles": { "de": "Lecker Mord", "en": "Murder à la Carte", "es": "Asesinato a la carta", "pt": "Homicídio à la Carte", "fr": "Meurtre à la carte", "ru": "Убийство от шеф-повара" , "it": "La tavola apparecchiata"},
   "size": {
     "width": 6,
     "height": 6

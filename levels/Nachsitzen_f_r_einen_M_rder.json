@@ -2,6 +2,7 @@
   "schema": 1,
   "id": "editor-nachsitzen-f-r-einen-m-rder",
   "title": "Nachsitzen für einen Mörder",
+  "titles": { "it": "Punizione per un assassino" },
   "size": {
     "width": 7,
     "height": 7

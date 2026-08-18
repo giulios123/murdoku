@@ -20,7 +20,7 @@ import { FAQ_BOARDS } from './faqBoards.ts'
  * one-per-row/column base rule — a rule violation in an ILLUSTRATION would teach
  * exactly the wrong thing.
  */
-const LANGS = ['de', 'en', 'es', 'pt', 'fr', 'ru'] as const
+const LANGS = ['de', 'it', 'en', 'es', 'pt', 'fr', 'ru'] as const
 const dicts = Object.fromEntries(
   LANGS.map((lg) => [
     lg,

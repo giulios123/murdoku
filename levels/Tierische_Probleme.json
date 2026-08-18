@@ -2,7 +2,7 @@
   "schema": 1,
   "id": "editor-tierische-probleme",
   "title": "Ein tierisches Alibi",
-  "titles": { "de": "Ein tierisches Alibi", "en": "A Beastly Alibi", "es": "Una coartada animal", "pt": "Um Álibi Animal", "fr": "Un alibi bestial", "ru": "Звериное алиби" },
+  "titles": { "de": "Ein tierisches Alibi", "en": "A Beastly Alibi", "es": "Una coartada animal", "pt": "Um Álibi Animal", "fr": "Un alibi bestial", "ru": "Звериное алиби" , "it": "Il taxi giallo"},
   "size": {
     "width": 8,
     "height": 8

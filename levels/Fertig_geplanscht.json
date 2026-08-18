@@ -2,7 +2,7 @@
   "schema": 1,
   "id": "editor-fertig-geplanscht",
   "title": "Endstation Sprungturm",
-  "titles": { "de": "Endstation Sprungturm", "en": "The Last Dive", "es": "Última zambullida", "pt": "O Último Mergulho", "fr": "Le Dernier Plongeon", "ru": "Последний прыжок с вышки" },
+  "titles": { "de": "Endstation Sprungturm", "en": "The Last Dive", "es": "Última zambullida", "pt": "O Último Mergulho", "fr": "Le Dernier Plongeon", "ru": "Последний прыжок с вышки" , "it": "Il richiamo degli animali"},
   "size": {
     "width": 7,
     "height": 7

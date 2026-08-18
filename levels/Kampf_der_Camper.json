@@ -2,7 +2,7 @@
   "schema": 1,
   "id": "editor-kampf-der-camper",
   "title": "Kampf der Camper",
-  "titles": { "de": "Kampf der Camper", "en": "Clash of the Campers", "es": "El duelo de los campistas", "pt": "O Duelo dos Campistas", "fr": "La Guerre des campeurs", "ru": "Битва туристов" },
+  "titles": { "de": "Kampf der Camper", "en": "Clash of the Campers", "es": "El duelo de los campistas", "pt": "O Duelo dos Campistas", "fr": "La Guerre des campeurs", "ru": "Битва туристов" , "it": "Amici senza perdono"},
   "size": {
     "width": 7,
     "height": 7

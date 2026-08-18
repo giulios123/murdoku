@@ -2,7 +2,7 @@
   "schema": 1,
   "id": "editor-der-schwere-brettspielmord",
   "title": "Spiel auf Leben und Tod",
-  "titles": { "de": "Spiel auf Leben und Tod", "en": "A Game of Life and Death", "es": "Un juego a vida o muerte", "pt": "Jogo de Vida ou Morte", "fr": "Un jeu de vie ou de mort", "ru": "Игра на жизнь и смерть" },
+  "titles": { "de": "Spiel auf Leben und Tod", "en": "A Game of Life and Death", "es": "Un juego a vida o muerte", "pt": "Jogo de Vida ou Morte", "fr": "Un jeu de vie ou de mort", "ru": "Игра на жизнь и смерть" , "it": "Il tabellone muto"},
   "size": {
     "width": 9,
     "height": 9

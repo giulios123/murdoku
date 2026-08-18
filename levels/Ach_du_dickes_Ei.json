@@ -2,7 +2,7 @@
   "schema": 1,
   "id": "editor-ach-du-dickes-ei",
   "title": "Ach du dickes Ei",
-  "titles": { "de": "Ach du dickes Ei", "en": "A Cracking Case", "es": "Huevos revueltos", "pt": "Um Ovo Podre", "fr": "Qui vole un œuf…", "ru": "Дело о разбитом яйце" },
+  "titles": { "de": "Ach du dickes Ei", "en": "A Cracking Case", "es": "Huevos revueltos", "pt": "Um Ovo Podre", "fr": "Qui vole un œuf…", "ru": "Дело о разбитом яйце", "it": "Un uovo di troppo" },
   "size": {
     "width": 9,
     "height": 9

@@ -2,7 +2,7 @@
   "schema": 1,
   "id": "editor-die-fernsehjunkies",
   "title": "Die Fernsehjunkies",
-  "titles": { "de": "Die Fernsehjunkies", "en": "The TV Junkies", "es": "Los adictos a la tele", "pt": "Viciados em Televisão", "fr": "Accros au petit écran", "ru": "Заложники телевизора" },
+  "titles": { "de": "Die Fernsehjunkies", "en": "The TV Junkies", "es": "Los adictos a la tele", "pt": "Viciados em Televisão", "fr": "Accros au petit écran", "ru": "Заложники телевизора" , "it": "La capanna chiusa"},
   "size": {
     "width": 8,
     "height": 8

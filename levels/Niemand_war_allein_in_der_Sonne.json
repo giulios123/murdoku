@@ -2,7 +2,7 @@
   "schema": 1,
   "id": "editor-niemand-war-allein-in-der-sonne",
   "title": "Böses unter der Sonne",
-  "titles": { "de": "Böses unter der Sonne", "en": "Evil Under the Parasol", "es": "El mal bajo la sombrilla", "pt": "Mal Debaixo do Sol", "fr": "Meurtre au soleil", "ru": "Зло под зонтом" },
+  "titles": { "de": "Böses unter der Sonne", "en": "Evil Under the Parasol", "es": "El mal bajo la sombrilla", "pt": "Mal Debaixo do Sol", "fr": "Meurtre au soleil", "ru": "Зло под зонтом" , "it": "La lettera bruciata"},
   "size": {
     "width": 8,
     "height": 8

@@ -2,7 +2,7 @@
   "schema": 1,
   "id": "editor-der-einfache-brettspielmord",
   "title": "Spielabend mit Leiche",
-  "titles": { "de": "Spielabend mit Leiche", "en": "Game Night Gone Wrong", "es": "Noche de juegos con cadáver", "pt": "Noite de Jogos com Cadáver", "fr": "Soirée jeux, cadavre compris", "ru": "Игровой вечер с трупом" },
+  "titles": { "de": "Spielabend mit Leiche", "en": "Game Night Gone Wrong", "es": "Noche de juegos con cadáver", "pt": "Noite de Jogos com Cadáver", "fr": "Soirée jeux, cadavre compris", "ru": "Игровой вечер с трупом" , "it": "Il registro dell'albergo"},
   "size": {
     "width": 9,
     "height": 9

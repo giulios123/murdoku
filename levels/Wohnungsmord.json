@@ -2,7 +2,7 @@
   "schema": 1,
   "id": "editor-wohnungsmord",
   "title": "Volkers letzter Gang",
-  "titles": { "de": "Volkers letzter Gang", "en": "Volker's Last Walk", "es": "El último paseo de Volker", "pt": "O Último Passeio", "fr": "La Dernière Promenade", "ru": "Последний путь жильца" },
+  "titles": { "de": "Volkers letzter Gang", "en": "Volker's Last Walk", "es": "El último paseo de Volker", "pt": "O Último Passeio", "fr": "La Dernière Promenade", "ru": "Последний путь жильца" , "it": "Il cerchio degli alibi"},
   "size": {
     "width": 8,
     "height": 8

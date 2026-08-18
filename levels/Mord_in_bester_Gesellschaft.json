@@ -2,7 +2,7 @@
   "schema": 1,
   "id": "editor-mord-in-bester-gesellschaft",
   "title": "Mord in bester Gesellschaft",
-  "titles": { "de": "Mord in bester Gesellschaft", "en": "Murder in High Society", "es": "Asesinato en la alta sociedad", "pt": "Homicídio na Alta-Roda", "fr": "Meurtre dans la haute", "ru": "Убийство в высшем обществе" },
+  "titles": { "de": "Mord in bester Gesellschaft", "en": "Murder in High Society", "es": "Asesinato en la alta sociedad", "pt": "Homicídio na Alta-Roda", "fr": "Meurtre dans la haute", "ru": "Убийство в высшем обществе" , "it": "Sussurri nel cortile"},
   "size": {
     "width": 5,
     "height": 5

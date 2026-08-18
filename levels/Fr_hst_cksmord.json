@@ -2,7 +2,7 @@
   "schema": 1,
   "id": "editor-fr-hst-cksmord",
   "title": "Frühstücksmord",
-  "titles": { "de": "Frühstücksmord", "en": "Murder at Breakfast", "es": "Asesinato en el desayuno", "pt": "Morte ao Pequeno-Almoço", "fr": "Meurtre au petit-déjeuner", "ru": "Убийство за завтраком" },
+  "titles": { "de": "Frühstücksmord", "en": "Murder at Breakfast", "es": "Asesinato en el desayuno", "pt": "Morte ao Pequeno-Almoço", "fr": "Meurtre au petit-déjeuner", "ru": "Убийство за завтраком" , "it": "Scontrino macchiato"},
   "size": {
     "width": 6,
     "height": 6

@@ -2,7 +2,7 @@
   "schema": 1,
   "id": "editor-das-neue-haus",
   "title": "Einzug mit Leiche",
-  "titles": { "de": "Einzug mit Leiche", "en": "Moving In with Murder", "es": "Mudanza con cadáver", "pt": "Mudança com Cadáver", "fr": "Crémaillère fatale", "ru": "Новоселье с трупом" },
+  "titles": { "de": "Einzug mit Leiche", "en": "Moving In with Murder", "es": "Mudanza con cadáver", "pt": "Mudança com Cadáver", "fr": "Crémaillère fatale", "ru": "Новоселье с трупом" , "it": "Chiavi senza padrone"},
   "size": {
     "width": 9,
     "height": 9

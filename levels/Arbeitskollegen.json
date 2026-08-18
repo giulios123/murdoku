@@ -2,7 +2,7 @@
   "schema": 1,
   "id": "editor-arbeitskollegen",
   "title": "Kollegen unter Verdacht",
-  "titles": { "de": "Kollegen unter Verdacht", "en": "Colleagues Under Suspicion", "es": "Colegas bajo sospecha", "pt": "Colegas Sob Suspeita", "fr": "Soupçons entre collègues", "ru": "Коллеги под подозрением" },
+  "titles": { "de": "Kollegen unter Verdacht", "en": "Colleagues Under Suspicion", "es": "Colegas bajo sospecha", "pt": "Colegas Sob Suspeita", "fr": "Soupçons entre collègues", "ru": "Коллеги под подозрением" , "it": "La stanza senza eco"},
   "size": {
     "width": 6,
     "height": 6

@@ -2,7 +2,7 @@
   "schema": 1,
   "id": "editor-tierischer-mordausblick",
   "title": "Aussicht auf einen Mord",
-  "titles": { "de": "Aussicht auf einen Mord", "en": "A View to a Murder", "es": "Vistas al crimen", "pt": "Vista Para um Crime", "fr": "Vue sur meurtre", "ru": "Вид на убийство" },
+  "titles": { "de": "Aussicht auf einen Mord", "en": "A View to a Murder", "es": "Vistas al crimen", "pt": "Vista Para um Crime", "fr": "Vue sur meurtre", "ru": "Вид на убийство" , "it": "La fotografia strappata"},
   "size": {
     "width": 7,
     "height": 7

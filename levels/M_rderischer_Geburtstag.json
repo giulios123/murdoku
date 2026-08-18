@@ -2,7 +2,7 @@
   "schema": 1,
   "id": "editor-m-rderischer-geburtstag",
   "title": "Mörderischer Geburtstag",
-  "titles": { "de": "Mörderischer Geburtstag", "en": "A Murderous Birthday", "es": "Un cumpleaños mortal", "pt": "Parabéns e Pêsames", "fr": "Un anniversaire meurtrier", "ru": "Убийственный день рождения" },
+  "titles": { "de": "Mörderischer Geburtstag", "en": "A Murderous Birthday", "es": "Un cumpleaños mortal", "pt": "Parabéns e Pêsames", "fr": "Un anniversaire meurtrier", "ru": "Убийственный день рождения" , "it": "La cesta avvelenata"},
   "size": {
     "width": 9,
     "height": 9

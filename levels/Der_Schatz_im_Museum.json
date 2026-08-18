@@ -2,7 +2,7 @@
   "schema": 1,
   "id": "editor-der-schatz-im-museum",
   "title": "Der Schatz im Museum",
-  "titles": { "de": "Der Schatz im Museum", "en": "Treasure at the Museum", "es": "El tesoro del museo", "pt": "O Tesouro do Museu", "fr": "Le Trésor du musée", "ru": "Сокровище музея" },
+  "titles": { "de": "Der Schatz im Museum", "en": "Treasure at the Museum", "es": "El tesoro del museo", "pt": "O Tesouro do Museu", "fr": "Le Trésor du musée", "ru": "Сокровище музея" , "it": "Le mura traditrici"},
   "size": {
     "width": 7,
     "height": 7

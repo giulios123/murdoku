@@ -2,7 +2,7 @@
   "schema": 1,
   "id": "editor-wei-e-m-rder",
   "title": "Weiße Mörder",
-  "titles": { "de": "Weiße Mörder", "en": "Killers in White", "es": "Asesinos de blanco", "pt": "Assassinos de Bata Branca", "fr": "Des tueurs en blouse blanche", "ru": "Убийцы в белых халатах" },
+  "titles": { "de": "Weiße Mörder", "en": "Killers in White", "es": "Asesinos de blanco", "pt": "Assassinos de Bata Branca", "fr": "Des tueurs en blouse blanche", "ru": "Убийцы в белых халатах" , "it": "La pista nascosta"},
   "size": {
     "width": 6,
     "height": 6

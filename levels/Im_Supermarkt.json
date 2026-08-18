@@ -2,7 +2,7 @@
   "schema": 1,
   "id": "editor-im-supermarkt",
   "title": "Der letzte Einkauf",
-  "titles": { "de": "Der letzte Einkauf", "en": "The Final Checkout", "es": "La última compra", "pt": "A Última Compra", "fr": "Les Dernières Courses", "ru": "Последний чек" },
+  "titles": { "de": "Der letzte Einkauf", "en": "The Final Checkout", "es": "La última compra", "pt": "A Última Compra", "fr": "Les Dernières Courses", "ru": "Последний чек" , "it": "Gabbie e segreti"},
   "size": {
     "width": 8,
     "height": 8

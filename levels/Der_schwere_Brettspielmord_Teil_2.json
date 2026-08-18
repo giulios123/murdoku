@@ -2,7 +2,7 @@
   "schema": 1,
   "id": "editor-der-schwere-brettspielmord-teil-2",
   "title": "Spiel auf Leben und Tod II",
-  "titles": { "de": "Spiel auf Leben und Tod II", "en": "A Game of Life and Death II", "es": "Un juego a vida o muerte II", "pt": "Jogo de Vida ou Morte II", "fr": "Un jeu de vie ou de mort II", "ru": "Игра на жизнь и смерть II" },
+  "titles": { "de": "Spiel auf Leben und Tod II", "en": "A Game of Life and Death II", "es": "Un juego a vida o muerte II", "pt": "Jogo de Vida ou Morte II", "fr": "Un jeu de vie ou de mort II", "ru": "Игра на жизнь и смерть II" , "it": "La mossa sospesa"},
   "size": {
     "width": 9,
     "height": 9

@@ -2,7 +2,7 @@
   "schema": 1,
   "id": "editor-kleiner-mord-unter-freunden",
   "title": "Kleiner Mord unter Freunden",
-  "titles": { "de": "Kleiner Mord unter Freunden", "en": "A Little Murder Among Friends", "es": "Un pequeño asesinato entre amigos", "pt": "Um Crime Entre Amigos", "fr": "Un petit meurtre entre amis", "ru": "Маленькое убийство в кругу друзей" },
+  "titles": { "de": "Kleiner Mord unter Freunden", "en": "A Little Murder Among Friends", "es": "Un pequeño asesinato entre amigos", "pt": "Um Crime Entre Amigos", "fr": "Un petit meurtre entre amis", "ru": "Маленькое убийство в кругу друзей" , "it": "Reparto chiuso"},
   "size": {
     "width": 4,
     "height": 4

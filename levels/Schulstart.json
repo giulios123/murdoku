@@ -165,5 +165,5 @@
     }
   },
   "title": "Schulstart",
-  "titles": { "de": "Schulstart", "en": "Back to School", "es": "Vuelta al cole", "pt": "Regresso às Aulas", "fr": "La Rentrée", "ru": "Снова в школу" }
+  "titles": { "de": "Schulstart", "en": "Back to School", "es": "Vuelta al cole", "pt": "Regresso às Aulas", "fr": "La Rentrée", "ru": "Снова в школу" , "it": "La scala a chiocciola"}
 }

@@ -2,7 +2,7 @@
   "schema": 1,
   "id": "editor-niemand-h-rt-dich-schreien",
   "title": "Niemand hört dich schreien",
-  "titles": { "es": "Nadie te oye gritar", "pt": "Ninguém Te Ouve Gritar", "fr": "Personne ne vous entend crier", "ru": "Никто не услышит крика" },
+  "titles": { "es": "Nadie te oye gritar", "pt": "Ninguém Te Ouve Gritar", "fr": "Personne ne vous entend crier", "ru": "Никто не услышит крика" , "it": "Il pianoforte spento"},
   "size": {
     "width": 9,
     "height": 9

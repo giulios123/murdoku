@@ -3,7 +3,7 @@
   "author": "Mika Aporius",
   "id": "editor-pferd-auf-dem-flur",
   "title": "Pferd auf dem Flur",
-  "titles": { "de": "Pferd auf dem Flur", "en": "A Horse in the Hallway", "es": "Un caballo en el pasillo", "pt": "Um Cavalo no Corredor", "fr": "Un cheval dans le couloir", "ru": "Лошадь в коридоре" },
+  "titles": { "de": "Pferd auf dem Flur", "en": "A Horse in the Hallway", "es": "Un caballo en el pasillo", "pt": "Um Cavalo no Corredor", "fr": "Un cheval dans le couloir", "ru": "Лошадь в коридоре" , "it": "Il profumo dell'inganno"},
   "size": {
     "width": 8,
     "height": 8

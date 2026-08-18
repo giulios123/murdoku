@@ -2,7 +2,7 @@
   "schema": 1,
   "id": "editor-der-einfache-wohnungsmord-teil-2",
   "title": "Viola, der zweite Akt",
-  "titles": { "de": "Viola, der zweite Akt", "en": "Viola, Act Two", "es": "Viola, segundo acto", "pt": "O Segundo Ato", "fr": "Le Second Acte", "ru": "Второй акт" },
+  "titles": { "de": "Viola, der zweite Akt", "en": "Viola, Act Two", "es": "Viola, segundo acto", "pt": "O Segundo Ato", "fr": "Le Second Acte", "ru": "Второй акт" , "it": "Il piatto freddo"},
   "size": {
     "width": 8,
     "height": 8

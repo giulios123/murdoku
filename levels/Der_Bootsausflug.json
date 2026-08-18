@@ -2,7 +2,7 @@
   "schema": 1,
   "id": "editor-der-bootsausflug",
   "title": "Über Bord",
-  "titles": { "de": "Über Bord", "en": "Overboard", "es": "Por la borda", "pt": "Pela Borda Fora", "fr": "Par-dessus bord", "ru": "Человек за бортом" },
+  "titles": { "de": "Über Bord", "en": "Overboard", "es": "Por la borda", "pt": "Pela Borda Fora", "fr": "Par-dessus bord", "ru": "Человек за бортом" , "it": "Acqua senza sponde"},
   "size": {
     "width": 7,
     "height": 7

@@ -2,7 +2,7 @@
   "schema": 1,
   "id": "editor-schwierige-g-ste",
   "title": "Schwierige Gäste",
-  "titles": { "de": "Schwierige Gäste", "en": "Difficult Guests", "es": "Huéspedes difíciles", "pt": "Hóspedes Difíceis", "fr": "Des invités difficiles", "ru": "Трудные гости" },
+  "titles": { "de": "Schwierige Gäste", "en": "Difficult Guests", "es": "Huéspedes difíciles", "pt": "Hóspedes Difíceis", "fr": "Des invités difficiles", "ru": "Трудные гости" , "it": "L'armadio chiuso"},
   "size": {
     "width": 6,
     "height": 6

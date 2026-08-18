@@ -2,7 +2,7 @@
   "schema": 1,
   "id": "editor-der-buchladen",
   "title": "Zwischen den Zeilen",
-  "titles": { "de": "Zwischen den Zeilen", "en": "Between the Lines", "es": "Entre líneas", "pt": "Nas Entrelinhas", "fr": "Entre les lignes", "ru": "Между строк" },
+  "titles": { "de": "Zwischen den Zeilen", "en": "Between the Lines", "es": "Entre líneas", "pt": "Nas Entrelinhas", "fr": "Entre les lignes", "ru": "Между строк" , "it": "Polvere sugli scaffali"},
   "size": {
     "width": 6,
     "height": 6

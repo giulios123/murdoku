@@ -2,7 +2,7 @@
   "schema": 1,
   "id": "editor-die-h-tte-im-wald",
   "title": "Die Hütte im Wald",
-  "titles": { "de": "Die Hütte im Wald", "en": "The Cabin in the Woods", "es": "La cabaña en el bosque", "pt": "A Cabana na Floresta", "fr": "La Cabane dans les bois", "ru": "Хижина в лесу" },
+  "titles": { "de": "Die Hütte im Wald", "en": "The Cabin in the Woods", "es": "La cabaña en el bosque", "pt": "A Cabana na Floresta", "fr": "La Cabane dans les bois", "ru": "Хижина в лесу" , "it": "Un fiore sull'acqua"},
   "size": {
     "width": 11,
     "height": 11

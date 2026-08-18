@@ -2,7 +2,7 @@
   "schema": 1,
   "id": "editor-der-schmutzige-pausenhof",
   "title": "Der schmutzige Pausenhof",
-  "titles": { "es": "El patio sucio", "pt": "O Recreio Acabou", "fr": "La Récré est finie", "ru": "Грязный школьный двор" },
+  "titles": { "es": "El patio sucio", "pt": "O Recreio Acabou", "fr": "La Récré est finie", "ru": "Грязный школьный двор" , "it": "Pedine nel buio"},
   "size": {
     "width": 8,
     "height": 8

@@ -2,7 +2,7 @@
   "schema": 1,
   "id": "editor-tierscher-mord",
   "title": "Federn, Fell und ein Mord",
-  "titles": { "de": "Federn, Fell und ein Mord", "en": "Feathers, Fur and Foul Play", "es": "Plumas, pelaje y juego sucio", "pt": "Penas, Pelo e um Crime", "fr": "Des plumes et du sang", "ru": "Перья, шерсть и злой умысел" },
+  "titles": { "de": "Federn, Fell und ein Mord", "en": "Feathers, Fur and Foul Play", "es": "Plumas, pelaje y juego sucio", "pt": "Penas, Pelo e um Crime", "fr": "Des plumes et du sang", "ru": "Перья, шерсть и злой умысел" , "it": "Il confessionale vuoto"},
   "size": {
     "width": 8,
     "height": 8

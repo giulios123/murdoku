@@ -2,7 +2,7 @@
   "schema": 1,
   "id": "editor-das-mafiaessen",
   "title": "Das Mafiaessen",
-  "titles": { "de": "Das Mafiaessen", "en": "The Mafia Dinner", "es": "La cena de la mafia", "pt": "O Jantar da Máfia", "fr": "Le Dîner de la mafia", "ru": "Ужин с мафией" },
+  "titles": { "de": "Das Mafiaessen", "en": "The Mafia Dinner", "es": "La cena de la mafia", "pt": "O Jantar da Máfia", "fr": "Le Dîner de la mafia", "ru": "Ужин с мафией" , "it": "Il banchetto nero"},
   "size": {
     "width": 8,
     "height": 8

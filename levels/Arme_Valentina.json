@@ -2,7 +2,7 @@
   "schema": 1,
   "id": "editor-arme-valentina",
   "title": "Arme Valentina",
-  "titles": { "de": "Arme Valentina", "en": "Poor Valentina", "es": "Pobre Valentina", "pt": "Sem Piedade", "fr": "Sans pitié", "ru": "Бедняжка" },
+  "titles": { "de": "Arme Valentina", "en": "Poor Valentina", "es": "Pobre Valentina", "pt": "Sem Piedade", "fr": "Sans pitié", "ru": "Бедняжка" , "it": "Il conto della notte"},
   "size": {
     "width": 8,
     "height": 8

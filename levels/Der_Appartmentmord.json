@@ -2,7 +2,7 @@
   "schema": 1,
   "id": "editor-der-appartmentmord",
   "title": "Der letzte Mieter",
-  "titles": { "de": "Der letzte Mieter", "en": "The Last Tenant", "es": "El último inquilino", "pt": "O Último Inquilino", "fr": "Le Dernier Locataire", "ru": "Последний квартирант" },
+  "titles": { "de": "Der letzte Mieter", "en": "The Last Tenant", "es": "El último inquilino", "pt": "O Último Inquilino", "fr": "Le Dernier Locataire", "ru": "Последний квартирант" , "it": "Il palazzo in affitto"},
   "size": {
     "width": 9,
     "height": 9

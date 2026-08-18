@@ -2,7 +2,7 @@
   "schema": 1,
   "id": "editor-der-mord-zu-hause",
   "title": "Willkommen daheim",
-  "titles": { "de": "Willkommen daheim", "en": "Welcome Home", "es": "Bienvenido a casa", "pt": "Bem-Vindo a Casa", "fr": "Bienvenue à la maison", "ru": "С возвращением домой" },
+  "titles": { "de": "Willkommen daheim", "en": "Welcome Home", "es": "Bienvenido a casa", "pt": "Bem-Vindo a Casa", "fr": "Bienvenue à la maison", "ru": "С возвращением домой" , "it": "La sala delle statue"},
   "size": {
     "width": 9,
     "height": 9

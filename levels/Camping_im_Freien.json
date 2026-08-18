@@ -2,7 +2,7 @@
   "schema": 1,
   "id": "editor-camping-im-freien",
   "title": "Tod am Zeltplatz",
-  "titles": { "de": "Tod am Zeltplatz", "en": "Death at the Campsite", "es": "Muerte en el camping", "pt": "Morte no Acampamento", "fr": "Mort au camping", "ru": "Смерть в кемпинге" },
+  "titles": { "de": "Tod am Zeltplatz", "en": "Death at the Campsite", "es": "Muerte en el camping", "pt": "Morte no Acampamento", "fr": "Mort au camping", "ru": "Смерть в кемпинге" , "it": "Il bosco non parla"},
   "size": {
     "width": 6,
     "height": 6
